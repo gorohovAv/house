@@ -103,7 +103,7 @@ const LayeredCanvas = ({ config }: { config: LayeredImageConfig }) => {
     const loadImages = async () => {
       const imageMap = new Map<string, HTMLImageElement>()
       const loadPromises = config.layers.map(layer => {
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve) => {
           const img = new Image()
           img.onload = () => {
             imageMap.set(layer.id, img)
