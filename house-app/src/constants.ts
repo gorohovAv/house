@@ -162,3 +162,103 @@ export const CONSTRUCTION_OPTIONS: ConstructionOption[] = [
 
 export const INITIAL_BUDGET = 50000
 export const INITIAL_DURATION = 90
+
+export interface Risk {
+  id: number
+  description: string
+  solution: string
+  cost: number
+  duration: number
+  alternativeDescription: string
+}
+
+export const RISKS: Risk[] = [
+  {
+    id: 1,
+    description: "Задерживается доставка свай от завода из-за нехватки водителей",
+    solution: "Организовать доставку самостоятельно",
+    cost: 300,
+    duration: 2,
+    alternativeDescription: "Дождаться доставки от завода"
+  },
+  {
+    id: 2,
+    description: "Затопило котлован",
+    solution: "Организовать дренажную систему",
+    cost: 600,
+    duration: 5,
+    alternativeDescription: "Дождаться самостоятельного осушения"
+  },
+  {
+    id: 4,
+    description: "Пожар на складе поставщика древесины",
+    solution: "Взять с другого склада дороже",
+    cost: 1500,
+    duration: 3,
+    alternativeDescription: "Дождаться пополнения на складе"
+  },
+  {
+    id: 5,
+    description: "Материалы импортного производства задерживаются на границе",
+    solution: "Закупить отечественного производства",
+    cost: 1000,
+    duration: 7,
+    alternativeDescription: "Дождаться поставки импортных элементов"
+  },
+  {
+    id: 6,
+    description: "Бригада не сможет выйти на объект вовремя",
+    solution: "Нанять другую бригаду",
+    cost: 3000,
+    duration: 3,
+    alternativeDescription: "Дождаться бригаду"
+  },
+  {
+    id: 12,
+    description: "Элементы импортного производства задерживаются на границе",
+    solution: "Закупить отечественного производства",
+    cost: 1000,
+    duration: 7,
+    alternativeDescription: "Дождаться поставки импортных элементов"
+  },
+  {
+    id: 13,
+    description: "Задерживается доставка от завода из-за нехватки водителей",
+    solution: "Организовать доставку самостоятельно",
+    cost: 300,
+    duration: 2,
+    alternativeDescription: "Дождаться доставки от завода"
+  },
+  {
+    id: 14,
+    description: "Элементы импортного производства задерживаются на границе",
+    solution: "Закупить отечественного производства",
+    cost: 1000,
+    duration: 7,
+    alternativeDescription: "Дождаться поставки импортных элементов"
+  },
+  {
+    id: 17,
+    description: "Нарушение условий хранения, началась коррозия",
+    solution: "Закупить новый материал",
+    cost: 1000,
+    duration: 3,
+    alternativeDescription: "Подготовить имеющийся материал к монтажу"
+  },
+  {
+    id: 18,
+    description: "В местном питомнике задерживается поставка нужного сорта вишневых деревьев",
+    solution: "Купить сорт дороже",
+    cost: 800,
+    duration: 3,
+    alternativeDescription: "Дождаться поставки"
+  },
+  {
+    id: 20,
+    description: "В местном питомнике нет нужного вида рыбок",
+    solution: "Купить другой вид рыбок дороже",
+    cost: 400,
+    duration: 3,
+    alternativeDescription: "Дождаться поставки"
+  }
+]

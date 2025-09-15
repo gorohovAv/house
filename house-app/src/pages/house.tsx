@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './house.css'
 import { usePlanStore } from '../store/store'
 import { CONSTRUCTION_OPTIONS } from '../constants'
@@ -92,6 +93,7 @@ const layeredImageConfig: LayeredImageConfig = {
 export default function HousePage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
   const [roofType, setRoofType] = useState<string>('')
+  const navigate = useNavigate()
   
   const { 
     selectedOptions, 
@@ -129,6 +131,12 @@ export default function HousePage() {
         "4 Металлочерепица": "green"
       }
       setRoofType(roofTypeMap[option.type] || "pink")
+    }
+  }
+
+  const handleStartConstruction = () => {
+    if (allElementsSelected) {
+      navigate('/construction')
     }
   }
 
@@ -212,6 +220,7 @@ export default function HousePage() {
             <button 
               className="btn-primary"
               disabled={!allElementsSelected}
+              onClick={handleStartConstruction}
               style={{ 
                 opacity: allElementsSelected ? 1 : 0.5,
                 cursor: allElementsSelected ? 'pointer' : 'not-allowed'
