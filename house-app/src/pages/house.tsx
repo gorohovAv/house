@@ -1,14 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import './house.css'
+import { usePlanStore } from '../store/store'
+import { CONSTRUCTION_OPTIONS } from '../constants'
+import type { ConstructionOption } from '../constants'
 
 interface CardData {
   id: number
   title: string
-  options: {
-    name: string
-    price: number
-    time: number
-  }[]
+  options: ConstructionOption[]
 }
 
 interface LayerConfig {
@@ -30,48 +29,17 @@ interface LayeredImageConfig {
   layers: LayerConfig[]
 }
 
-const mockCards: CardData[] = [
-  {
-    id: 1,
-    title: "Фундамент",
-    options: [
-      { name: "Ленточный бетонный", price: 500, time: 3 },
-      { name: "Свайный", price: 350, time: 2 },
-      { name: "Плитный", price: 800, time: 5 },
-      { name: "Столбчатый", price: 200, time: 1 }
-    ]
-  },
-  {
-    id: 2,
-    title: "Крыша",
-    options: [
-      { name: "Красная крыша", price: 400, time: 2 },
-      { name: "Синяя крыша", price: 450, time: 2 },
-      { name: "Зеленая крыша", price: 420, time: 2 },
-      { name: "Розовая крыша", price: 380, time: 2 }
-    ]
-  },
-  {
-    id: 3,
-    title: "Стены",
-    options: [
-      { name: "Кирпич", price: 600, time: 4 },
-      { name: "Газобетон", price: 400, time: 3 },
-      { name: "Дерево", price: 500, time: 3 },
-      { name: "Каркас", price: 300, time: 2 }
-    ]
-  },
-  {
-    id: 4,
-    title: "Утепление",
-    options: [
-      { name: "Минеральная вата", price: 200, time: 1 },
-      { name: "Пенопласт", price: 150, time: 1 },
-      { name: "Эковата", price: 250, time: 1 },
-      { name: "Пенополиуретан", price: 300, time: 1 }
-    ]
-  }
-]
+const getCardsFromConstants = (): CardData[] => {
+  const constructionTypes = [...new Set(CONSTRUCTION_OPTIONS.map(option => option.constructionType))]
+  
+  return constructionTypes.map((type, index) => ({
+    id: index + 1,
+    title: type,
+    options: CONSTRUCTION_OPTIONS.filter(option => option.constructionType === type)
+  }))
+}
+
+const mockCards = getCardsFromConstants()
 
 // Конфигурация для многослойного изображения
 const layeredImageConfig: LayeredImageConfig = {
@@ -229,31 +197,41 @@ const LayeredCanvas = ({ config }: { config: LayeredImageConfig }) => {
 
 export default function HousePage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
-  const [selectedOption, setSelectedOption] = useState<string>('')
   const [roofType, setRoofType] = useState<string>('')
+  
+  const { 
+    selectedOptions, 
+    selectOption, 
+    getRemainingBudget, 
+    getRemainingDuration 
+  } = usePlanStore()
 
   const currentCard = mockCards[currentCardIndex]
+  const currentSelection = selectedOptions[currentCard.title]
 
   const handleSwipeLeft = () => {
     if (currentCardIndex < mockCards.length - 1) {
       setCurrentCardIndex(currentCardIndex + 1)
-      setSelectedOption('')
     }
   }
 
   const handleSwipeRight = () => {
     if (currentCardIndex > 0) {
       setCurrentCardIndex(currentCardIndex - 1)
-      setSelectedOption('')
     }
   }
 
-  const handleOptionSelect = (optionName: string) => {
-    setSelectedOption(optionName)
+  const handleOptionSelect = (option: ConstructionOption) => {
+    selectOption(currentCard.title, option)
     
     // Если это карточка крыши, обновляем тип крыши
     if (currentCard.title === "Крыша") {
-      setRoofType(optionName.toLowerCase().replace(' крыша', ''))
+      const roofTypeMap: Record<string, string> = {
+        "4 Гибкая/битумная черепица": "red",
+        "4 Керамическая черепица": "blue", 
+        "4 Металлочерепица": "green"
+      }
+      setRoofType(roofTypeMap[option.type] || "pink")
     }
   }
 
@@ -320,14 +298,14 @@ export default function HousePage() {
             <div className="indicator-title">Остаток лимита</div>
             <div className="indicator-value">
               <MoneyIcon />
-              <span className="indicator-text">15 000 р.</span>
+              <span className="indicator-text">{getRemainingBudget().toLocaleString()} р.</span>
             </div>
           </div>
           <div className="indicator">
             <div className="indicator-title">Остаток по срокам</div>
             <div className="indicator-value">
               <TimeIcon />
-              <span className="indicator-text">30 дней</span>
+              <span className="indicator-text">{getRemainingDuration()} дней</span>
             </div>
           </div>
         </div>
@@ -356,18 +334,18 @@ export default function HousePage() {
             {currentCard.options.map((option, index) => (
               <div 
                 key={index} 
-                className={`option-item ${selectedOption === option.name ? 'selected' : ''}`}
-                onClick={() => handleOptionSelect(option.name)}
+                className={`option-item ${currentSelection?.type === option.type ? 'selected' : ''}`}
+                onClick={() => handleOptionSelect(option)}
               >
-                <span className="option-text">{option.name}</span>
+                <span className="option-text">{option.type}</span>
                 <div className="option-indicators">
                   <div className="option-money">
                     <MoneyIcon />
-                    <span className="option-value">{option.price} р.</span>
+                    <span className="option-value">{option.cost.toLocaleString()} р.</span>
                   </div>
                   <div className="option-time">
                     <TimeIcon />
-                    <span className="option-value">{option.time} дня</span>
+                    <span className="option-value">{option.duration} дня</span>
                   </div>
                 </div>
               </div>
