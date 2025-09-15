@@ -1,3 +1,15 @@
+:root {
+  --color-primary: #002246;
+  --color-secondary: #062f59;
+  --color-button-primary: #ff6910;
+  --color-button-secondary: #d65000;
+  --color-button2-primary: #486686;
+  --color-button2-secondary: #355170;
+  --color-text: #fff;
+  --color-text-secondary: #333;
+  --font-family: "Inter", sans-serif;
+}
+
 #root {
   width: 100vw;
   height: 100vh;
