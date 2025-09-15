@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import './house.css'
 
 interface CardData {
   id: number
   title: string
-  image: string
-  options: string[]
+  options: {
+    name: string
+    price: number
+    time: number
+  }[]
 }
 
 interface LayerConfig {
@@ -32,63 +34,84 @@ const mockCards: CardData[] = [
   {
     id: 1,
     title: "Фундамент",
-    image: "https://via.placeholder.com/200x150/8B4513/ffffff?text=Фундамент",
-    options: ["Ленточный бетонный", "Свайный", "Плитный", "Столбчатый"]
+    options: [
+      { name: "Ленточный бетонный", price: 500, time: 3 },
+      { name: "Свайный", price: 350, time: 2 },
+      { name: "Плитный", price: 800, time: 5 },
+      { name: "Столбчатый", price: 200, time: 1 }
+    ]
   },
   {
     id: 2,
     title: "Крыша",
-    image: "https://via.placeholder.com/200x150/DC143C/ffffff?text=Крыша",
-    options: ["Металлочерепица", "Профнастил", "Шифер", "Мягкая кровля"]
+    options: [
+      { name: "Красная крыша", price: 400, time: 2 },
+      { name: "Синяя крыша", price: 450, time: 2 },
+      { name: "Зеленая крыша", price: 420, time: 2 },
+      { name: "Розовая крыша", price: 380, time: 2 }
+    ]
   },
   {
     id: 3,
     title: "Стены",
-    image: "https://via.placeholder.com/200x150/696969/ffffff?text=Стены",
-    options: ["Кирпич", "Газобетон", "Дерево", "Каркас"]
+    options: [
+      { name: "Кирпич", price: 600, time: 4 },
+      { name: "Газобетон", price: 400, time: 3 },
+      { name: "Дерево", price: 500, time: 3 },
+      { name: "Каркас", price: 300, time: 2 }
+    ]
   },
   {
     id: 4,
     title: "Утепление",
-    image: "https://via.placeholder.com/200x150/FFD700/ffffff?text=Утепление",
-    options: ["Минеральная вата", "Пенопласт", "Эковата", "Пенополиуретан"]
+    options: [
+      { name: "Минеральная вата", price: 200, time: 1 },
+      { name: "Пенопласт", price: 150, time: 1 },
+      { name: "Эковата", price: 250, time: 1 },
+      { name: "Пенополиуретан", price: 300, time: 1 }
+    ]
   }
 ]
 
 // Конфигурация для многослойного изображения
 const layeredImageConfig: LayeredImageConfig = {
-  width: 400,
-  height: 300,
+  width: 288,
+  height: 196,
   layers: [
     {
-      id: 'foundation',
-      assetPath: '/assets/foundation.png',
+      id: 'house',
+      assetPath: '/house.png',
       zIndex: 1,
       opacity: 1,
       visible: true
     },
     {
-      id: 'walls',
-      assetPath: '/assets/walls.png',
+      id: 'roof-red',
+      assetPath: '/redRoof.png',
       zIndex: 2,
-      opacity: 0.9,
-      visible: true,
-      blendMode: 'multiply'
+      opacity: 1,
+      visible: false
     },
     {
-      id: 'roof',
-      assetPath: '/assets/roof.png',
-      zIndex: 3,
-      opacity: 0.8,
-      visible: true
+      id: 'roof-blue',
+      assetPath: '/blueRoof.png',
+      zIndex: 2,
+      opacity: 1,
+      visible: false
     },
     {
-      id: 'insulation',
-      assetPath: '/assets/insulation.png',
-      zIndex: 4,
-      opacity: 0.6,
-      visible: false,
-      blendMode: 'overlay'
+      id: 'roof-green',
+      assetPath: '/greenRoof.png',
+      zIndex: 2,
+      opacity: 1,
+      visible: false
+    },
+    {
+      id: 'roof-pink',
+      assetPath: '/pinkRoof.png',
+      zIndex: 2,
+      opacity: 1,
+      visible: false
     }
   ]
 }
@@ -207,6 +230,7 @@ const LayeredCanvas = ({ config }: { config: LayeredImageConfig }) => {
 export default function HousePage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string>('')
+  const [roofType, setRoofType] = useState<string>('')
 
   const currentCard = mockCards[currentCardIndex]
 
@@ -224,65 +248,142 @@ export default function HousePage() {
     }
   }
 
+  const handleOptionSelect = (optionName: string) => {
+    setSelectedOption(optionName)
+    
+    // Если это карточка крыши, обновляем тип крыши
+    if (currentCard.title === "Крыша") {
+      setRoofType(optionName.toLowerCase().replace(' крыша', ''))
+    }
+  }
+
+  const updateLayeredConfig = () => {
+    const updatedConfig = { ...layeredImageConfig }
+    
+    // Скрываем все крыши
+    updatedConfig.layers.forEach(layer => {
+      if (layer.id.startsWith('roof-')) {
+        layer.visible = false
+      }
+    })
+    
+    // Показываем выбранную крышу
+    if (roofType) {
+      const roofLayer = updatedConfig.layers.find(layer => layer.id === `roof-${roofType}`)
+      if (roofLayer) {
+        roofLayer.visible = true
+      }
+    }
+    
+    return updatedConfig
+  }
+
+  const MoneyIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M9 1.5C5.25 1.5 2.25 4.5 2.25 8.25C2.25 12 5.25 15 9 15C12.75 15 15.75 12 15.75 8.25C15.75 4.5 12.75 1.5 9 1.5ZM9 13.5C6.75 13.5 4.5 11.25 4.5 8.25C4.5 5.25 6.75 3 9 3C11.25 3 13.5 5.25 13.5 8.25C13.5 11.25 11.25 13.5 9 13.5Z" fill="currentColor"/>
+      <path d="M9 5.25C7.5 5.25 6.75 6 6.75 7.5H8.25C8.25 7.125 8.625 6.75 9 6.75C9.375 6.75 9.75 7.125 9.75 7.5C9.75 7.875 9.375 8.25 9 8.25V9.75C9.75 9.75 10.5 9 10.5 8.25C10.5 7.5 9.75 6.75 9 6.75V5.25Z" fill="currentColor"/>
+    </svg>
+  )
+
+  const TimeIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M9 1.5C5.25 1.5 2.25 4.5 2.25 8.25C2.25 12 5.25 15 9 15C12.75 15 15.75 12 15.75 8.25C15.75 4.5 12.75 1.5 9 1.5ZM9 13.5C6.75 13.5 4.5 11.25 4.5 8.25C4.5 5.25 6.75 3 9 3C11.25 3 13.5 5.25 13.5 8.25C13.5 11.25 11.25 13.5 9 13.5Z" fill="currentColor"/>
+      <path d="M9 5.25V8.25L11.25 9.75L10.5 10.5L9 9V5.25Z" fill="currentColor"/>
+    </svg>
+  )
+
+  const ArrowLeftIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M11.25 3.75L6.75 8.25L11.25 12.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+
+  const ArrowRightIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M6.75 3.75L11.25 8.25L6.75 12.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+
   return (
     <div className="house-page">
-      <div className="left-panel">
-        <div className="center-component">
-          <LayeredCanvas config={layeredImageConfig} />
-        </div>
+      <div className="header">
+        <h1 className="title">Планирование</h1>
       </div>
       
-      <div className="right-panel">
-        <div className="cards-container">
-          <div className="card">
-            <h2 className="card-title">{currentCard.title}</h2>
-            <img 
-              src={currentCard.image} 
-              alt={currentCard.title}
-              className="card-image"
-            />
-            <div className="options">
-              {currentCard.options.map((option, index) => (
-                <label key={index} className="option-label">
-                  <input
-                    type="radio"
-                    name="materialOption"
-                    value={option}
-                    checked={selectedOption === option}
-                    onChange={(e) => setSelectedOption(e.target.value)}
-                    style={{ marginRight: '10px' }}
-                  />
-                  {option}
-                </label>
-              ))}
+      <div className="house-container">
+        <div className="house-display">
+          <LayeredCanvas config={updateLayeredConfig()} />
+        </div>
+        
+        <div className="indicators">
+          <div className="indicator">
+            <div className="indicator-title">Остаток лимита</div>
+            <div className="indicator-value">
+              <MoneyIcon />
+              <span className="indicator-text">15 000 р.</span>
             </div>
           </div>
-          
-          <div className="swipe-controls">
-            <button 
-              className="swipe-btn"
-              onClick={handleSwipeRight}
-              disabled={currentCardIndex === 0}
-            >
-              ← Назад
-            </button>
-            <div className="card-counter">
-              {currentCardIndex + 1} / {mockCards.length}
+          <div className="indicator">
+            <div className="indicator-title">Остаток по срокам</div>
+            <div className="indicator-value">
+              <TimeIcon />
+              <span className="indicator-text">30 дней</span>
             </div>
-            <button 
-              className="swipe-btn"
-              onClick={handleSwipeLeft}
-              disabled={currentCardIndex === mockCards.length - 1}
-            >
-              Вперед →
-            </button>
           </div>
         </div>
         
-        <div className="navigation">
-          <Link to="/analytics" className="nav-link">
-            Аналитика
-          </Link>
+        <div className="controls-panel">
+          <div className="card-header">
+            <button 
+              className="nav-arrow"
+              onClick={handleSwipeRight}
+              disabled={currentCardIndex === 0}
+            >
+              <ArrowLeftIcon />
+            </button>
+            <h2 className="card-title">{currentCard.title}</h2>
+            <button 
+              className="nav-arrow"
+              onClick={handleSwipeLeft}
+              disabled={currentCardIndex === mockCards.length - 1}
+            >
+              <ArrowRightIcon />
+            </button>
+            <div className="card-counter">{currentCardIndex + 1}/{mockCards.length}</div>
+          </div>
+          
+          <div className="options">
+            {currentCard.options.map((option, index) => (
+              <div 
+                key={index} 
+                className={`option-item ${selectedOption === option.name ? 'selected' : ''}`}
+                onClick={() => handleOptionSelect(option.name)}
+              >
+                <span className="option-text">{option.name}</span>
+                <div className="option-indicators">
+                  <div className="option-money">
+                    <MoneyIcon />
+                    <span className="option-value">{option.price} р.</span>
+                  </div>
+                  <div className="option-time">
+                    <TimeIcon />
+                    <span className="option-value">{option.time} дня</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="buttons">
+            <button className="btn-secondary">
+              К показателям
+            </button>
+            <button className="btn-primary">
+              Строить
+            </button>
+          </div>
+          
+          <div className="navigation-handle"></div>
         </div>
       </div>
     </div>
