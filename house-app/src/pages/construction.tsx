@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import './construction.css'
 import { useFactStore } from '../store/factStore'
+import { usePlanStore } from '../store/store'
+import { CONSTRUCTION_OPTIONS } from '../constants'
 import LayeredCanvas from '../components/LayeredCanvas'
 import Indicators from '../components/Indicators'
+import ConstructionCard from '../components/ConstructionCard'
 import { ArrowLeftIcon, ArrowRightIcon, RiskIcon, MoneyIcon, TimeIcon } from '../components/Icons'
 import type { ConstructionOption } from '../constants'
 
@@ -23,6 +26,12 @@ interface LayeredImageConfig {
   width: number
   height: number
   layers: LayerConfig[]
+}
+
+interface CardData {
+  id: number
+  title: string
+  options: ConstructionOption[]
 }
 
 const layeredImageConfig: LayeredImageConfig = {
@@ -67,8 +76,21 @@ const layeredImageConfig: LayeredImageConfig = {
   ]
 }
 
+const getCardsFromConstants = (): CardData[] => {
+  const constructionTypes = [...new Set(CONSTRUCTION_OPTIONS.map(option => option.constructionType))]
+  
+  return constructionTypes.map((type, index) => ({
+    id: index + 1,
+    title: type,
+    options: CONSTRUCTION_OPTIONS.filter(option => option.constructionType === type)
+  }))
+}
+
+const mockCards = getCardsFromConstants()
+
 export default function ConstructionPage() {
   const [roofType, setRoofType] = useState<string>('')
+  const [currentCardIndex, setCurrentCardIndex] = useState(0)
   
   const { 
     selectedOptions, 
@@ -77,13 +99,16 @@ export default function ConstructionPage() {
     getRemainingDuration,
     periods,
     currentPeriodIndex,
-    setCurrentPeriod,
     selectRiskSolution,
     initializeFromPlan
   } = useFactStore()
+  
+  const planStore = usePlanStore()
 
   const currentPeriod = periods[currentPeriodIndex]
   const currentRisk = currentPeriod?.risk
+  const currentCard = mockCards[currentCardIndex]
+  const currentSelection = selectedOptions[currentCard?.title] || undefined
 
   useEffect(() => {
     initializeFromPlan()
@@ -102,20 +127,43 @@ export default function ConstructionPage() {
     }
   }, [selectedOptions])
 
-  const handleSwipeLeft = () => {
-    if (currentPeriodIndex < periods.length - 1) {
-      setCurrentPeriod(currentPeriodIndex + 1)
+  // Инициализируем панель значениями из стора плана при загрузке
+  useEffect(() => {
+    if (Object.keys(selectedOptions).length === 0 && Object.keys(planStore.selectedOptions).length > 0) {
+      // Если в factStore нет выбранных опций, но есть в planStore, копируем их
+      Object.entries(planStore.selectedOptions).forEach(([key, value]) => {
+        if (value) {
+          selectOption(key, value)
+        }
+      })
+    }
+  }, [planStore.selectedOptions, selectedOptions, selectOption])
+
+
+  const handleCardSwipeLeft = () => {
+    if (currentCardIndex < mockCards.length - 1) {
+      setCurrentCardIndex(currentCardIndex + 1)
     }
   }
 
-  const handleSwipeRight = () => {
-    if (currentPeriodIndex > 0) {
-      setCurrentPeriod(currentPeriodIndex - 1)
+  const handleCardSwipeRight = () => {
+    if (currentCardIndex > 0) {
+      setCurrentCardIndex(currentCardIndex - 1)
     }
   }
 
   const handleOptionSelect = (option: ConstructionOption) => {
     selectOption(option.constructionType, option)
+    
+    // Если это карточка крыши, обновляем тип крыши
+    if (currentCard?.title === "Крыша") {
+      const roofTypeMap: Record<string, string> = {
+        "4 Гибкая/битумная черепица": "red",
+        "4 Керамическая черепица": "blue", 
+        "4 Металлочерепица": "green"
+      }
+      setRoofType(roofTypeMap[option.type] || "pink")
+    }
   }
 
   const handleRiskSolutionSelect = (solution: 'solution' | 'alternative') => {
@@ -146,10 +194,6 @@ export default function ConstructionPage() {
     return updatedConfig
   }
 
-  const getConstructionOptions = (): ConstructionOption[] => {
-    const constructionTypes = [...new Set(Object.values(selectedOptions).map(option => option?.constructionType).filter(Boolean))]
-    return constructionTypes.map(type => selectedOptions[type as keyof typeof selectedOptions]).filter(Boolean) as ConstructionOption[]
-  }
 
   return (
     <div className="construction-page">
@@ -240,23 +284,23 @@ export default function ConstructionPage() {
             <div className="options-header">
               <div 
                 className="nav-arrow"
-                onClick={currentPeriodIndex === 0 ? undefined : handleSwipeRight}
+                onClick={currentCardIndex === 0 ? undefined : handleCardSwipeRight}
                 style={{ 
-                  cursor: currentPeriodIndex === 0 ? 'not-allowed' : 'pointer',
-                  opacity: currentPeriodIndex === 0 ? 0.5 : 1,
+                  cursor: currentCardIndex === 0 ? 'not-allowed' : 'pointer',
+                  opacity: currentCardIndex === 0 ? 0.5 : 1,
                   outline: 0 
                 }}
               >
                 <ArrowLeftIcon />
               </div>
-              <h2 className="options-title">Выберите фундамент</h2>
-              <div className="period-counter">{currentPeriodIndex + 1}/{periods.length}</div>
+              <h2 className="options-title">{currentCard?.title}</h2>
+              <div className="period-counter">{currentCardIndex + 1}/{mockCards.length}</div>
               <div 
                 className="nav-arrow"
-                onClick={currentPeriodIndex === periods.length - 1 ? undefined : handleSwipeLeft}
+                onClick={currentCardIndex === mockCards.length - 1 ? undefined : handleCardSwipeLeft}
                 style={{ 
-                  cursor: currentPeriodIndex === periods.length - 1 ? 'not-allowed' : 'pointer',
-                  opacity: currentPeriodIndex === periods.length - 1 ? 0.5 : 1,
+                  cursor: currentCardIndex === mockCards.length - 1 ? 'not-allowed' : 'pointer',
+                  opacity: currentCardIndex === mockCards.length - 1 ? 0.5 : 1,
                   outline: 0 
                 }}
               >
@@ -264,27 +308,14 @@ export default function ConstructionPage() {
               </div>
             </div>
             
-            <div className="options-list">
-              {getConstructionOptions().map((option, index) => (
-                <div 
-                  key={index}
-                  className={`option-item ${selectedOptions[option.constructionType]?.type === option.type ? 'active' : ''}`}
-                  onClick={() => handleOptionSelect(option)}
-                >
-                  <div className="option-text">{option.type}</div>
-                  <div className="option-indicators">
-                    <div className="cost-indicator">
-                      <MoneyIcon />
-                      <span>{option.cost} р.</span>
-                    </div>
-                    <div className="time-indicator">
-                      <TimeIcon />
-                      <span>{option.duration} дня</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {currentCard && (
+              <ConstructionCard
+                title={currentCard.title}
+                options={currentCard.options}
+                currentSelection={currentSelection}
+                onOptionSelect={handleOptionSelect}
+              />
+            )}
             
             <div className="buttons">
               <button className="btn-secondary">

@@ -26,6 +26,8 @@ export interface FactState {
   getRemainingDuration: () => number
   getTotalCost: () => number
   getTotalDuration: () => number
+  getRiskCosts: () => number
+  getRiskDuration: () => number
   setCurrentPeriod: (index: number) => void
   selectRiskSolution: (periodId: number, solution: 'solution' | 'alternative') => void
   generatePeriods: () => void
@@ -91,14 +93,28 @@ export const useFactStore = create<FactState>()(
           .reduce((total, option) => total + option.duration, 0)
       },
       
+      getRiskCosts: () => {
+        const { periods } = get()
+        return periods
+          .filter(period => period.risk && period.selectedSolution === 'solution')
+          .reduce((total, period) => total + (period.risk?.cost || 0), 0)
+      },
+      
+      getRiskDuration: () => {
+        const { periods } = get()
+        return periods
+          .filter(period => period.risk && period.selectedSolution === 'solution')
+          .reduce((total, period) => total + (period.risk?.duration || 0), 0)
+      },
+      
       getRemainingBudget: () => {
-        const { budget, getTotalCost } = get()
-        return budget - getTotalCost()
+        const { budget, getTotalCost, getRiskCosts } = get()
+        return budget - getTotalCost() - getRiskCosts()
       },
       
       getRemainingDuration: () => {
-        const { duration, getTotalDuration } = get()
-        return duration - getTotalDuration()
+        const { duration, getTotalDuration, getRiskDuration } = get()
+        return duration - getTotalDuration() - getRiskDuration()
       },
       
       setCurrentPeriod: (index: number) => {
@@ -130,20 +146,30 @@ export const useFactStore = create<FactState>()(
       generatePeriods: () => {
         const { getTotalDuration } = get()
         const totalDuration = getTotalDuration()
-        const periodCount = Math.ceil(totalDuration / 7) // 7 дней на период
+        const periodCount = 5 // Всегда 5 периодов
+        const basePeriodDuration = Math.floor(totalDuration / periodCount)
+        const remainder = totalDuration % periodCount
         
         const periods: Period[] = []
+        let currentDay = 1
+        
         for (let i = 0; i < periodCount; i++) {
-          const startDay = i * 7 + 1
-          const endDay = Math.min((i + 1) * 7, totalDuration)
+          // Последний период может быть чуть больше, если есть остаток
+          const periodDuration = i === periodCount - 1 
+            ? basePeriodDuration + remainder 
+            : basePeriodDuration
+          
+          const endDay = currentDay + periodDuration - 1
           
           periods.push({
             id: i + 1,
-            startDay,
-            endDay,
+            startDay: currentDay,
+            endDay: endDay,
             risk: null,
             selectedSolution: null
           })
+          
+          currentDay = endDay + 1
         }
         
         set({ periods })
