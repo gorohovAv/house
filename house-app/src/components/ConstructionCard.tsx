@@ -8,6 +8,16 @@ interface ConstructionCardProps {
   onOptionSelect: (option: ConstructionOption) => void
 }
 
+const getDayDeclension = (count: number): string => {
+  if (count % 10 === 1 && count % 100 !== 11) {
+    return 'день'
+  } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+    return 'дня'
+  } else {
+    return 'дней'
+  }
+}
+
 const ConstructionCard = ({ title, options, currentSelection, onOptionSelect }: ConstructionCardProps) => {
   return (
     <div className="options">
@@ -25,7 +35,7 @@ const ConstructionCard = ({ title, options, currentSelection, onOptionSelect }: 
             </div>
             <div className="option-time">
               <TimeIcon />
-              <span className="option-value">{option.duration} дня</span>
+              <span className="option-value">{option.duration} {getDayDeclension(option.duration)}</span>
             </div>
           </div>
         </div>

@@ -12,6 +12,16 @@ import { useTourStorage } from '../hooks/useTourStorage'
 import { CONSTRUCTION_TOUR } from '../config/tours'
 import type { ConstructionOption } from '../constants'
 
+const getDayDeclension = (count: number): string => {
+  if (count % 10 === 1 && count % 100 !== 11) {
+    return 'день'
+  } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+    return 'дня'
+  } else {
+    return 'дней'
+  }
+}
+
 interface LayerConfig {
   id: string
   assetPath: string
@@ -246,7 +256,7 @@ export default function ConstructionPage() {
                     </div>
                     <div className="time-indicator">
                       <TimeIcon />
-                      <span>{currentRisk.duration} дня</span>
+                      <span>{currentRisk.duration} {getDayDeclension(currentRisk.duration)}</span>
                     </div>
                   </div>
                 </div>
@@ -263,7 +273,7 @@ export default function ConstructionPage() {
                     </div>
                     <div className="time-indicator">
                       <TimeIcon />
-                      <span>+{Math.ceil(currentRisk.duration * 1.5)} дня</span>
+                      <span>+{Math.ceil(currentRisk.duration * 1.5)} {getDayDeclension(Math.ceil(currentRisk.duration * 1.5))}</span>
                     </div>
                   </div>
                 </div>
