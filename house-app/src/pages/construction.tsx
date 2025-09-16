@@ -259,7 +259,7 @@ export default function ConstructionPage() {
                   <div className="solution-indicators">
                     <div className="cost-indicator">
                       <MoneyIcon />
-                      <span>0 р.</span>
+                      <span>0</span>
                     </div>
                     <div className="time-indicator">
                       <TimeIcon />
@@ -288,7 +288,7 @@ export default function ConstructionPage() {
           />
           
           <div className="request-money-card">
-            <div className="request-amount">10 000 р.</div>
+            <div className="request-amount">10 000</div>
             <button className="btn-request">
               Запросить еще
             </button>
