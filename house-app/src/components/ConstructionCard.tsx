@@ -17,11 +17,11 @@ const ConstructionCard = ({ title, options, currentSelection, onOptionSelect }: 
           className={`option-item ${currentSelection?.type === option.type ? 'selected' : ''}`}
           onClick={() => onOptionSelect(option)}
         >
-          <span className="option-text">{option.type}</span>
+            <span className="option-text">{option.type.replace(/^\d+\s/, '')}</span>
           <div className="option-indicators">
             <div className="option-money">
               <MoneyIcon />
-              <span className="option-value">{option.cost.toLocaleString()} р.</span>
+              <span className="option-value">{option.cost.toLocaleString()}</span>
             </div>
             <div className="option-time">
               <TimeIcon />

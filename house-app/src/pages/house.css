@@ -142,10 +142,10 @@
 .option-item {
   border: 2px solid var(--color-button2-primary);
   border-radius: 8px;
-  padding: 8px;
+  padding: 12px 8px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -164,19 +164,22 @@
   font-size: 12px;
   line-height: 1.21;
   color: var(--color-text);
-  flex: 1;
+  text-align: left;
 }
 
 .option-indicators {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
+  min-width: 120px;
 }
 
 .option-money, .option-time {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 65px;
 }
 
 .option-icon {
@@ -190,6 +193,7 @@
   font-size: 12px;
   line-height: 1.21;
   color: var(--color-text);
+  white-space: nowrap;
 }
 
 .buttons {
