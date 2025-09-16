@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './house.css'
 import { usePlanStore } from '../store/store'
@@ -8,6 +8,9 @@ import LayeredCanvas from '../components/LayeredCanvas'
 import ConstructionCard from '../components/ConstructionCard'
 import Indicators from '../components/Indicators'
 import { ArrowLeftIcon, ArrowRightIcon } from '../components/Icons'
+import { useTour } from '../components/TourProvider'
+import { useTourStorage } from '../hooks/useTourStorage'
+import { HOUSE_PLANNING_TOUR } from '../config/tours'
 
 interface CardData {
   id: number
@@ -102,11 +105,25 @@ export default function HousePage() {
     getRemainingDuration 
   } = usePlanStore()
 
+  const { startTour } = useTour()
+  const { isTourCompleted } = useTourStorage()
+
   const currentCard = mockCards[currentCardIndex]
   const currentSelection = selectedOptions[currentCard.title] || undefined
 
   // Проверяем, выбраны ли все элементы
   const allElementsSelected = mockCards.every(card => selectedOptions[card.title])
+
+  // Запускаем тур при первом посещении страницы
+  useEffect(() => {
+    if (!isTourCompleted(HOUSE_PLANNING_TOUR.id)) {
+      const timer = setTimeout(() => {
+        startTour(HOUSE_PLANNING_TOUR)
+      }, 500) // Небольшая задержка для загрузки элементов
+      
+      return () => clearTimeout(timer)
+    }
+  }, [isTourCompleted, startTour])
 
   const handleSwipeLeft = () => {
     if (currentCardIndex < mockCards.length - 1) {

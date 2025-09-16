@@ -7,6 +7,9 @@ import LayeredCanvas from '../components/LayeredCanvas'
 import Indicators from '../components/Indicators'
 import ConstructionCard from '../components/ConstructionCard'
 import { ArrowLeftIcon, ArrowRightIcon, RiskIcon, MoneyIcon, TimeIcon } from '../components/Icons'
+import { useTour } from '../components/TourProvider'
+import { useTourStorage } from '../hooks/useTourStorage'
+import { CONSTRUCTION_TOUR } from '../config/tours'
 import type { ConstructionOption } from '../constants'
 
 interface LayerConfig {
@@ -104,6 +107,8 @@ export default function ConstructionPage() {
   } = useFactStore()
   
   const planStore = usePlanStore()
+  const { startTour } = useTour()
+  const { isTourCompleted } = useTourStorage()
 
   const currentPeriod = periods[currentPeriodIndex]
   const currentRisk = currentPeriod?.risk
@@ -113,6 +118,17 @@ export default function ConstructionPage() {
   useEffect(() => {
     initializeFromPlan()
   }, [initializeFromPlan])
+
+  // Запускаем тур при первом посещении страницы
+  useEffect(() => {
+    if (!isTourCompleted(CONSTRUCTION_TOUR.id)) {
+      const timer = setTimeout(() => {
+        startTour(CONSTRUCTION_TOUR)
+      }, 500)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [isTourCompleted, startTour])
 
   useEffect(() => {
     // Обновляем тип крыши на основе выбранных опций
