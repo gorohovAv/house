@@ -12,7 +12,7 @@ const Indicators = ({ remainingBudget, remainingDuration }: IndicatorsProps) => 
         <div className="indicator-title">Остаток лимита</div>
         <div className="indicator-value">
           <MoneyIcon />
-          <span className="indicator-text">{remainingBudget.toLocaleString()} р.</span>
+          <span className="indicator-text">{remainingBudget.toLocaleString()}</span>
         </div>
       </div>
       <div className="indicator">

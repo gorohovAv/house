@@ -242,7 +242,7 @@ export default function ConstructionPage() {
                   <div className="solution-indicators">
                     <div className="cost-indicator">
                       <MoneyIcon />
-                      <span>{currentRisk.cost} р.</span>
+                      <span>{currentRisk.cost}</span>
                     </div>
                     <div className="time-indicator">
                       <TimeIcon />
