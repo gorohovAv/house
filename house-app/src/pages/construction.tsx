@@ -121,13 +121,11 @@ export default function ConstructionPage() {
 
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
-    if (!isTourCompleted(CONSTRUCTION_TOUR.id)) {
-      const timer = setTimeout(() => {
+    const timer = setTimeout(() => {
         startTour(CONSTRUCTION_TOUR)
       }, 500)
       
       return () => clearTimeout(timer)
-    }
   }, [isTourCompleted, startTour])
 
   useEffect(() => {

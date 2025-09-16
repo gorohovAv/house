@@ -116,13 +116,11 @@ export default function HousePage() {
 
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
-    if (!isTourCompleted(HOUSE_PLANNING_TOUR.id)) {
-      const timer = setTimeout(() => {
+    const timer = setTimeout(() => {
         startTour(HOUSE_PLANNING_TOUR)
       }, 500) // Небольшая задержка для загрузки элементов
       
       return () => clearTimeout(timer)
-    }
   }, [isTourCompleted, startTour])
 
   const handleSwipeLeft = () => {
