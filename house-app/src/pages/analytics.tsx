@@ -92,7 +92,7 @@ export default function AnalyticsPage() {
       </div>
       
       <div className="navigation">
-        <Link to="/" className="nav-link">
+        <Link to="/plan" className="nav-link">
           Дом
         </Link>
       </div>
