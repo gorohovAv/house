@@ -224,7 +224,7 @@
 
 .btn-secondary {
   flex: 1;
-  background: var(--color-button2-primary);
+  background: var(--color-button2-secondary);
   color: var(--color-text);
   border: none;
   border-radius: 8px;
