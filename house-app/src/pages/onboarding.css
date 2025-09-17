@@ -47,7 +47,7 @@
 }
 
 .onboarding-title h1 {
-  font-family: Inter;
+  font-family: var(--font-family);
   font-weight: 700;
   font-size: 24px;
   line-height: 1.3;
@@ -56,7 +56,7 @@
 }
 
 .onboarding-title p {
-  font-family: Inter;
+  font-family: var(--font-family);
   font-weight: 400;
   font-size: 16px;
   line-height: 1.3;
@@ -65,7 +65,7 @@
 }
 
 .onboarding-welcome h2 {
-  font-family: Inter;
+  font-family: var(--font-family);
   font-weight: 400;
   font-size: 16px;
   line-height: 1.3;
@@ -87,7 +87,7 @@
 }
 
 .onboarding-content p {
-  font-family: Inter;
+  font-family: var(--font-family);
   font-weight: 400;
   font-size: 16px;
   line-height: 1.3;
@@ -112,7 +112,7 @@
 }
 
 .onboarding-form h2 {
-  font-family: Inter;
+  font-family: var(--font-family);
   font-weight: 700;
   font-size: 24px;
   line-height: 1.3;
@@ -133,7 +133,7 @@
   border: 2px solid #486686;
   border-radius: 8px;
   padding: 0 8px;
-  font-family: Inter;
+  font-family: var(--font-family);
   font-weight: 700;
   font-size: 16px;
   line-height: 1.3;
@@ -157,7 +157,7 @@
 }
 
 .onboarding-error {
-  font-family: Inter;
+  font-family: var(--font-family);
   font-weight: 400;
   font-size: 12px;
   line-height: 1.21;
@@ -187,7 +187,7 @@
   height: 48px;
   border: none;
   border-radius: 8px;
-  font-family: Inter;
+  font-family: var(--font-family);
   font-weight: 400;
   font-size: 14px;
   line-height: 1.3;
