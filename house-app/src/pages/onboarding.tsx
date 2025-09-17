@@ -35,6 +35,8 @@ const OnboardingPage = () => {
     const value = e.target.value
     setInputValue(value)
     setShowError(false)
+    // Обновляем валидность в store при каждом изменении
+    setProjectName(value)
   }
 
   const renderWelcomeStep = () => (
