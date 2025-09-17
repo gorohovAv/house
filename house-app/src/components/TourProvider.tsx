@@ -9,6 +9,7 @@ export interface TourStepConfig {
   type?: 'modal' | 'tooltip' | 'highlight'
   showArrow?: boolean
   buttons?: TourButtonConfig[]
+  scrollTo?: boolean
 }
 
 export interface TourButtonConfig {

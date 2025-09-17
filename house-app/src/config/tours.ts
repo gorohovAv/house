@@ -23,7 +23,8 @@ export const HOUSE_PLANNING_TOUR: TourConfig = {
       description: 'Данный индикатор показывает остаток вашего бюджета',
       type: 'tooltip',
       position: 'bottom',
-      showArrow: true
+      showArrow: true,
+      scrollTo: true
     },
     {
       target: '.controls-panel',
@@ -31,7 +32,8 @@ export const HOUSE_PLANNING_TOUR: TourConfig = {
       description: 'Поле с вариантами материалов, на котором указаны сумма и время строительства',
       type: 'tooltip',
       position: 'top',
-      showArrow: true
+      showArrow: true,
+      scrollTo: true
     }
   ]
 }
@@ -59,7 +61,8 @@ export const CONSTRUCTION_TOUR: TourConfig = {
       description: 'Здесь отображаются риски и их решения для текущего периода строительства',
       type: 'tooltip',
       position: 'bottom',
-      showArrow: true
+      showArrow: true,
+      scrollTo: true
     },
     {
       target: '.indicators',
@@ -67,7 +70,8 @@ export const CONSTRUCTION_TOUR: TourConfig = {
       description: 'Отслеживайте оставшийся бюджет и время строительства',
       type: 'tooltip',
       position: 'bottom',
-      showArrow: true
+      showArrow: true,
+      scrollTo: true
     },
     {
       target: '.construction-options',
@@ -75,7 +79,8 @@ export const CONSTRUCTION_TOUR: TourConfig = {
       description: 'Здесь вы можете изменить выбранные материалы и решения',
       type: 'tooltip',
       position: 'top',
-      showArrow: true
+      showArrow: true,
+      scrollTo: true
     }
   ]
 }

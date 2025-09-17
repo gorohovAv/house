@@ -22,6 +22,27 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
 
   const currentStepConfig = activeTour?.steps[currentStep]
 
+  const scrollToElement = (element: Element) => {
+    // Ищем контейнер скролла (construction-scroll-container)
+    const scrollContainer = document.querySelector('.construction-scroll-container')
+    
+    if (scrollContainer) {
+      // Скроллим внутри контейнера
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center'
+      })
+    } else {
+      // Fallback к обычному скроллу
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center'
+      })
+    }
+  }
+
   useEffect(() => {
     if (!isActive || !currentStepConfig) {
       setTargetElement(null)
@@ -32,13 +53,31 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     const element = document.querySelector(currentStepConfig.target)
     if (element) {
       setTargetElement(element as Element)
-      const rect = element.getBoundingClientRect()
-      setElementPosition({
-        top: rect.top + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-        height: rect.height
-      })
+      
+      // Скроллим к элементу только если указано scrollTo: true
+      if (currentStepConfig.scrollTo) {
+        scrollToElement(element)
+        
+        // Небольшая задержка для завершения скролла
+        setTimeout(() => {
+          const rect = element.getBoundingClientRect()
+          setElementPosition({
+            top: rect.top + window.scrollY,
+            left: rect.left + window.scrollX,
+            width: rect.width,
+            height: rect.height
+          })
+        }, 300)
+      } else {
+        // Устанавливаем позицию сразу без скролла
+        const rect = element.getBoundingClientRect()
+        setElementPosition({
+          top: rect.top + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+          height: rect.height
+        })
+      }
     }
   }, [isActive, currentStepConfig])
 
@@ -67,14 +106,53 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
       }
     }
 
+    const scrollContainer = document.querySelector('.construction-scroll-container')
+
     window.addEventListener('resize', handleResize)
     window.addEventListener('scroll', handleScroll)
+    
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll)
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('scroll', handleScroll)
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll)
+      }
     }
   }, [targetElement])
+
+  // Обновляем позицию после скролла к элементу
+  useEffect(() => {
+    if (targetElement && elementPosition) {
+      const rect = targetElement.getBoundingClientRect()
+      setElementPosition({
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+        height: rect.height
+      })
+    }
+  }, [targetElement, currentStep])
+
+  // Дополнительное обновление позиции после завершения скролла
+  useEffect(() => {
+    if (targetElement && isActive) {
+      const timeoutId = setTimeout(() => {
+        const rect = targetElement.getBoundingClientRect()
+        setElementPosition({
+          top: rect.top + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+          height: rect.height
+        })
+      }, 500) // Даем время на завершение скролла
+
+      return () => clearTimeout(timeoutId)
+    }
+  }, [targetElement, isActive, currentStep])
 
   const handleButtonClick = (action: string, onClick?: () => void) => {
     if (onClick) {
