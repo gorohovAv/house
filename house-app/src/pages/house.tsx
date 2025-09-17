@@ -194,39 +194,41 @@ export default function HousePage() {
         />
         
         <div className="controls-panel">
-          <div className="card-header">
-            <div 
-              className="nav-arrow"
-              onClick={currentCardIndex === 0 ? undefined : handleSwipeRight}
-              style={{ 
-                cursor: currentCardIndex === 0 ? 'not-allowed' : 'pointer',
-                opacity: currentCardIndex === 0 ? 0.5 : 1,
-                outline: 0 
-              }}
-            >
-              <ArrowLeftIcon />
+          <div className="controls-content">
+            <div className="card-header">
+              <div 
+                className="nav-arrow"
+                onClick={currentCardIndex === 0 ? undefined : handleSwipeRight}
+                style={{ 
+                  cursor: currentCardIndex === 0 ? 'not-allowed' : 'pointer',
+                  opacity: currentCardIndex === 0 ? 0.5 : 1,
+                  outline: 0 
+                }}
+              >
+                <ArrowLeftIcon />
+              </div>
+              <h2 className="card-title">{currentCard.title}</h2>
+              <div className="card-counter">{currentCardIndex + 1}/{mockCards.length}</div>
+              <div 
+                className="nav-arrow"
+                onClick={currentCardIndex === mockCards.length - 1 ? undefined : handleSwipeLeft}
+                style={{ 
+                  cursor: currentCardIndex === mockCards.length - 1 ? 'not-allowed' : 'pointer',
+                  opacity: currentCardIndex === mockCards.length - 1 ? 0.5 : 1,
+                  outline: 0 
+                }}
+              >
+                <ArrowRightIcon />
+              </div>
             </div>
-            <h2 className="card-title">{currentCard.title}</h2>
-            <div className="card-counter">{currentCardIndex + 1}/{mockCards.length}</div>
-            <div 
-              className="nav-arrow"
-              onClick={currentCardIndex === mockCards.length - 1 ? undefined : handleSwipeLeft}
-              style={{ 
-                cursor: currentCardIndex === mockCards.length - 1 ? 'not-allowed' : 'pointer',
-                opacity: currentCardIndex === mockCards.length - 1 ? 0.5 : 1,
-                outline: 0 
-              }}
-            >
-              <ArrowRightIcon />
-            </div>
+            
+            <ConstructionCard
+              title={currentCard.title}
+              options={currentCard.options}
+              currentSelection={currentSelection}
+              onOptionSelect={handleOptionSelect}
+            />
           </div>
-          
-          <ConstructionCard
-            title={currentCard.title}
-            options={currentCard.options}
-            currentSelection={currentSelection}
-            onOptionSelect={handleOptionSelect}
-          />
           
           <div className="buttons">
             <button className="btn-secondary">
