@@ -7,8 +7,8 @@ export const HOUSE_PLANNING_TOUR: TourConfig = {
       target: '.house-display',
       title: 'Добро пожаловать на этап "Планирование"',
       description: 'На этом этапе вам предостоит создать план вашего дома с учетом срока и бюджетов',
-      type: 'modal',
-      position: 'center',
+      type: 'tooltip',
+      position: 'bottom',
       buttons: [
         {
           text: 'Понятно',
