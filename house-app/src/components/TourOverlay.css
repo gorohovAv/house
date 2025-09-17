@@ -17,15 +17,104 @@
   background: rgba(0, 0, 0, 0.7);
   pointer-events: auto;
   cursor: pointer;
+  /* Создаем дырку для подсвечиваемого элемента */
+  clip-path: polygon(
+    0% 0%, 
+    0% 100%, 
+    100% 100%, 
+    100% 0%
+  );
+  transition: clip-path 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: tourBackdropFadeIn 0.3s ease-out;
+}
+
+.tour-backdrop.with-highlight {
+  /* Дырка будет создана динамически через inline стили */
+  clip-path: polygon(
+    0% 0%, 
+    0% 100%, 
+    100% 100%, 
+    100% 0%
+  );
+  animation: tourBackdropHighlightIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes tourBackdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tourBackdropHighlightIn {
+  0% {
+    opacity: 0;
+    clip-path: polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%);
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+    /* clip-path будет установлен динамически */
+  }
 }
 
 .tour-highlight {
   position: absolute;
-  background: rgba(255, 255, 255, 0.1);
+  background: transparent;
   border: 2px solid var(--color-button-primary);
   border-radius: 8px;
   pointer-events: none;
-  box-shadow: 0 0 0 4px rgba(255, 105, 16, 0.3);
+  box-shadow: 
+    0 0 0 4px rgba(255, 105, 16, 0.3),
+    0 0 20px rgba(255, 105, 16, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 1;
+  animation: 
+    tourHighlightAppear 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    tourHighlightPulse 2s ease-in-out infinite 0.6s;
+  transform-origin: center;
+}
+
+@keyframes tourHighlightAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+    box-shadow: 
+      0 0 0 0px rgba(255, 105, 16, 0),
+      0 0 0px rgba(255, 105, 16, 0),
+      inset 0 0 0 0px rgba(255, 255, 255, 0);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 
+      0 0 0 4px rgba(255, 105, 16, 0.3),
+      0 0 20px rgba(255, 105, 16, 0.4),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+}
+
+@keyframes tourHighlightPulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 4px rgba(255, 105, 16, 0.3),
+      0 0 20px rgba(255, 105, 16, 0.4),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 6px rgba(255, 105, 16, 0.5),
+      0 0 30px rgba(255, 105, 16, 0.6),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  }
 }
 
 .tour-modal {

@@ -188,6 +188,37 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     }
   }
 
+  const getBackdropClipPath = () => {
+    if (!elementPosition) {
+      return 'polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%)'
+    }
+
+    const { top, left, width, height } = elementPosition
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    // Добавляем отступы для более плавного перехода
+    const padding = 8
+    const x1 = Math.max(0, left - padding) / viewportWidth * 100
+    const y1 = Math.max(0, top - padding) / viewportHeight * 100
+    const x2 = Math.min(100, (left + width + padding) / viewportWidth * 100)
+    const y2 = Math.min(100, (top + height + padding) / viewportHeight * 100)
+
+    // Создаем полигон с дыркой для элемента
+    return `polygon(
+      0% 0%, 
+      0% 100%, 
+      ${x1}% 100%, 
+      ${x1}% ${y1}%, 
+      ${x2}% ${y1}%, 
+      ${x2}% ${y2}%, 
+      ${x1}% ${y2}%, 
+      ${x1}% 100%, 
+      100% 100%, 
+      100% 0%
+    )`
+  }
+
   const getTooltipPosition = () => {
     if (!elementPosition || !currentStepConfig) return {}
 
@@ -330,9 +361,12 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
       {children}
       {createPortal(
         <div className="tour-overlay" ref={overlayRef}>
-          {/* Подсветка фона с обработчиком клика */}
+          {/* Подсветка фона с обработчиком клика и дыркой для элемента */}
           <div 
-            className="tour-backdrop" 
+            className={`tour-backdrop ${elementPosition ? 'with-highlight' : ''}`}
+            style={{
+              clipPath: getBackdropClipPath()
+            }}
             onClick={handleOverlayClick}
           />
           
