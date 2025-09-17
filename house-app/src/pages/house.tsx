@@ -244,8 +244,7 @@ export default function HousePage() {
               Строить
             </button>
           </div>
-          
-          <div className="navigation-handle"></div>
+        
         </div>
       </div>
     </div>

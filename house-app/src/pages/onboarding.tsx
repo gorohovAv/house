@@ -111,7 +111,6 @@ const OnboardingPage = () => {
       </div>
 
       <div className="onboarding-navigation">
-        <div className="onboarding-handle"></div>
         <button 
           className={getButtonClass()}
           onClick={handleNext}

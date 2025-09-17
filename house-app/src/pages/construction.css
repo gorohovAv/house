@@ -295,7 +295,7 @@
 }
 
 .option-item {
-  border: 2px solid var(--color-accent);
+  border: 2px solid var(--color-button2-primary);
   border-radius: 8px;
   padding: 8px;
   display: flex;
@@ -377,14 +377,7 @@
   background: #e55a0a;
 }
 
-.navigation-handle {
-  width: 108px;
-  height: 4px;
-  background: var(--color-text);
-  border-radius: 12px;
-  margin: 0 auto 10px;
-  opacity: 0.3;
-}
+
 
 @media (max-width: 375px) {
   .construction-container {

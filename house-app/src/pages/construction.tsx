@@ -349,8 +349,7 @@ export default function ConstructionPage() {
                 Строить
               </button>
             </div>
-            
-            <div className="navigation-handle"></div>
+          
           </div>
         </div>
       </div>

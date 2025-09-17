@@ -157,8 +157,7 @@
 }
 
 .option-item.selected {
-  background: rgba(255, 105, 16, 0.2);
-  border-color: var(--color-button-primary);
+  border: 2px solid var(--color-button-primary);
 }
 
 .option-text {
@@ -240,13 +239,6 @@
   background: var(--color-button2-secondary);
 }
 
-.navigation-handle {
-  width: 108px;
-  height: 4px;
-  background: var(--color-text);
-  border-radius: 12px;
-  margin: 0 auto;
-}
 
 .layered-canvas {
   width: 100%;
