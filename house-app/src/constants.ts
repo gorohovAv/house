@@ -170,6 +170,8 @@ export interface Risk {
   cost: number
   duration: number
   alternativeDescription: string
+  affectedElement: string
+  affectedStyle: string
 }
 
 export const RISKS: Risk[] = [
@@ -179,7 +181,9 @@ export const RISKS: Risk[] = [
     solution: "Организовать доставку самостоятельно",
     cost: 300,
     duration: 2,
-    alternativeDescription: "Дождаться доставки от завода"
+    alternativeDescription: "Дождаться доставки от завода",
+    affectedElement: "Фундамент",
+    affectedStyle: "Свайный"
   },
   {
     id: 2,
@@ -187,78 +191,288 @@ export const RISKS: Risk[] = [
     solution: "Организовать дренажную систему",
     cost: 600,
     duration: 5,
-    alternativeDescription: "Дождаться самостоятельного осушения"
+    alternativeDescription: "Дождаться самостоятельного осушения",
+    affectedElement: "Фундамент",
+    affectedStyle: "Ленточный"
+  },
+  {
+    id: 3,
+    description: "Возможность ошибки в проекте фундамента",
+    solution: "Заказать детальный расчет",
+    cost: 800,
+    duration: 3,
+    alternativeDescription: "Взять паузу для проведения контрольных замеров",
+    affectedElement: "Фундамент",
+    affectedStyle: "Плитный"
   },
   {
     id: 4,
+    description: "Растрескивание плиты при усадке",
+    solution: "Нанять специалистов для прорезания усадочных швов",
+    cost: 500,
+    duration: 2,
+    alternativeDescription: "Провести дополнительный уход за бетоном",
+    affectedElement: "Фундамент",
+    affectedStyle: "Плитный"
+  },
+  {
+    id: 5,
+    description: "Траншея под фундамент осыпалась после дождя в подготовленную опалубку",
+    solution: "Укрепить откосы траншеи щитами",
+    cost: 400,
+    duration: 2,
+    alternativeDescription: "Отложить заливку, чтобы грунт просох",
+    affectedElement: "Фундамент",
+    affectedStyle: "Ленточный"
+  },
+  {
+    id: 6,
     description: "Пожар на складе поставщика древесины",
     solution: "Взять с другого склада дороже",
     cost: 1500,
     duration: 3,
-    alternativeDescription: "Дождаться пополнения на складе"
+    alternativeDescription: "Дождаться пополнения на складе",
+    affectedElement: "Стены",
+    affectedStyle: "Традиционный стиль"
   },
   {
-    id: 5,
+    id: 7,
     description: "Материалы импортного производства задерживаются на границе",
     solution: "Закупить отечественного производства",
     cost: 1000,
     duration: 7,
-    alternativeDescription: "Дождаться поставки импортных элементов"
+    alternativeDescription: "Дождаться поставки импортных элементов",
+    affectedElement: "Стены",
+    affectedStyle: "Классический стиль, Стиль хай-тек"
   },
   {
-    id: 6,
+    id: 8,
     description: "Бригада не сможет выйти на объект вовремя",
     solution: "Нанять другую бригаду",
     cost: 3000,
     duration: 3,
-    alternativeDescription: "Дождаться бригаду"
+    alternativeDescription: "Дождаться бригаду",
+    affectedElement: "Стены",
+    affectedStyle: "Немецкий стиль, Стиль хай-тек"
+  },
+  {
+    id: 9,
+    description: "Привезли партию кирпича с разным оттенком",
+    solution: "Закупить новую партию",
+    cost: 3000,
+    duration: 2,
+    alternativeDescription: "Отсортировать по оттенкам и использовать для кладки разных стен",
+    affectedElement: "Стены",
+    affectedStyle: "Классический стиль"
+  },
+  {
+    id: 10,
+    description: "Бревна имеют естественную кривизну, стена отклоняется от вертикали",
+    solution: "Нанять плотника для выправления конструкции",
+    cost: 2000,
+    duration: 3,
+    alternativeDescription: "Пересобрать стену используя бревна из запаса",
+    affectedElement: "Стены",
+    affectedStyle: "Традиционный стиль"
+  },
+  {
+    id: 11,
+    description: "Во время заливки бетона пошел дождь",
+    solution: "Укрыть плотной пленкой и арендовать тепловые пушки",
+    cost: 600,
+    duration: 2,
+    alternativeDescription: "Дождаться прекращения дождя",
+    affectedElement: "Перекрытие",
+    affectedStyle: "Монолитное"
   },
   {
     id: 12,
+    description: "Монтажники забыли заложить гильзы для прокладки инженерных коммуникаций",
+    solution: "Арендовать алмазное бурение для просверливания отверстий",
+    cost: 500,
+    duration: 2,
+    alternativeDescription: "Приостановить укладку плит для закладки гильз",
+    affectedElement: "Перекрытие",
+    affectedStyle: "Сборное железобетонное"
+  },
+  {
+    id: 13,
+    description: "Доски оказались естественной влажности, их начинает \"вести\" после укладки",
+    solution: "Заменить доски на сухие (камерной сушки)",
+    cost: 400,
+    duration: 2,
+    alternativeDescription: "Дать балкам просохнуть в штабеле",
+    affectedElement: "Перекрытие",
+    affectedStyle: "Балочное деревянное"
+  },
+  {
+    id: 14,
+    description: "Деформировались фанерные листы опалубки",
+    solution: "Заменить некачественную фанеру на новую",
+    cost: 300,
+    duration: 1,
+    alternativeDescription: "Применить дополнительные регулировки при монтаже",
+    affectedElement: "Перекрытие",
+    affectedStyle: "Монолитное"
+  },
+  {
+    id: 15,
+    description: "Более маленький шаг в разметке уже смонтированных балок",
+    solution: "Докупить материал для монтажа балок с текущим шагом",
+    cost: 200,
+    duration: 1,
+    alternativeDescription: "Демонтаж и последующий монтаж балок в проектной разметке",
+    affectedElement: "Перекрытие",
+    affectedStyle: "Балочное деревянное"
+  },
+  {
+    id: 16,
+    description: "Пароизоляционная лента оказалась из партии с браком, нарушена ее герметичность",
+    solution: "Закупить новую параизоляционную ленту",
+    cost: 100,
+    duration: 1,
+    alternativeDescription: "Устранить брак вручную",
+    affectedElement: "Двери и Окна",
+    affectedStyle: "Традиционный стиль, Стиль хай-тек, Классический стиль"
+  },
+  {
+    id: 17,
     description: "Элементы импортного производства задерживаются на границе",
     solution: "Закупить отечественного производства",
     cost: 1000,
     duration: 7,
-    alternativeDescription: "Дождаться поставки импортных элементов"
+    alternativeDescription: "Дождаться поставки импортных элементов",
+    affectedElement: "Двери и Окна",
+    affectedStyle: "Классический стиль"
   },
   {
-    id: 13,
+    id: 18,
     description: "Задерживается доставка от завода из-за нехватки водителей",
     solution: "Организовать доставку самостоятельно",
     cost: 300,
     duration: 2,
-    alternativeDescription: "Дождаться доставки от завода"
+    alternativeDescription: "Дождаться доставки от завода",
+    affectedElement: "Двери и Окна",
+    affectedStyle: "Немецкий стиль"
   },
   {
-    id: 14,
+    id: 19,
     description: "Элементы импортного производства задерживаются на границе",
     solution: "Закупить отечественного производства",
     cost: 1000,
     duration: 7,
-    alternativeDescription: "Дождаться поставки импортных элементов"
+    alternativeDescription: "Дождаться поставки импортных элементов",
+    affectedElement: "Двери и Окна",
+    affectedStyle: "Стиль хай-тек"
   },
   {
-    id: 17,
+    id: 20,
+    description: "Проемы еще не готовы к монтажу",
+    solution: "Нанять бригаду в срочном порядке",
+    cost: 800,
+    duration: 2,
+    alternativeDescription: "Дождаться возвращения бригады на объект",
+    affectedElement: "Двери и Окна",
+    affectedStyle: "Немецкий стиль"
+  },
+  {
+    id: 21,
+    description: "При раскатке подкладочного ковра пошел дождь",
+    solution: "Арендовать тепловые пушки для быстрой сушки",
+    cost: 600,
+    duration: 2,
+    alternativeDescription: "Дать ковру просохнуть самостоятельно",
+    affectedElement: "Крыша",
+    affectedStyle: "Гибкая/битумная черепица"
+  },
+  {
+    id: 22,
+    description: "Цвет черепицы из разных паллет заметно отличается",
+    solution: "Докупить палеты под один из имеющихся оттенков",
+    cost: 3000,
+    duration: 2,
+    alternativeDescription: "Распределить черепицу так, чтобы добиться равномерного смешения",
+    affectedElement: "Крыша",
+    affectedStyle: "Керамическая черепица"
+  },
+  {
+    id: 23,
     description: "Нарушение условий хранения, началась коррозия",
     solution: "Закупить новый материал",
     cost: 1000,
     duration: 3,
-    alternativeDescription: "Подготовить имеющийся материал к монтажу"
+    alternativeDescription: "Подготовить имеющийся материал к монтажу",
+    affectedElement: "Крыша",
+    affectedStyle: "Металлочерепица"
   },
   {
-    id: 18,
+    id: 24,
+    description: "Во время резки листов болгаркой искры повредили подкровельную гидроизоляционную пленку",
+    solution: "Закупить и уложить новый материал",
+    cost: 400,
+    duration: 1,
+    alternativeDescription: "Устранить повреждения вручную",
+    affectedElement: "Крыша",
+    affectedStyle: "Металлочерепица"
+  },
+  {
+    id: 25,
+    description: "Пасмурная погода не активируется самоклеящийся слой",
+    solution: "Купить строительный фен",
+    cost: 200,
+    duration: 1,
+    alternativeDescription: "Дождаться солнечной погоды",
+    affectedElement: "Крыша",
+    affectedStyle: "Гибкая/битумная черепица"
+  },
+  {
+    id: 26,
     description: "В местном питомнике задерживается поставка нужного сорта вишневых деревьев",
     solution: "Купить сорт дороже",
     cost: 800,
     duration: 3,
-    alternativeDescription: "Дождаться поставки"
+    alternativeDescription: "Дождаться поставки",
+    affectedElement: "Благоустройство",
+    affectedStyle: "Сад"
   },
   {
-    id: 20,
-    description: "В местном питомнике нет нужного вида рыбок",
-    solution: "Купить другой вид рыбок дороже",
+    id: 27,
+    description: "Доски оказались естественной влажности, их начинает \"вести\" на солнце",
+    solution: "Заменить доски на сухие (камерной сушки)",
     cost: 400,
-    duration: 3,
-    alternativeDescription: "Дождаться поставки"
+    duration: 2,
+    alternativeDescription: "Дать доскам полежать и просохнуть",
+    affectedElement: "Благоустройство",
+    affectedStyle: "Мостик"
+  },
+  {
+    id: 28,
+    description: "Повредили пленку для пруда при укладке",
+    solution: "Закупить новый материал",
+    cost: 300,
+    duration: 1,
+    alternativeDescription: "Устранить повреждение вручную",
+    affectedElement: "Благоустройство",
+    affectedStyle: "Пруд"
+  },
+  {
+    id: 29,
+    description: "Выбранные места оказались в зоне прохождения подземных коммуникаций",
+    solution: "Вызвать специалистов с помощью трассоискателем",
+    cost: 500,
+    duration: 2,
+    alternativeDescription: "Дождаться точных планов от эксплуатирующих организаций",
+    affectedElement: "Благоустройство",
+    affectedStyle: "Сад, Мостик, Пруд"
+  },
+  {
+    id: 30,
+    description: "Залитые бетонные опоры дали трещины",
+    solution: "Сделать инъектирование трещин",
+    cost: 300,
+    duration: 1,
+    alternativeDescription: "Провести наблюдение на предмет критичности дефектов",
+    affectedElement: "Благоустройство",
+    affectedStyle: "Мостик"
   }
 ]

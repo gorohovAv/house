@@ -242,54 +242,95 @@ export default function ConstructionPage() {
         
         <div className="construction-container">
           {currentRisk ? (
-            <div className="risk-card">
-              <div className="risk-header">
-                <div className="risk-indicator">
-                  <RiskIcon />
-                  <span>Риск {currentRisk.id}</span>
-                </div>
-              </div>
-              
-              <div className="risk-description">
-                {currentRisk.description}
-              </div>
-              
-              <div className="risk-solutions">
-                <div 
-                  className={`solution-option ${currentPeriod?.selectedSolution === 'solution' ? 'active' : ''}`}
-                  onClick={() => handleRiskSolutionSelect('solution')}
-                >
-                  <div className="solution-text">{currentRisk.solution}</div>
-                  <div className="solution-indicators">
-                    <div className="cost-indicator">
-                      <MoneyIcon />
-                      <span>{currentRisk.cost}</span>
-                    </div>
-                    <div className="time-indicator">
-                      <TimeIcon />
-                      <span>{currentRisk.duration} {getDayDeclension(currentRisk.duration)}</span>
-                    </div>
+            currentPeriod?.isProtected ? (
+              <div className="protection-card">
+                <div className="protection-header">
+                  <div className="protection-indicator">
+                    <span>🛡️</span>
+                    <span>Защита от риска</span>
                   </div>
                 </div>
                 
-                <div 
-                  className={`solution-option ${currentPeriod?.selectedSolution === 'alternative' ? 'active' : ''}`}
-                  onClick={() => handleRiskSolutionSelect('alternative')}
-                >
-                  <div className="solution-text">{currentRisk.alternativeDescription}</div>
-                  <div className="solution-indicators">
-                    <div className="cost-indicator">
-                      <MoneyIcon />
-                      <span>0</span>
+                <div className="protection-description">
+                  Риск {currentRisk.id}: {currentRisk.description}
+                </div>
+                
+                <div className="protection-info">
+                  <div className="protection-text">
+                    Этот риск действует на другую конструкцию, поэтому вы защищены от его последствий.
+                  </div>
+                  
+                  <button 
+                    className="btn-primary protection-button"
+                    onClick={() => {
+                      // Обрабатываем дни текущего периода перед переходом
+                      const currentPeriodDays = currentPeriod.endDay - currentPeriod.startDay + 1
+                      console.log(`🛡️ Обработка ${currentPeriodDays} дней периода ${currentPeriodIndex + 1} (защита)`)
+                      
+                      for (let day = currentPeriod.startDay; day <= currentPeriod.endDay; day++) {
+                        processDay(day)
+                      }
+                      
+                      // Переходим к следующему периоду
+                      setTimeout(() => {
+                        moveToNextPeriod()
+                      }, 1000)
+                    }}
+                  >
+                    Перейти к следующему периоду
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="risk-card">
+                <div className="risk-header">
+                  <div className="risk-indicator">
+                    <RiskIcon />
+                    <span>Риск {currentRisk.id}</span>
+                  </div>
+                </div>
+                
+                <div className="risk-description">
+                  {currentRisk.description}
+                </div>
+                
+                <div className="risk-solutions">
+                  <div 
+                    className={`solution-option ${currentPeriod?.selectedSolution === 'solution' ? 'active' : ''}`}
+                    onClick={() => handleRiskSolutionSelect('solution')}
+                  >
+                    <div className="solution-text">{currentRisk.solution}</div>
+                    <div className="solution-indicators">
+                      <div className="cost-indicator">
+                        <MoneyIcon />
+                        <span>{currentRisk.cost}</span>
+                      </div>
+                      <div className="time-indicator">
+                        <TimeIcon />
+                        <span>{currentRisk.duration} {getDayDeclension(currentRisk.duration)}</span>
+                      </div>
                     </div>
-                    <div className="time-indicator">
-                      <TimeIcon />
-                      <span>+{Math.ceil(currentRisk.duration * 1.5)} {getDayDeclension(Math.ceil(currentRisk.duration * 1.5))}</span>
+                  </div>
+                  
+                  <div 
+                    className={`solution-option ${currentPeriod?.selectedSolution === 'alternative' ? 'active' : ''}`}
+                    onClick={() => handleRiskSolutionSelect('alternative')}
+                  >
+                    <div className="solution-text">{currentRisk.alternativeDescription}</div>
+                    <div className="solution-indicators">
+                      <div className="cost-indicator">
+                        <MoneyIcon />
+                        <span>0</span>
+                      </div>
+                      <div className="time-indicator">
+                        <TimeIcon />
+                        <span>+{Math.ceil(currentRisk.duration * 1.5)} {getDayDeclension(Math.ceil(currentRisk.duration * 1.5))}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )
           ) : (
             <div className="no-risk-card">
               <div className="no-risk-content">

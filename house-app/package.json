@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "analyze": "npx vite build && npx vite-bundle-analyzer dist",
     "lint": "eslint .",
     "preview": "vite preview"
   },

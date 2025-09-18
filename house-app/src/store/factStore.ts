@@ -10,6 +10,7 @@ export interface Period {
   endDay: number
   risk: Risk | null
   selectedSolution: 'solution' | 'alternative' | null
+  isProtected: boolean
 }
 
 export interface PaymentScheduleItem {
@@ -224,7 +225,8 @@ export const useFactStore = create<FactState>()(
             startDay: currentDay,
             endDay: endDay,
             risk: null,
-            selectedSolution: null
+            selectedSolution: null,
+            isProtected: false
           })
           
           currentDay = endDay + 1
@@ -234,12 +236,58 @@ export const useFactStore = create<FactState>()(
       },
       
       assignRandomRisk: (periodId: number) => {
-        const randomRisk = RISKS[Math.floor(Math.random() * RISKS.length)]
+        const { selectedOptions, periods } = get()
+        const period = periods.find(p => p.id === periodId)
+        
+        if (!period) return
+        
+        // Определяем, какая конструкция строится в этот период
+        const currentDay = period.startDay
+        let currentConstructionDay = 1
+        let currentConstructionType = null
+        let currentConstructionStyle = null
+        
+        for (const [type, option] of Object.entries(selectedOptions)) {
+          if (option && currentDay >= currentConstructionDay && currentDay < currentConstructionDay + option.duration) {
+            currentConstructionType = type
+            // Извлекаем стиль из типа опции (например, "2 Классический стиль" -> "Классический стиль")
+            currentConstructionStyle = option.type.split(' ').slice(1).join(' ')
+            break
+          }
+          if (option) {
+            currentConstructionDay += option.duration
+          }
+        }
+        
+        // Фильтруем риски по условиям выпадения
+        const availableRisks = RISKS.filter(risk => {
+          // Проверяем соответствие элемента конструкции
+          if (risk.affectedElement !== currentConstructionType) {
+            return false
+          }
+          
+          // Проверяем соответствие стиля (может быть несколько через запятую)
+          const riskStyles = risk.affectedStyle.split(', ').map(s => s.trim())
+          return riskStyles.includes(currentConstructionStyle)
+        })
+        
+        if (availableRisks.length === 0) {
+          console.log(`⚠️ Нет доступных рисков для ${currentConstructionType} (${currentConstructionStyle})`)
+          return
+        }
+        
+        const randomRisk = availableRisks[Math.floor(Math.random() * availableRisks.length)]
+        
+        // Проверяем, защищен ли пользователь от этого риска
+        const isProtected = randomRisk.affectedElement !== currentConstructionType || 
+                           !randomRisk.affectedStyle.split(', ').map(s => s.trim()).includes(currentConstructionStyle)
+        
+        console.log(`🎲 Выбран риск ${randomRisk.id} для ${currentConstructionType} (${currentConstructionStyle}) | Защита: ${isProtected ? 'ДА' : 'НЕТ'}`)
         
         set((state) => ({
           periods: state.periods.map((period: Period) =>
             period.id === periodId
-              ? { ...period, risk: randomRisk }
+              ? { ...period, risk: randomRisk, isProtected }
               : period
           )
         }))
