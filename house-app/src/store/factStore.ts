@@ -45,6 +45,7 @@ export interface FactState {
   paymentSchedule: PaymentScheduleItem[]
   fundingPlan: FundingPlanItem[]
   piggyBank: number
+  planningRemainder: number
   factGraphs: FactGraph[]
   currentFactGraph: FactDay[]
   
@@ -80,16 +81,23 @@ export const useFactStore = create<FactState>()(
       paymentSchedule: [],
       fundingPlan: [],
       piggyBank: 0,
+      planningRemainder: 0,
       factGraphs: [],
       currentFactGraph: [],
       
       initializeFromPlan: () => {
         const planStore = usePlanStore.getState()
+        const totalCost = Object.values(planStore.selectedOptions)
+          .filter((option): option is ConstructionOption => option !== null)
+          .reduce((total, option) => total + option.cost, 0)
+        const planningRemainder = planStore.budget - totalCost
+        
         set({
           selectedOptions: { ...planStore.selectedOptions },
           budget: planStore.budget,
           duration: planStore.duration,
           piggyBank: 0,
+          planningRemainder: planningRemainder,
           factGraphs: [],
           currentFactGraph: []
         })
@@ -116,8 +124,15 @@ export const useFactStore = create<FactState>()(
           }
         }))
         
-        // Обновляем планы после изменения опций
+        // Обновляем планы и остаток после изменения опций
         setTimeout(() => {
+          const { selectedOptions, budget } = get()
+          const totalCost = Object.values(selectedOptions)
+            .filter((opt): opt is ConstructionOption => opt !== null)
+            .reduce((total, opt) => total + opt.cost, 0)
+          const planningRemainder = budget - totalCost
+          
+          set({ planningRemainder })
           get().generateFundingPlan()
           get().generatePaymentSchedule()
         }, 0)
@@ -271,9 +286,15 @@ export const useFactStore = create<FactState>()(
       processDay: (day: number) => {
         const { fundingPlan, piggyBank, selectedOptions, periods, currentPeriodIndex, currentFactGraph } = get()
         
+        console.log('Processing day:', day)
+        console.log('Current piggyBank before:', piggyBank)
+        
         // Зачисляем деньги по плану финансирования
         const dayFunding = fundingPlan.filter(funding => funding.dayIndex === day)
         const totalIncoming = dayFunding.reduce((sum, funding) => sum + funding.amount, 0)
+        
+        console.log('Day funding:', dayFunding)
+        console.log('Total incoming:', totalIncoming)
         
         // Обновляем кубышку
         set({ piggyBank: piggyBank + totalIncoming })
@@ -324,6 +345,11 @@ export const useFactStore = create<FactState>()(
         const issuedMoney = Math.min(requiredMoney, currentPiggyBank)
         const isIdle = issuedMoney < requiredMoney
         
+        console.log('Required money:', requiredMoney)
+        console.log('Current piggyBank for payment:', currentPiggyBank)
+        console.log('Issued money:', issuedMoney)
+        console.log('Is idle:', isIdle)
+        
         // Обновляем кубышку
         set({ piggyBank: currentPiggyBank - issuedMoney })
         
@@ -339,15 +365,22 @@ export const useFactStore = create<FactState>()(
         }
         
         // Добавляем день в текущий график факта
-        set((state) => ({
-          currentFactGraph: [...state.currentFactGraph, factDay]
-        }))
+        console.log('Adding fact day:', factDay)
+        set((state) => {
+          const newGraph = [...state.currentFactGraph, factDay]
+          console.log('New currentFactGraph:', newGraph)
+          return { currentFactGraph: newGraph }
+        })
       },
 
       requestMoney: (amount: number) => {
-        set((state) => ({
-          piggyBank: state.piggyBank + amount
-        }))
+        const { planningRemainder } = get()
+        if (amount <= planningRemainder) {
+          set((state) => ({
+            piggyBank: state.piggyBank + amount,
+            planningRemainder: state.planningRemainder - amount
+          }))
+        }
       },
 
       moveToNextPeriod: () => {
@@ -384,6 +417,7 @@ export const useFactStore = create<FactState>()(
           paymentSchedule: [],
           fundingPlan: [],
           piggyBank: 0,
+          planningRemainder: 0,
           factGraphs: [],
           currentFactGraph: []
         })

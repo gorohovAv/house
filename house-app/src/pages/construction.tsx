@@ -120,7 +120,8 @@ export default function ConstructionPage() {
     processDay,
     currentFactGraph,
     fundingPlan,
-    paymentSchedule
+    paymentSchedule,
+    planningRemainder
   } = useFactStore()
   
   const planStore = usePlanStore()
@@ -139,10 +140,11 @@ export default function ConstructionPage() {
   // Отладочная информация
   useEffect(() => {
     console.log('PiggyBank:', piggyBank)
+    console.log('PlanningRemainder:', planningRemainder)
     console.log('FundingPlan:', fundingPlan)
     console.log('PaymentSchedule:', paymentSchedule)
     console.log('CurrentFactGraph:', currentFactGraph)
-  }, [piggyBank, fundingPlan, paymentSchedule, currentFactGraph])
+  }, [piggyBank, planningRemainder, fundingPlan, paymentSchedule, currentFactGraph])
 
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
@@ -358,7 +360,11 @@ export default function ConstructionPage() {
               </button>
               <button 
                 className="btn-primary"
-                onClick={() => processDay(currentFactGraph.length + 1)}
+                onClick={() => {
+                  const nextDay = currentFactGraph.length + 1
+                  console.log('Processing day:', nextDay)
+                  processDay(nextDay)
+                }}
               >
                 Строить
               </button>
