@@ -113,7 +113,14 @@ export default function ConstructionPage() {
     periods,
     currentPeriodIndex,
     selectRiskSolution,
-    initializeFromPlan
+    initializeFromPlan,
+    piggyBank,
+    requestMoney,
+    moveToNextPeriod,
+    processDay,
+    currentFactGraph,
+    fundingPlan,
+    paymentSchedule
   } = useFactStore()
   
   const planStore = usePlanStore()
@@ -128,6 +135,14 @@ export default function ConstructionPage() {
   useEffect(() => {
     initializeFromPlan()
   }, [initializeFromPlan])
+
+  // Отладочная информация
+  useEffect(() => {
+    console.log('PiggyBank:', piggyBank)
+    console.log('FundingPlan:', fundingPlan)
+    console.log('PaymentSchedule:', paymentSchedule)
+    console.log('CurrentFactGraph:', currentFactGraph)
+  }, [piggyBank, fundingPlan, paymentSchedule, currentFactGraph])
 
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
@@ -151,17 +166,6 @@ export default function ConstructionPage() {
     }
   }, [selectedOptions])
 
-  // Инициализируем панель значениями из стора плана при загрузке
-  useEffect(() => {
-    if (Object.keys(selectedOptions).length === 0 && Object.keys(planStore.selectedOptions).length > 0) {
-      // Если в factStore нет выбранных опций, но есть в planStore, копируем их
-      Object.entries(planStore.selectedOptions).forEach(([key, value]) => {
-        if (value) {
-          selectOption(key, value)
-        }
-      })
-    }
-  }, [planStore.selectedOptions, selectedOptions, selectOption])
 
 
   const handleCardSwipeLeft = () => {
@@ -193,6 +197,10 @@ export default function ConstructionPage() {
   const handleRiskSolutionSelect = (solution: 'solution' | 'alternative') => {
     if (currentPeriod) {
       selectRiskSolution(currentPeriod.id, solution)
+      // Переходим к следующему периоду после выбора решения
+      setTimeout(() => {
+        moveToNextPeriod()
+      }, 1000)
     }
   }
 
@@ -299,7 +307,10 @@ export default function ConstructionPage() {
           
           <div className="request-money-card">
             <div className="request-amount">10 000</div>
-            <button className="btn-request">
+            <button 
+              className="btn-request"
+              onClick={() => requestMoney(10000)}
+            >
               Запросить еще
             </button>
           </div>
@@ -345,7 +356,10 @@ export default function ConstructionPage() {
               <button className="btn-secondary">
                 К показателям
               </button>
-              <button className="btn-primary">
+              <button 
+                className="btn-primary"
+                onClick={() => processDay(currentFactGraph.length + 1)}
+              >
                 Строить
               </button>
             </div>

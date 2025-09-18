@@ -12,12 +12,41 @@ export interface Period {
   selectedSolution: 'solution' | 'alternative' | null
 }
 
+export interface PaymentScheduleItem {
+  dayIndex: number
+  amount: number
+}
+
+export interface FundingPlanItem {
+  dayIndex: number
+  amount: number
+}
+
+export interface FactDay {
+  day: number
+  constructionType: string | null
+  constructionOption: ConstructionOption | null
+  risk: Risk | null
+  requiredMoney: number
+  issuedMoney: number
+  isIdle: boolean
+}
+
+export interface FactGraph {
+  days: FactDay[]
+}
+
 export interface FactState {
   selectedOptions: Record<string, ConstructionOption | null>
   budget: number
   duration: number
   periods: Period[]
   currentPeriodIndex: number
+  paymentSchedule: PaymentScheduleItem[]
+  fundingPlan: FundingPlanItem[]
+  piggyBank: number
+  factGraphs: FactGraph[]
+  currentFactGraph: FactDay[]
   
   initializeFromPlan: () => void
   selectOption: (constructionType: string, option: ConstructionOption) => void
@@ -32,6 +61,11 @@ export interface FactState {
   selectRiskSolution: (periodId: number, solution: 'solution' | 'alternative') => void
   generatePeriods: () => void
   assignRandomRisk: (periodId: number) => void
+  generatePaymentSchedule: () => void
+  generateFundingPlan: () => void
+  processDay: (day: number) => void
+  requestMoney: (amount: number) => void
+  moveToNextPeriod: () => void
   resetFact: () => void
 }
 
@@ -43,18 +77,30 @@ export const useFactStore = create<FactState>()(
       duration: 90,
       periods: [],
       currentPeriodIndex: 0,
+      paymentSchedule: [],
+      fundingPlan: [],
+      piggyBank: 0,
+      factGraphs: [],
+      currentFactGraph: [],
       
       initializeFromPlan: () => {
         const planStore = usePlanStore.getState()
         set({
           selectedOptions: { ...planStore.selectedOptions },
           budget: planStore.budget,
-          duration: planStore.duration
+          duration: planStore.duration,
+          piggyBank: 0,
+          factGraphs: [],
+          currentFactGraph: []
         })
-        get().generatePeriods()
         
-        // Автоматически назначаем риск на первый период
+        // Генерируем планы после обновления selectedOptions
         setTimeout(() => {
+          get().generatePeriods()
+          get().generateFundingPlan()
+          get().generatePaymentSchedule()
+          
+          // Автоматически назначаем риск на первый период
           const { periods, assignRandomRisk } = get()
           if (periods.length > 0 && !periods[0].risk) {
             assignRandomRisk(periods[0].id)
@@ -69,6 +115,12 @@ export const useFactStore = create<FactState>()(
             [constructionType]: option
           }
         }))
+        
+        // Обновляем планы после изменения опций
+        setTimeout(() => {
+          get().generateFundingPlan()
+          get().generatePaymentSchedule()
+        }, 0)
       },
       
       clearSelection: (constructionType: string) => {
@@ -122,8 +174,6 @@ export const useFactStore = create<FactState>()(
       },
       
       selectRiskSolution: (periodId: number, solution: 'solution' | 'alternative') => {
-        const { assignRandomRisk, periods, currentPeriodIndex } = get()
-        
         set((state) => ({
           periods: state.periods.map((period: Period) =>
             period.id === periodId
@@ -131,16 +181,6 @@ export const useFactStore = create<FactState>()(
               : period
           )
         }))
-        
-        // Автоматически назначаем риск на следующий период
-        const nextPeriodIndex = currentPeriodIndex + 1
-        if (nextPeriodIndex < periods.length) {
-          const nextPeriod = periods[nextPeriodIndex]
-          if (nextPeriod && !nextPeriod.risk) {
-            assignRandomRisk(nextPeriod.id)
-            set({ currentPeriodIndex: nextPeriodIndex })
-          }
-        }
       },
       
       generatePeriods: () => {
@@ -186,6 +226,153 @@ export const useFactStore = create<FactState>()(
           )
         }))
       },
+
+      generatePaymentSchedule: () => {
+        const { selectedOptions, getTotalDuration } = get()
+        const paymentSchedule: PaymentScheduleItem[] = []
+        
+        // Создаем план выплат - распределяем стоимость по всем дням строительства
+        let currentDay = 1
+        Object.values(selectedOptions).forEach((option) => {
+          if (option) {
+            const dailyAmount = option.cost / option.duration
+            for (let i = 0; i < option.duration; i++) {
+              paymentSchedule.push({
+                dayIndex: currentDay + i,
+                amount: Math.ceil(dailyAmount)
+              })
+            }
+            currentDay += option.duration
+          }
+        })
+        
+        set({ paymentSchedule })
+      },
+
+      generateFundingPlan: () => {
+        const { selectedOptions } = get()
+        const fundingPlan: FundingPlanItem[] = []
+        
+        // Создаем план финансирования - начисления в первый день строительства каждого элемента
+        let currentDay = 1
+        Object.values(selectedOptions).forEach((option) => {
+          if (option) {
+            fundingPlan.push({
+              dayIndex: currentDay,
+              amount: option.cost
+            })
+            currentDay += option.duration
+          }
+        })
+        
+        set({ fundingPlan })
+      },
+
+      processDay: (day: number) => {
+        const { fundingPlan, piggyBank, selectedOptions, periods, currentPeriodIndex, currentFactGraph } = get()
+        
+        // Зачисляем деньги по плану финансирования
+        const dayFunding = fundingPlan.filter(funding => funding.dayIndex === day)
+        const totalIncoming = dayFunding.reduce((sum, funding) => sum + funding.amount, 0)
+        
+        // Обновляем кубышку
+        set({ piggyBank: piggyBank + totalIncoming })
+        
+        // Определяем текущий период
+        const currentPeriod = periods[currentPeriodIndex]
+        if (!currentPeriod) return
+        
+        // Определяем, какая конструкция строится в этот день
+        // Строим конструкции последовательно
+        let currentDay = 1
+        let constructionType = null
+        let constructionOption = null
+        
+        for (const [type, option] of Object.entries(selectedOptions)) {
+          if (option && day >= currentDay && day < currentDay + option.duration) {
+            constructionType = type
+            constructionOption = option
+            break
+          }
+          if (option) {
+            currentDay += option.duration
+          }
+        }
+        
+        if (!constructionOption) return
+        
+        // Рассчитываем требуемые деньги на день из paymentSchedule
+        const { paymentSchedule } = get()
+        const dayPayments = paymentSchedule.filter(payment => payment.dayIndex === day)
+        const baseRequiredMoney = dayPayments.reduce((sum, payment) => sum + payment.amount, 0)
+        
+        // Проверяем риск
+        const risk = currentPeriod.risk
+        let riskCost = 0
+        let riskDuration = 0
+        
+        if (risk && currentPeriod.selectedSolution === 'solution') {
+          riskCost = risk.cost
+          riskDuration = risk.duration
+        }
+        
+        const riskDailyCost = riskDuration > 0 ? riskCost / riskDuration : 0
+        const requiredMoney = Math.ceil(baseRequiredMoney + riskDailyCost)
+        
+        // Проверяем, есть ли деньги в кубышке
+        const currentPiggyBank = get().piggyBank
+        const issuedMoney = Math.min(requiredMoney, currentPiggyBank)
+        const isIdle = issuedMoney < requiredMoney
+        
+        // Обновляем кубышку
+        set({ piggyBank: currentPiggyBank - issuedMoney })
+        
+        // Создаем день факта
+        const factDay: FactDay = {
+          day,
+          constructionType: isIdle ? null : constructionType,
+          constructionOption: isIdle ? null : constructionOption,
+          risk: isIdle ? null : risk,
+          requiredMoney,
+          issuedMoney,
+          isIdle
+        }
+        
+        // Добавляем день в текущий график факта
+        set((state) => ({
+          currentFactGraph: [...state.currentFactGraph, factDay]
+        }))
+      },
+
+      requestMoney: (amount: number) => {
+        set((state) => ({
+          piggyBank: state.piggyBank + amount
+        }))
+      },
+
+      moveToNextPeriod: () => {
+        const { currentPeriodIndex, periods, currentFactGraph, factGraphs, assignRandomRisk } = get()
+        
+        // Сохраняем текущий график факта
+        const newFactGraphs = [...factGraphs, { days: currentFactGraph }]
+        
+        // Переходим к следующему периоду
+        const nextPeriodIndex = currentPeriodIndex + 1
+        
+        set({
+          factGraphs: newFactGraphs,
+          currentFactGraph: [],
+          currentPeriodIndex: nextPeriodIndex
+        })
+        
+        // Назначаем риск на новый период
+        if (nextPeriodIndex < periods.length) {
+          const nextPeriod = periods[nextPeriodIndex]
+          if (nextPeriod && !nextPeriod.risk) {
+            assignRandomRisk(nextPeriod.id)
+          }
+        }
+      },
       
       resetFact: () => {
         set({
@@ -193,7 +380,12 @@ export const useFactStore = create<FactState>()(
           budget: 50000,
           duration: 90,
           periods: [],
-          currentPeriodIndex: 0
+          currentPeriodIndex: 0,
+          paymentSchedule: [],
+          fundingPlan: [],
+          piggyBank: 0,
+          factGraphs: [],
+          currentFactGraph: []
         })
       }
     }),
