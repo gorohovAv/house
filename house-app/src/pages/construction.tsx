@@ -190,6 +190,7 @@ export default function ConstructionPage() {
 
   const handleRiskSolutionSelect = (solution: 'solution' | 'alternative') => {
     if (currentPeriod) {
+      console.log(`🏦 КУБЫШКА ПЕРЕД ВЫБОРОМ РЕШЕНИЯ: ${piggyBank} руб.`)
       selectRiskSolution(currentPeriod.id, solution)
       
       // Обрабатываем дни текущего периода перед переходом
@@ -263,6 +264,7 @@ export default function ConstructionPage() {
                   <button 
                     className="btn-primary protection-button"
                     onClick={() => {
+                      console.log(`🏦 КУБЫШКА ПЕРЕД ЗАЩИТОЙ: ${piggyBank} руб.`)
                       // Обрабатываем дни текущего периода перед переходом
                       const currentPeriodDays = currentPeriod.endDay - currentPeriod.startDay + 1
                       console.log(`🛡️ Обработка ${currentPeriodDays} дней периода ${currentPeriodIndex + 1} (защита)`)
@@ -353,7 +355,10 @@ export default function ConstructionPage() {
             <div className="request-amount">10 000</div>
             <button 
               className="btn-request"
-              onClick={() => requestMoney(10000)}
+              onClick={() => {
+                console.log(`🏦 КУБЫШКА ПЕРЕД ЗАПРОСОМ: ${piggyBank} руб.`)
+                requestMoney(10000)
+              }}
             >
               Запросить еще
             </button>
@@ -403,6 +408,7 @@ export default function ConstructionPage() {
               <button 
                 className="btn-primary"
                 onClick={() => {
+                  console.log(`🏦 КУБЫШКА ПЕРЕД СТРОИТЕЛЬСТВОМ: ${piggyBank} руб.`)
                   const nextDay = factGraph.length + 1
                   processDay(nextDay)
                 }}

@@ -370,17 +370,20 @@ export const useFactStore = create<FactState>()(
         const { fundingPlan, piggyBank, selectedOptions, periods, currentPeriodIndex, factGraph } = get()
         
         console.log(`📅 Обработка дня ${day} | ФактГраф: ${factGraph.length} дней`)
+        console.log(`🏦 КУБЫШКА ДО ОПЕРАЦИЙ: ${piggyBank} руб.`)
         
         // Зачисляем деньги по плану финансирования
         const dayFunding = fundingPlan.filter(funding => funding.dayIndex === day)
         const totalIncoming = dayFunding.reduce((sum, funding) => sum + funding.amount, 0)
         
         if (totalIncoming > 0) {
-          console.log(`💰 Поступление: +${totalIncoming} руб. (день ${day})`)
+          console.log(`💰 ПОСТУПЛЕНИЕ В КУБЫШКУ: +${totalIncoming} руб. (день ${day})`)
+          console.log(`🏦 КУБЫШКА ПОСЛЕ ПОСТУПЛЕНИЯ: ${piggyBank + totalIncoming} руб.`)
         }
         
         // Обновляем кубышку
         set({ piggyBank: piggyBank + totalIncoming })
+        console.log(`🏦 КУБЫШКА ОБНОВЛЕНА: ${piggyBank + totalIncoming} руб.`)
         
         // Определяем текущий период
         const currentPeriod = periods[currentPeriodIndex]
@@ -411,7 +414,7 @@ export const useFactStore = create<FactState>()(
         const baseRequiredMoney = dayPayments.reduce((sum, payment) => sum + payment.amount, 0)
         
         if (baseRequiredMoney > 0) {
-          console.log(`💸 Платеж по графику: ${baseRequiredMoney} руб. (день ${day})`)
+          console.log(`💸 ПЛАТЕЖ ПО ГРАФИКУ: ${baseRequiredMoney} руб. (день ${day})`)
         }
         
         // Проверяем риск - теперь риски уже учтены в paymentSchedule
@@ -433,10 +436,16 @@ export const useFactStore = create<FactState>()(
         const issuedMoney = Math.min(requiredMoney, currentPiggyBank)
         const isIdle = issuedMoney < requiredMoney
         
-        console.log(`💳 Требуется: ${requiredMoney} руб. | Выдано: ${issuedMoney} руб. | Простой: ${isIdle ? 'ДА' : 'НЕТ'}`)
+        console.log(`💳 ТРЕБУЕТСЯ: ${requiredMoney} руб. | ВЫДАНО: ${issuedMoney} руб. | ПРОСТОЙ: ${isIdle ? 'ДА' : 'НЕТ'}`)
+        
+        if (issuedMoney > 0) {
+          console.log(`💸 СПИСАНИЕ С КУБЫШКИ: -${issuedMoney} руб. (день ${day})`)
+          console.log(`🏦 КУБЫШКА ПОСЛЕ СПИСАНИЯ: ${currentPiggyBank - issuedMoney} руб.`)
+        }
         
         // Обновляем кубышку
         set({ piggyBank: currentPiggyBank - issuedMoney })
+        console.log(`🏦 КУБЫШКА ОБНОВЛЕНА: ${currentPiggyBank - issuedMoney} руб.`)
         
         // Создаем день факта
         const factDay: FactDay = {
@@ -458,12 +467,18 @@ export const useFactStore = create<FactState>()(
       },
 
       requestMoney: (amount: number) => {
-        const { planningRemainder } = get()
+        const { planningRemainder, piggyBank } = get()
         if (amount <= planningRemainder) {
+          console.log(`🏦 КУБЫШКА ДО ЗАПРОСА: ${piggyBank} руб.`)
+          console.log(`💰 ЗАПРОС ДОПОЛНИТЕЛЬНЫХ СРЕДСТВ: +${amount} руб.`)
+          console.log(`🏦 КУБЫШКА ПОСЛЕ ЗАПРОСА: ${piggyBank + amount} руб.`)
+          
           set((state) => ({
             piggyBank: state.piggyBank + amount,
             planningRemainder: state.planningRemainder - amount
           }))
+        } else {
+          console.log(`❌ ЗАПРОС ОТКЛОНЕН: недостаточно средств в планируемом остатке (${planningRemainder} руб.)`)
         }
       },
 
@@ -507,7 +522,9 @@ export const useFactStore = create<FactState>()(
       applyRiskToPiggyBank: (riskCost: number) => {
         const { piggyBank } = get()
         const newPiggyBank = Math.max(0, piggyBank - riskCost)
-        console.log(`💰 Применен денежный штраф: -${riskCost} руб. | Кубышка: ${piggyBank} → ${newPiggyBank} руб.`)
+        console.log(`🏦 КУБЫШКА ДО ШТРАФА: ${piggyBank} руб.`)
+        console.log(`⚠️ ШТРАФ ЗА РИСК: -${riskCost} руб.`)
+        console.log(`🏦 КУБЫШКА ПОСЛЕ ШТРАФА: ${newPiggyBank} руб.`)
         set({ piggyBank: newPiggyBank })
       },
 
