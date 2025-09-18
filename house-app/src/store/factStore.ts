@@ -70,7 +70,6 @@ export interface FactState {
   resetFact: () => void
   recalculatePaymentSchedule: () => void
   recalculateFundingPlan: () => void
-  applyRiskToPiggyBank: (riskCost: number) => void
   recalculatePaymentScheduleForAlternative: (affectedElement: string, additionalDuration: number) => void
   recalculateFundingPlanForAlternative: (affectedElement: string, additionalDuration: number) => void
 }
@@ -209,16 +208,10 @@ export const useFactStore = create<FactState>()(
         // Обрабатываем последствия выбора решения
         if (period && period.risk) {
           if (solution === 'solution') {
-            // Принимаем решение - применяем штрафы
-            if (period.risk.cost > 0) {
-              // Денежный штраф - вычитаем из кубышки
-              get().applyRiskToPiggyBank(period.risk.cost)
-            }
-            if (period.risk.duration > 0) {
-              // Временной штраф - пересчитываем графики
-              get().recalculatePaymentSchedule()
-              get().recalculateFundingPlan()
-            }
+            // Принимаем решение - пересчитываем графики с учетом штрафов
+            // Штрафы будут размазаны по дням строительства через пересчет графиков
+            get().recalculatePaymentSchedule()
+            get().recalculateFundingPlan()
           } else {
             // Альтернатива - увеличиваем время на 50%, но без денежных штрафов
             const additionalDuration = Math.ceil(period.risk.duration * 1.5)
@@ -417,17 +410,22 @@ export const useFactStore = create<FactState>()(
           console.log(`💸 ПЛАТЕЖ ПО ГРАФИКУ: ${baseRequiredMoney} руб. (день ${day})`)
         }
         
-        // Проверяем риск - теперь риски уже учтены в paymentSchedule
+        // Проверяем, есть ли риск в этот день строительства
         const risk = currentPeriod.risk
         let riskInfo = ''
         
-        if (risk && currentPeriod.selectedSolution === 'solution') {
+        // Проверяем, строится ли в этот день конструкция, на которую влияет риск
+        const isRiskDay = risk && 
+          currentPeriod.selectedSolution === 'solution' && 
+          risk.affectedElement === constructionType
+        
+        if (isRiskDay) {
           riskInfo = ` (включая риск ${risk.id})`
         }
         
         const requiredMoney = Math.ceil(baseRequiredMoney)
         
-        if (risk && currentPeriod.selectedSolution === 'solution') {
+        if (isRiskDay) {
           console.log(`⚠️ Обработка дня с риском ${risk.id}${riskInfo} (день ${day})`)
         }
         
@@ -452,7 +450,7 @@ export const useFactStore = create<FactState>()(
           day,
           constructionType: isIdle ? null : constructionType,
           constructionOption: isIdle ? null : constructionOption,
-          risk: isIdle ? null : risk,
+          risk: isIdle ? null : (isRiskDay ? risk : null),
           requiredMoney,
           issuedMoney,
           isIdle
@@ -519,14 +517,6 @@ export const useFactStore = create<FactState>()(
         })
       },
 
-      applyRiskToPiggyBank: (riskCost: number) => {
-        const { piggyBank } = get()
-        const newPiggyBank = Math.max(0, piggyBank - riskCost)
-        console.log(`🏦 КУБЫШКА ДО ШТРАФА: ${piggyBank} руб.`)
-        console.log(`⚠️ ШТРАФ ЗА РИСК: -${riskCost} руб.`)
-        console.log(`🏦 КУБЫШКА ПОСЛЕ ШТРАФА: ${newPiggyBank} руб.`)
-        set({ piggyBank: newPiggyBank })
-      },
 
       recalculatePaymentSchedule: () => {
         const { selectedOptions, periods } = get()
