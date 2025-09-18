@@ -118,7 +118,7 @@ export default function ConstructionPage() {
     requestMoney,
     moveToNextPeriod,
     processDay,
-    currentFactGraph,
+    factGraph,
     fundingPlan,
     paymentSchedule,
     planningRemainder
@@ -137,14 +137,6 @@ export default function ConstructionPage() {
     initializeFromPlan()
   }, [initializeFromPlan])
 
-  // Отладочная информация
-  useEffect(() => {
-    console.log('PiggyBank:', piggyBank)
-    console.log('PlanningRemainder:', planningRemainder)
-    console.log('FundingPlan:', fundingPlan)
-    console.log('PaymentSchedule:', paymentSchedule)
-    console.log('CurrentFactGraph:', currentFactGraph)
-  }, [piggyBank, planningRemainder, fundingPlan, paymentSchedule, currentFactGraph])
 
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
@@ -199,6 +191,15 @@ export default function ConstructionPage() {
   const handleRiskSolutionSelect = (solution: 'solution' | 'alternative') => {
     if (currentPeriod) {
       selectRiskSolution(currentPeriod.id, solution)
+      
+      // Обрабатываем дни текущего периода перед переходом
+      const currentPeriodDays = currentPeriod.endDay - currentPeriod.startDay + 1
+      console.log(`🏗️ Обработка ${currentPeriodDays} дней периода ${currentPeriodIndex + 1}`)
+      
+      for (let day = currentPeriod.startDay; day <= currentPeriod.endDay; day++) {
+        processDay(day)
+      }
+      
       // Переходим к следующему периоду после выбора решения
       setTimeout(() => {
         moveToNextPeriod()
@@ -361,8 +362,7 @@ export default function ConstructionPage() {
               <button 
                 className="btn-primary"
                 onClick={() => {
-                  const nextDay = currentFactGraph.length + 1
-                  console.log('Processing day:', nextDay)
+                  const nextDay = factGraph.length + 1
                   processDay(nextDay)
                 }}
               >

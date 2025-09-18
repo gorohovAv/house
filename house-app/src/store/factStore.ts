@@ -46,8 +46,7 @@ export interface FactState {
   fundingPlan: FundingPlanItem[]
   piggyBank: number
   planningRemainder: number
-  factGraphs: FactGraph[]
-  currentFactGraph: FactDay[]
+  factGraph: FactDay[]
   
   initializeFromPlan: () => void
   selectOption: (constructionType: string, option: ConstructionOption) => void
@@ -82,8 +81,7 @@ export const useFactStore = create<FactState>()(
       fundingPlan: [],
       piggyBank: 0,
       planningRemainder: 0,
-      factGraphs: [],
-      currentFactGraph: [],
+      factGraph: [],
       
       initializeFromPlan: () => {
         const planStore = usePlanStore.getState()
@@ -98,8 +96,7 @@ export const useFactStore = create<FactState>()(
           duration: planStore.duration,
           piggyBank: 0,
           planningRemainder: planningRemainder,
-          factGraphs: [],
-          currentFactGraph: []
+          factGraph: []
         })
         
         // Генерируем планы после обновления selectedOptions
@@ -110,8 +107,9 @@ export const useFactStore = create<FactState>()(
           
           // Автоматически назначаем риск на первый период
           const { periods, assignRandomRisk } = get()
-          if (periods.length > 0 && !periods[0].risk) {
+          if (periods.length > 0) {
             assignRandomRisk(periods[0].id)
+            console.log(`🎲 Риск назначен на период 1 (инициализация)`)
           }
         }, 0)
       },
@@ -189,6 +187,11 @@ export const useFactStore = create<FactState>()(
       },
       
       selectRiskSolution: (periodId: number, solution: 'solution' | 'alternative') => {
+        const { periods, factGraph } = get()
+        const period = periods.find(p => p.id === periodId)
+        
+        console.log(`🎯 Решение по риску: ${solution === 'solution' ? 'Решение' : 'Альтернатива'} | Период ${periodId} | ФактГраф: ${factGraph.length} дней`)
+        
         set((state) => ({
           periods: state.periods.map((period: Period) =>
             period.id === periodId
@@ -261,6 +264,7 @@ export const useFactStore = create<FactState>()(
           }
         })
         
+        console.log(`📊 График выплат сгенерирован: ${paymentSchedule.length} дней | Общая сумма: ${paymentSchedule.reduce((sum, p) => sum + p.amount, 0)} руб.`)
         set({ paymentSchedule })
       },
 
@@ -280,21 +284,22 @@ export const useFactStore = create<FactState>()(
           }
         })
         
+        console.log(`💰 План финансирования сгенерирован: ${fundingPlan.length} траншей | Общая сумма: ${fundingPlan.reduce((sum, f) => sum + f.amount, 0)} руб.`)
         set({ fundingPlan })
       },
 
       processDay: (day: number) => {
-        const { fundingPlan, piggyBank, selectedOptions, periods, currentPeriodIndex, currentFactGraph } = get()
+        const { fundingPlan, piggyBank, selectedOptions, periods, currentPeriodIndex, factGraph } = get()
         
-        console.log('Processing day:', day)
-        console.log('Current piggyBank before:', piggyBank)
+        console.log(`📅 Обработка дня ${day} | ФактГраф: ${factGraph.length} дней`)
         
         // Зачисляем деньги по плану финансирования
         const dayFunding = fundingPlan.filter(funding => funding.dayIndex === day)
         const totalIncoming = dayFunding.reduce((sum, funding) => sum + funding.amount, 0)
         
-        console.log('Day funding:', dayFunding)
-        console.log('Total incoming:', totalIncoming)
+        if (totalIncoming > 0) {
+          console.log(`💰 Поступление: +${totalIncoming} руб. (день ${day})`)
+        }
         
         // Обновляем кубышку
         set({ piggyBank: piggyBank + totalIncoming })
@@ -327,6 +332,10 @@ export const useFactStore = create<FactState>()(
         const dayPayments = paymentSchedule.filter(payment => payment.dayIndex === day)
         const baseRequiredMoney = dayPayments.reduce((sum, payment) => sum + payment.amount, 0)
         
+        if (baseRequiredMoney > 0) {
+          console.log(`💸 Платеж по графику: ${baseRequiredMoney} руб. (день ${day})`)
+        }
+        
         // Проверяем риск
         const risk = currentPeriod.risk
         let riskCost = 0
@@ -340,15 +349,16 @@ export const useFactStore = create<FactState>()(
         const riskDailyCost = riskDuration > 0 ? riskCost / riskDuration : 0
         const requiredMoney = Math.ceil(baseRequiredMoney + riskDailyCost)
         
+        if (riskDailyCost > 0) {
+          console.log(`⚠️ Доп. расходы по риску: +${Math.ceil(riskDailyCost)} руб. (день ${day})`)
+        }
+        
         // Проверяем, есть ли деньги в кубышке
         const currentPiggyBank = get().piggyBank
         const issuedMoney = Math.min(requiredMoney, currentPiggyBank)
         const isIdle = issuedMoney < requiredMoney
         
-        console.log('Required money:', requiredMoney)
-        console.log('Current piggyBank for payment:', currentPiggyBank)
-        console.log('Issued money:', issuedMoney)
-        console.log('Is idle:', isIdle)
+        console.log(`💳 Требуется: ${requiredMoney} руб. | Выдано: ${issuedMoney} руб. | Простой: ${isIdle ? 'ДА' : 'НЕТ'}`)
         
         // Обновляем кубышку
         set({ piggyBank: currentPiggyBank - issuedMoney })
@@ -364,12 +374,11 @@ export const useFactStore = create<FactState>()(
           isIdle
         }
         
-        // Добавляем день в текущий график факта
-        console.log('Adding fact day:', factDay)
+        // Добавляем день в график факта
         set((state) => {
-          const newGraph = [...state.currentFactGraph, factDay]
-          console.log('New currentFactGraph:', newGraph)
-          return { currentFactGraph: newGraph }
+          const newGraph = [...state.factGraph, factDay]
+          console.log(`✅ День ${day} добавлен в ФактГраф | Всего дней: ${newGraph.length}`)
+          return { factGraph: newGraph }
         })
       },
 
@@ -384,25 +393,23 @@ export const useFactStore = create<FactState>()(
       },
 
       moveToNextPeriod: () => {
-        const { currentPeriodIndex, periods, currentFactGraph, factGraphs, assignRandomRisk } = get()
-        
-        // Сохраняем текущий график факта
-        const newFactGraphs = [...factGraphs, { days: currentFactGraph }]
+        const { currentPeriodIndex, periods, assignRandomRisk, factGraph } = get()
         
         // Переходим к следующему периоду
         const nextPeriodIndex = currentPeriodIndex + 1
         
+        console.log(`🔄 Переход к периоду ${nextPeriodIndex + 1} | ФактГраф: ${factGraph.length} дней`)
+        
         set({
-          factGraphs: newFactGraphs,
-          currentFactGraph: [],
           currentPeriodIndex: nextPeriodIndex
         })
         
         // Назначаем риск на новый период
         if (nextPeriodIndex < periods.length) {
           const nextPeriod = periods[nextPeriodIndex]
-          if (nextPeriod && !nextPeriod.risk) {
+          if (nextPeriod) {
             assignRandomRisk(nextPeriod.id)
+            console.log(`🎲 Риск назначен на период ${nextPeriodIndex + 1}`)
           }
         }
       },
@@ -418,8 +425,7 @@ export const useFactStore = create<FactState>()(
           fundingPlan: [],
           piggyBank: 0,
           planningRemainder: 0,
-          factGraphs: [],
-          currentFactGraph: []
+          factGraph: []
         })
       }
     }),
