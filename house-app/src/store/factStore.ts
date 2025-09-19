@@ -16,7 +16,7 @@ export interface Period {
 export interface PaymentScheduleItem {
   dayIndex: number
   amount: number
-  issued: number
+  issued: number | null
   construction: string | null
   procent: number
   overallPrice: number
@@ -39,6 +39,7 @@ export interface FactState {
   fundingPlan: FundingPlanItem[]
   piggyBank: number
   planningRemainder: number
+  constructionDurationModifications: Record<string, number>
   
   initializeFromPlan: () => void
   selectOption: (constructionType: string, option: ConstructionOption) => void
@@ -63,6 +64,9 @@ export interface FactState {
   recalculateFundingPlan: () => void
   recalculatePaymentScheduleForAlternative: (affectedElement: string, additionalDuration: number) => void
   recalculateFundingPlanForAlternative: (affectedElement: string, additionalDuration: number) => void
+  preserveIssuedHistory: (newPaymentSchedule: PaymentScheduleItem[]) => PaymentScheduleItem[]
+  getModifiedDuration: (constructionType: string) => number
+  addDurationModification: (constructionType: string, additionalDuration: number) => void
 }
 
 export const useFactStore = create<FactState>()(
@@ -77,6 +81,7 @@ export const useFactStore = create<FactState>()(
       fundingPlan: [],
       piggyBank: 0,
       planningRemainder: 0,
+      constructionDurationModifications: {},
       
       initializeFromPlan: () => {
         const planStore = usePlanStore.getState()
@@ -213,8 +218,17 @@ export const useFactStore = create<FactState>()(
       },
       
       generatePeriods: () => {
-        const { getTotalDuration } = get()
-        const totalDuration = getTotalDuration()
+        const { getTotalDuration, getModifiedDuration, selectedOptions } = get()
+        
+        // Рассчитываем общую длительность с учетом всех модификаций
+        let totalDuration = 0
+        Object.entries(selectedOptions).forEach(([constructionType, option]) => {
+          if (option) {
+            const modifiedDuration = getModifiedDuration(constructionType)
+            totalDuration += modifiedDuration
+          }
+        })
+        
         const periodCount = 5 // Всегда 5 периодов
         const basePeriodDuration = Math.floor(totalDuration / periodCount)
         const remainder = totalDuration % periodCount
@@ -306,13 +320,16 @@ export const useFactStore = create<FactState>()(
       },
 
       generatePaymentSchedule: () => {
-        const { selectedOptions, periods } = get()
+        const { selectedOptions, periods, getModifiedDuration } = get()
         const paymentSchedule: PaymentScheduleItem[] = []
         
         // Создаем план выплат - распределяем стоимость по всем дням строительства
         let currentDay = 1
         Object.entries(selectedOptions).forEach(([constructionType, option]) => {
           if (option) {
+            // Используем модифицированную длительность
+            const modifiedDuration = getModifiedDuration(constructionType)
+            
             // Находим риски, которые влияют на эту конструкцию
             const constructionRisks = periods.filter(period => 
               period.risk && 
@@ -324,7 +341,7 @@ export const useFactStore = create<FactState>()(
             const totalRiskDuration = constructionRisks.reduce((sum, period) => 
               sum + (period.risk?.duration || 0), 0
             )
-            const overallDuration = option.duration + totalRiskDuration
+            const overallDuration = modifiedDuration + totalRiskDuration
             
             // Рассчитываем общую стоимость с учетом рисков
             const totalRiskCost = constructionRisks.reduce((sum, period) => 
@@ -335,11 +352,11 @@ export const useFactStore = create<FactState>()(
             const dailyAmount = overallPrice / overallDuration
             
             for (let i = 0; i < overallDuration; i++) {
-              const procent = Math.round(((i + 1) / overallDuration) * 100)
+              const procent = Math.round((i / overallDuration) * 100)
               paymentSchedule.push({
                 dayIndex: currentDay + i,
                 amount: Math.ceil(dailyAmount),
-                issued: 0,
+                issued: null,
                 construction: constructionType,
                 procent: procent,
                 overallPrice: overallPrice,
@@ -355,18 +372,19 @@ export const useFactStore = create<FactState>()(
       },
 
       generateFundingPlan: () => {
-        const { selectedOptions } = get()
+        const { selectedOptions, getModifiedDuration } = get()
         const fundingPlan: FundingPlanItem[] = []
         
         // Создаем план финансирования - начисления в первый день строительства каждого элемента
         let currentDay = 1
-        Object.values(selectedOptions).forEach((option) => {
+        Object.entries(selectedOptions).forEach(([constructionType, option]) => {
           if (option) {
+            const modifiedDuration = getModifiedDuration(constructionType)
             fundingPlan.push({
               dayIndex: currentDay,
               amount: option.cost
             })
-            currentDay += option.duration
+            currentDay += modifiedDuration
           }
         })
         
@@ -406,7 +424,7 @@ export const useFactStore = create<FactState>()(
         
         set((state) => {
           const newPaymentSchedule = state.paymentSchedule.map(payment => {
-            if (payment.dayIndex === day && payment.issued === 0) {
+            if (payment.dayIndex === day && payment.issued === null) {
               const requiredMoney = payment.amount
               const issuedMoney = Math.min(requiredMoney, currentPiggyBank)
               const isIdle = issuedMoney < requiredMoney
@@ -427,9 +445,12 @@ export const useFactStore = create<FactState>()(
           
           // Обновляем кубышку после всех операций
           const totalIssued = dayPayments.reduce((sum, payment) => {
-            const requiredMoney = payment.amount
-            const issuedMoney = Math.min(requiredMoney, currentPiggyBank)
-            return sum + issuedMoney
+            if (payment.issued === null) {
+              const requiredMoney = payment.amount
+              const issuedMoney = Math.min(requiredMoney, currentPiggyBank)
+              return sum + issuedMoney
+            }
+            return sum + payment.issued
           }, 0)
           
           console.log(`🏦 КУБЫШКА ПОСЛЕ СПИСАНИЯ: ${currentPiggyBank - totalIssued} руб.`)
@@ -489,7 +510,8 @@ export const useFactStore = create<FactState>()(
           paymentSchedule: [],
           fundingPlan: [],
           piggyBank: 0,
-          planningRemainder: 0
+          planningRemainder: 0,
+          constructionDurationModifications: {}
         })
       },
 
@@ -524,11 +546,11 @@ export const useFactStore = create<FactState>()(
             // Распределяем стоимость по дням
             const dailyAmount = overallPrice / overallDuration
             for (let i = 0; i < overallDuration; i++) {
-              const procent = Math.round(((i + 1) / overallDuration) * 100)
+              const procent = Math.round((i / overallDuration) * 100)
               paymentSchedule.push({
                 dayIndex: currentDay + i,
                 amount: Math.ceil(dailyAmount),
-                issued: 0,
+                issued: null,
                 construction: constructionType,
                 procent: procent,
                 overallPrice: overallPrice,
@@ -540,7 +562,10 @@ export const useFactStore = create<FactState>()(
         })
         
         console.log(`📊 График выплат пересчитан с учетом рисков: ${paymentSchedule.length} дней | Общая сумма: ${paymentSchedule.reduce((sum, p) => sum + p.amount, 0)} руб.`)
-        set({ paymentSchedule })
+        
+        // Сохраняем историю issued значений
+        const updatedPaymentSchedule = get().preserveIssuedHistory(paymentSchedule)
+        set({ paymentSchedule: updatedPaymentSchedule })
       },
 
       recalculateFundingPlan: () => {
@@ -585,7 +610,10 @@ export const useFactStore = create<FactState>()(
       },
 
       recalculatePaymentScheduleForAlternative: (affectedElement: string, additionalDuration: number) => {
-        const { selectedOptions } = get()
+        const { selectedOptions, addDurationModification, getModifiedDuration } = get()
+        
+        // Сохраняем модификацию длительности
+        addDurationModification(affectedElement, additionalDuration)
         
         // Создаем новый график выплат
         const newPaymentSchedule: PaymentScheduleItem[] = []
@@ -593,22 +621,17 @@ export const useFactStore = create<FactState>()(
         
         for (const [type, option] of Object.entries(selectedOptions)) {
           if (option) {
-            let constructionDuration = option.duration
-            let constructionCost = option.cost
-            
-            // Если это затронутая конструкция, увеличиваем длительность
-            if (type === affectedElement) {
-              constructionDuration += additionalDuration
-            }
+            const constructionDuration = getModifiedDuration(type)
+            const constructionCost = option.cost
             
             // Добавляем записи для этой конструкции
             const dailyAmount = constructionCost / constructionDuration
             for (let i = 0; i < constructionDuration; i++) {
-              const procent = Math.round(((i + 1) / constructionDuration) * 100)
+              const procent = Math.round((i / constructionDuration) * 100)
               newPaymentSchedule.push({
                 dayIndex: newCurrentDay + i,
                 amount: Math.ceil(dailyAmount),
-                issued: 0,
+                issued: null,
                 construction: type,
                 procent: procent,
                 overallPrice: constructionCost,
@@ -621,11 +644,17 @@ export const useFactStore = create<FactState>()(
         }
         
         console.log(`📊 График выплат пересчитан для альтернативы: +${additionalDuration} дней для ${affectedElement}`)
-        set({ paymentSchedule: newPaymentSchedule })
+        
+        // Сохраняем историю issued значений
+        const updatedPaymentSchedule = get().preserveIssuedHistory(newPaymentSchedule)
+        set({ paymentSchedule: updatedPaymentSchedule })
       },
 
       recalculateFundingPlanForAlternative: (affectedElement: string, additionalDuration: number) => {
-        const { selectedOptions } = get()
+        const { selectedOptions, addDurationModification, getModifiedDuration } = get()
+        
+        // Сохраняем модификацию длительности
+        addDurationModification(affectedElement, additionalDuration)
         
         // Создаем новый план финансирования
         const newFundingPlan: FundingPlanItem[] = []
@@ -633,12 +662,7 @@ export const useFactStore = create<FactState>()(
         
         for (const [type, option] of Object.entries(selectedOptions)) {
           if (option) {
-            let constructionDuration = option.duration
-            
-            // Если это затронутая конструкция, увеличиваем длительность
-            if (type === affectedElement) {
-              constructionDuration += additionalDuration
-            }
+            const constructionDuration = getModifiedDuration(type)
             
             // Финансирование поступает в первый день строительства
             newFundingPlan.push({
@@ -652,6 +676,50 @@ export const useFactStore = create<FactState>()(
         
         console.log(`💰 План финансирования пересчитан для альтернативы: ${affectedElement} +${additionalDuration} дней`)
         set({ fundingPlan: newFundingPlan })
+      },
+
+      preserveIssuedHistory: (newPaymentSchedule: PaymentScheduleItem[]) => {
+        const { paymentSchedule: currentPaymentSchedule } = get()
+        
+        // Создаем карту существующих issued значений по dayIndex
+        const issuedHistory = new Map<number, number>()
+        currentPaymentSchedule.forEach(payment => {
+          if (payment.issued !== null) {
+            issuedHistory.set(payment.dayIndex, payment.issued)
+          }
+        })
+        
+        // Применяем сохраненные issued значения к новому графику
+        const updatedPaymentSchedule = newPaymentSchedule.map(payment => {
+          const savedIssued = issuedHistory.get(payment.dayIndex)
+          if (savedIssued !== undefined) {
+            return { ...payment, issued: savedIssued }
+          }
+          return payment
+        })
+        
+        console.log(`📋 Сохранена история issued значений: ${issuedHistory.size} записей`)
+        return updatedPaymentSchedule
+      },
+
+      getModifiedDuration: (constructionType: string) => {
+        const { selectedOptions, constructionDurationModifications } = get()
+        const option = selectedOptions[constructionType]
+        if (!option) return 0
+        
+        const baseDuration = option.duration
+        const modification = constructionDurationModifications[constructionType] || 0
+        return baseDuration + modification
+      },
+
+      addDurationModification: (constructionType: string, additionalDuration: number) => {
+        set((state) => ({
+          constructionDurationModifications: {
+            ...state.constructionDurationModifications,
+            [constructionType]: (state.constructionDurationModifications[constructionType] || 0) + additionalDuration
+          }
+        }))
+        console.log(`⏱️ Модификация длительности ${constructionType}: +${additionalDuration} дней (общее: +${(get().constructionDurationModifications[constructionType] || 0) + additionalDuration})`)
       }
     }),
     {
