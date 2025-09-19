@@ -37,6 +37,7 @@ export interface FactState {
   currentPeriodIndex: number
   paymentSchedule: PaymentScheduleItem[]
   fundingPlan: FundingPlanItem[]
+  history: PaymentScheduleItem[]
   piggyBank: number
   planningRemainder: number
   constructionDurationModifications: Record<string, number>
@@ -65,6 +66,8 @@ export interface FactState {
   recalculatePaymentScheduleForAlternative: (affectedElement: string, additionalDuration: number) => void
   recalculateFundingPlanForAlternative: (affectedElement: string, additionalDuration: number) => void
   preserveIssuedHistory: (newPaymentSchedule: PaymentScheduleItem[]) => PaymentScheduleItem[]
+  restoreFromHistory: () => void
+  addToHistory: (day: PaymentScheduleItem) => void
   getModifiedDuration: (constructionType: string) => number
   addDurationModification: (constructionType: string, additionalDuration: number) => void
   addIdleDays: (constructionType: string, idleDays: number) => void
@@ -80,6 +83,7 @@ export const useFactStore = create<FactState>()(
       currentPeriodIndex: 0,
       paymentSchedule: [],
       fundingPlan: [],
+      history: [],
       piggyBank: 0,
       planningRemainder: 0,
       constructionDurationModifications: {},
@@ -369,6 +373,9 @@ export const useFactStore = create<FactState>()(
         
         console.log(`📊 График выплат сгенерирован: ${paymentSchedule.length} дней | Общая сумма: ${paymentSchedule.reduce((sum, p) => sum + p.amount, 0)} руб.`)
         set({ paymentSchedule })
+        
+        // Восстанавливаем данные из истории
+        get().restoreFromHistory()
       },
 
       generateFundingPlan: () => {
@@ -464,11 +471,16 @@ export const useFactStore = create<FactState>()(
                 get().addIdleDays(payment.construction, 1)
               }
               
-              return {
+              const updatedPayment = {
                 ...payment,
                 issued: issuedMoney,
                 procent: newProcent
               }
+              
+              // Добавляем в историю
+              get().addToHistory(updatedPayment)
+              
+              return updatedPayment
             }
             return payment
           })
@@ -539,6 +551,7 @@ export const useFactStore = create<FactState>()(
           currentPeriodIndex: 0,
           paymentSchedule: [],
           fundingPlan: [],
+          history: [],
           piggyBank: 0,
           planningRemainder: 0,
           constructionDurationModifications: {}
@@ -547,11 +560,25 @@ export const useFactStore = create<FactState>()(
 
 
       recalculatePaymentSchedule: () => {
-        const { selectedOptions, periods } = get()
-        const paymentSchedule: PaymentScheduleItem[] = []
+        const { selectedOptions, periods, currentPeriodIndex, paymentSchedule, history } = get()
         
-        // Создаем новый график выплат с учетом рисков
-        let currentDay = 1
+        // Находим текущий период
+        const currentPeriod = periods[currentPeriodIndex]
+        if (!currentPeriod) {
+          console.log('❌ Текущий период не найден')
+          return
+        }
+        
+        const startDay = currentPeriod.startDay
+        console.log(`📊 Пересчет графика выплат с дня ${startDay} (период ${currentPeriodIndex + 1})`)
+        
+        // Сохраняем все записи до дня начала периода
+        const preservedPayments = paymentSchedule.filter(payment => payment.dayIndex < startDay)
+        
+        // Создаем новый график начиная с дня начала периода
+        const newPayments: PaymentScheduleItem[] = []
+        let currentDay = startDay
+        
         Object.entries(selectedOptions).forEach(([constructionType, option]) => {
           if (option) {
             // Находим риски, которые влияют на эту конструкцию
@@ -576,12 +603,12 @@ export const useFactStore = create<FactState>()(
             // Распределяем стоимость по дням
             const dailyAmount = overallPrice / overallDuration
             for (let i = 0; i < overallDuration; i++) {
-              paymentSchedule.push({
+              newPayments.push({
                 dayIndex: currentDay + i,
                 amount: Math.ceil(dailyAmount),
                 issued: null,
                 construction: constructionType,
-                procent: 0, // issued = null, значит процент только 0
+                procent: 0,
                 overallPrice: overallPrice,
                 overallDuration: overallDuration
               })
@@ -590,10 +617,23 @@ export const useFactStore = create<FactState>()(
           }
         })
         
-        console.log(`📊 График выплат пересчитан с учетом рисков: ${paymentSchedule.length} дней | Общая сумма: ${paymentSchedule.reduce((sum, p) => sum + p.amount, 0)} руб.`)
+        // Объединяем сохраненные и новые записи
+        let updatedPaymentSchedule = [...preservedPayments, ...newPayments]
         
-        // Сохраняем историю issued значений
-        const updatedPaymentSchedule = get().preserveIssuedHistory(paymentSchedule)
+        // Восстанавливаем данные из истории
+        const historyMap = new Map<number, PaymentScheduleItem>()
+        history.forEach(day => {
+          historyMap.set(day.dayIndex, day)
+        })
+        
+        // Заменяем записи в paymentSchedule на записи из истории
+        updatedPaymentSchedule = updatedPaymentSchedule.map(payment => {
+          const historyDay = historyMap.get(payment.dayIndex)
+          return historyDay || payment
+        })
+        
+        console.log(`📊 График выплат пересчитан: сохранено ${preservedPayments.length} записей, добавлено ${newPayments.length} новых`)
+        console.log(`🔄 Восстановлено из истории: ${historyMap.size} записей`)
         set({ paymentSchedule: updatedPaymentSchedule })
       },
 
@@ -676,6 +716,9 @@ export const useFactStore = create<FactState>()(
         // Сохраняем историю issued значений
         const updatedPaymentSchedule = get().preserveIssuedHistory(newPaymentSchedule)
         set({ paymentSchedule: updatedPaymentSchedule })
+        
+        // Восстанавливаем данные из истории
+        get().restoreFromHistory()
       },
 
       recalculateFundingPlanForAlternative: (affectedElement: string, additionalDuration: number) => {
@@ -781,6 +824,39 @@ export const useFactStore = create<FactState>()(
 
         console.log(`⏸️ Добавлено ${idleDays} дней простоя для ${constructionType} (дни ${lastDay + 1}-${lastDay + idleDays})`)
         set({ paymentSchedule: newPaymentSchedule })
+        
+        // Восстанавливаем данные из истории
+        get().restoreFromHistory()
+      },
+
+      addToHistory: (day: PaymentScheduleItem) => {
+        set((state) => {
+          // Удаляем старую запись с таким же dayIndex если есть
+          const filteredHistory = state.history.filter(h => h.dayIndex !== day.dayIndex)
+          return {
+            history: [...filteredHistory, day]
+          }
+        })
+        console.log(`📝 Добавлено в историю: день ${day.dayIndex}`)
+      },
+
+      restoreFromHistory: () => {
+        const { paymentSchedule, history } = get()
+        
+        // Создаем карту истории по dayIndex
+        const historyMap = new Map<number, PaymentScheduleItem>()
+        history.forEach(day => {
+          historyMap.set(day.dayIndex, day)
+        })
+        
+        // Заменяем записи в paymentSchedule на записи из истории
+        const restoredPaymentSchedule = paymentSchedule.map(payment => {
+          const historyDay = historyMap.get(payment.dayIndex)
+          return historyDay || payment
+        })
+        
+        console.log(`🔄 Восстановлено из истории: ${historyMap.size} записей`)
+        set({ paymentSchedule: restoredPaymentSchedule })
       }
     }),
     {
