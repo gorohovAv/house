@@ -604,7 +604,6 @@ export const useFactStore = create<FactState>()(
 
       recalculatePaymentScheduleForAlternative: (affectedElement: string, additionalDuration: number) => {
         const { selectedOptions, paymentSchedule } = get()
-        const newPaymentSchedule = [...paymentSchedule]
         
         // Находим конструкцию, на которую влияет риск
         const affectedOption = Object.values(selectedOptions).find(option => 
@@ -629,61 +628,65 @@ export const useFactStore = create<FactState>()(
           }
         }
         
-        // Удаляем старые записи для этой конструкции
-        const filteredSchedule = newPaymentSchedule.filter(payment => 
-          payment.dayIndex < constructionStartDay || payment.dayIndex > constructionEndDay
-        )
-        
-        // Добавляем новые записи с увеличенной длительностью
-        const dailyAmount = affectedOption.cost / (affectedOption.duration + additionalDuration)
-        for (let i = 0; i < affectedOption.duration + additionalDuration; i++) {
-          filteredSchedule.push({
-            dayIndex: constructionStartDay + i,
-            amount: Math.ceil(dailyAmount)
-          })
-        }
-        
-        // Сортируем по дням
-        filteredSchedule.sort((a, b) => a.dayIndex - b.dayIndex)
-        
-        console.log(`📊 График выплат пересчитан для альтернативы: +${additionalDuration} дней для ${affectedElement}`)
-        set({ paymentSchedule: filteredSchedule })
-      },
-
-      recalculateFundingPlanForAlternative: (affectedElement: string, additionalDuration: number) => {
-        const { selectedOptions, fundingPlan } = get()
-        const newFundingPlan = [...fundingPlan]
-        
-        // Находим конструкцию, на которую влияет риск
-        const affectedOption = Object.values(selectedOptions).find(option => 
-          option && option.constructionType === affectedElement
-        )
-        
-        if (!affectedOption) return
-        
-        // Находим день начала строительства этой конструкции
-        let currentDay = 1
-        let constructionStartDay = 0
+        // Создаем новый график выплат
+        const newPaymentSchedule: PaymentScheduleItem[] = []
+        let newCurrentDay = 1
         
         for (const [type, option] of Object.entries(selectedOptions)) {
           if (option) {
+            let constructionDuration = option.duration
+            let constructionCost = option.cost
+            
+            // Если это затронутая конструкция, увеличиваем длительность
             if (type === affectedElement) {
-              constructionStartDay = currentDay
-              break
+              constructionDuration += additionalDuration
             }
-            currentDay += option.duration
+            
+            // Добавляем записи для этой конструкции
+            const dailyAmount = constructionCost / constructionDuration
+            for (let i = 0; i < constructionDuration; i++) {
+              newPaymentSchedule.push({
+                dayIndex: newCurrentDay + i,
+                amount: Math.ceil(dailyAmount)
+              })
+            }
+            
+            newCurrentDay += constructionDuration
           }
         }
         
-        // Обновляем план финансирования - сумма остается той же, но длительность увеличивается
-        const updatedFundingPlan = newFundingPlan.map(funding => 
-          funding.dayIndex === constructionStartDay 
-            ? { ...funding, amount: affectedOption.cost }
-            : funding
-        )
+        console.log(`📊 График выплат пересчитан для альтернативы: +${additionalDuration} дней для ${affectedElement}`)
+        set({ paymentSchedule: newPaymentSchedule })
+      },
+
+      recalculateFundingPlanForAlternative: (affectedElement: string, additionalDuration: number) => {
+        const { selectedOptions } = get()
+        
+        // Создаем новый план финансирования
+        const newFundingPlan: FundingPlanItem[] = []
+        let newCurrentDay = 1
+        
+        for (const [type, option] of Object.entries(selectedOptions)) {
+          if (option) {
+            let constructionDuration = option.duration
+            
+            // Если это затронутая конструкция, увеличиваем длительность
+            if (type === affectedElement) {
+              constructionDuration += additionalDuration
+            }
+            
+            // Финансирование поступает в первый день строительства
+            newFundingPlan.push({
+              dayIndex: newCurrentDay,
+              amount: option.cost
+            })
+            
+            newCurrentDay += constructionDuration
+          }
+        }
         
         console.log(`💰 План финансирования пересчитан для альтернативы: ${affectedElement} +${additionalDuration} дней`)
-        set({ fundingPlan: updatedFundingPlan })
+        set({ fundingPlan: newFundingPlan })
       }
     }),
     {
