@@ -67,6 +67,7 @@ export interface FactState {
   preserveIssuedHistory: (newPaymentSchedule: PaymentScheduleItem[]) => PaymentScheduleItem[]
   getModifiedDuration: (constructionType: string) => number
   addDurationModification: (constructionType: string, additionalDuration: number) => void
+  addIdleDays: (constructionType: string, idleDays: number) => void
 }
 
 export const useFactStore = create<FactState>()(
@@ -352,13 +353,12 @@ export const useFactStore = create<FactState>()(
             const dailyAmount = overallPrice / overallDuration
             
             for (let i = 0; i < overallDuration; i++) {
-              const procent = Math.round((i / overallDuration) * 100)
               paymentSchedule.push({
                 dayIndex: currentDay + i,
                 amount: Math.ceil(dailyAmount),
                 issued: null,
                 construction: constructionType,
-                procent: procent,
+                procent: 0, // issued = null, значит процент только 0
                 overallPrice: overallPrice,
                 overallDuration: overallDuration
               })
@@ -435,9 +435,39 @@ export const useFactStore = create<FactState>()(
                 console.log(`💸 СПИСАНИЕ С КУБЫШКИ: -${issuedMoney} руб. (день ${day})`)
               }
               
+              // Рассчитываем процент только если есть выдача денег
+              let newProcent = 0
+              if (issuedMoney > 0) {
+                // Находим текущий день строительства для этой конструкции
+                const constructionPayments = state.paymentSchedule
+                  .filter(p => p.construction === payment.construction && p.dayIndex <= day)
+                  .sort((a, b) => a.dayIndex - b.dayIndex)
+                
+                const currentDayInConstruction = constructionPayments.length
+                newProcent = Math.round((currentDayInConstruction / payment.overallDuration) * 100)
+                console.log(`📈 ПРОГРЕСС: день ${currentDayInConstruction}/${payment.overallDuration} = ${newProcent}% (конструкция ${payment.construction})`)
+              } else if (issuedMoney === 0) {
+                // Простой - сохраняем предыдущий процент
+                const constructionPayments = state.paymentSchedule
+                  .filter(p => p.construction === payment.construction && p.dayIndex < day)
+                  .sort((a, b) => b.dayIndex - a.dayIndex)
+                
+                if (constructionPayments.length > 0) {
+                  const lastPayment = constructionPayments[0]
+                  if (lastPayment.issued !== null) {
+                    newProcent = lastPayment.procent
+                    console.log(`⏸️ ПРОСТОЙ: процент сохранен ${newProcent}% (конструкция ${payment.construction})`)
+                  }
+                }
+                
+                // Добавляем день простоя для недостроенной конструкции
+                get().addIdleDays(payment.construction, 1)
+              }
+              
               return {
                 ...payment,
-                issued: issuedMoney
+                issued: issuedMoney,
+                procent: newProcent
               }
             }
             return payment
@@ -546,13 +576,12 @@ export const useFactStore = create<FactState>()(
             // Распределяем стоимость по дням
             const dailyAmount = overallPrice / overallDuration
             for (let i = 0; i < overallDuration; i++) {
-              const procent = Math.round((i / overallDuration) * 100)
               paymentSchedule.push({
                 dayIndex: currentDay + i,
                 amount: Math.ceil(dailyAmount),
                 issued: null,
                 construction: constructionType,
-                procent: procent,
+                procent: 0, // issued = null, значит процент только 0
                 overallPrice: overallPrice,
                 overallDuration: overallDuration
               })
@@ -627,13 +656,12 @@ export const useFactStore = create<FactState>()(
             // Добавляем записи для этой конструкции
             const dailyAmount = constructionCost / constructionDuration
             for (let i = 0; i < constructionDuration; i++) {
-              const procent = Math.round((i / constructionDuration) * 100)
               newPaymentSchedule.push({
                 dayIndex: newCurrentDay + i,
                 amount: Math.ceil(dailyAmount),
                 issued: null,
                 construction: type,
-                procent: procent,
+                procent: 0, // issued = null, значит процент только 0
                 overallPrice: constructionCost,
                 overallDuration: constructionDuration
               })
@@ -720,6 +748,39 @@ export const useFactStore = create<FactState>()(
           }
         }))
         console.log(`⏱️ Модификация длительности ${constructionType}: +${additionalDuration} дней (общее: +${(get().constructionDurationModifications[constructionType] || 0) + additionalDuration})`)
+      },
+
+      addIdleDays: (constructionType: string, idleDays: number) => {
+        const { paymentSchedule, selectedOptions } = get()
+        const option = selectedOptions[constructionType]
+        if (!option) return
+
+        // Находим последний день строительства этой конструкции
+        const constructionPayments = paymentSchedule
+          .filter(p => p.construction === constructionType)
+          .sort((a, b) => b.dayIndex - a.dayIndex)
+        
+        if (constructionPayments.length === 0) return
+
+        const lastDay = constructionPayments[0].dayIndex
+        const newPaymentSchedule = [...paymentSchedule]
+
+        // Добавляем дни простоя после последнего дня строительства
+        for (let i = 1; i <= idleDays; i++) {
+          const idleDay = lastDay + i
+          newPaymentSchedule.push({
+            dayIndex: idleDay,
+            amount: 0, // В дни простоя не тратим деньги
+            issued: 0, // Простой
+            construction: constructionType,
+            procent: constructionPayments[0].procent, // Сохраняем последний процент
+            overallPrice: option.cost,
+            overallDuration: option.duration
+          })
+        }
+
+        console.log(`⏸️ Добавлено ${idleDays} дней простоя для ${constructionType} (дни ${lastDay + 1}-${lastDay + idleDays})`)
+        set({ paymentSchedule: newPaymentSchedule })
       }
     }),
     {

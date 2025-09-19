@@ -118,7 +118,6 @@ export default function ConstructionPage() {
     requestMoney,
     moveToNextPeriod,
     processDay,
-    factGraph,
     fundingPlan,
     paymentSchedule,
     planningRemainder
@@ -409,8 +408,6 @@ export default function ConstructionPage() {
                 className="btn-primary"
                 onClick={() => {
                   console.log(`🏦 КУБЫШКА ПЕРЕД СТРОИТЕЛЬСТВОМ: ${piggyBank} руб.`)
-                  const nextDay = factGraph.length + 1
-                  processDay(nextDay)
                 }}
               >
                 Строить
