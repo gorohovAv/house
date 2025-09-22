@@ -596,12 +596,8 @@ export const useFactStore = create<FactState>()(
               period.selectedSolution === 'solution' && 
               period.risk.affectedElement === constructionType
             )
-            
-            // Рассчитываем общую длительность с учетом рисков
-            const totalRiskDuration = constructionRisks.reduce((sum, period) => 
-              sum + (period.risk?.duration || 0), 0
-            )
-            const overallDuration = option.duration + totalRiskDuration
+          
+            const overallDuration = option.duration // пользователь деньгами порешал, ебаный его рот, никаких добавочных дней
             
             // Рассчитываем общую стоимость с учетом рисков
             const totalRiskCost = constructionRisks.reduce((sum, period) => 
