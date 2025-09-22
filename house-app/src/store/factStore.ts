@@ -640,7 +640,7 @@ export const useFactStore = create<FactState>()(
         const { selectedOptions, periods } = get()
         const fundingPlan: FundingPlanItem[] = []
         
-        // Создаем новый план финансирования с учетом рисков
+        // Создаем новый план финансирования БЕЗ учета рисков
         let currentDay = 1
         Object.values(selectedOptions).forEach((option) => {
           if (option) {
@@ -657,23 +657,18 @@ export const useFactStore = create<FactState>()(
             )
             const totalDuration = option.duration + totalRiskDuration
             
-            // Рассчитываем общую стоимость с учетом рисков
-            const totalRiskCost = constructionRisks.reduce((sum, period) => 
-              sum + (period.risk?.cost || 0), 0
-            )
-            const totalCost = option.cost + totalRiskCost
-            
-            // Финансирование поступает в первый день строительства
+            // План финансирования содержит ТОЛЬКО базовую стоимость конструкции
+            // Штрафы от рисков НЕ включаются в план финансирования
             fundingPlan.push({
               dayIndex: currentDay,
-              amount: totalCost
+              amount: option.cost
             })
             
             currentDay += totalDuration
           }
         })
         
-        console.log(`💰 План финансирования пересчитан с учетом рисков: ${fundingPlan.length} траншей | Общая сумма: ${fundingPlan.reduce((sum, f) => sum + f.amount, 0)} руб.`)
+        console.log(`💰 План финансирования пересчитан БЕЗ учета рисков: ${fundingPlan.length} траншей | Общая сумма: ${fundingPlan.reduce((sum, f) => sum + f.amount, 0)} руб.`)
         set({ fundingPlan })
       },
 
@@ -726,7 +721,7 @@ export const useFactStore = create<FactState>()(
         // Сохраняем модификацию длительности
         addDurationModification(affectedElement, additionalDuration)
         
-        // Создаем новый план финансирования
+        // Создаем новый план финансирования БЕЗ учета рисков
         const newFundingPlan: FundingPlanItem[] = []
         let newCurrentDay = 1
         
@@ -735,6 +730,7 @@ export const useFactStore = create<FactState>()(
             const constructionDuration = getModifiedDuration(type)
             
             // Финансирование поступает в первый день строительства
+            // План финансирования содержит ТОЛЬКО базовую стоимость конструкции
             newFundingPlan.push({
               dayIndex: newCurrentDay,
               amount: option.cost
@@ -744,7 +740,7 @@ export const useFactStore = create<FactState>()(
           }
         }
         
-        console.log(`💰 План финансирования пересчитан для альтернативы: ${affectedElement} +${additionalDuration} дней`)
+        console.log(`💰 План финансирования пересчитан для альтернативы БЕЗ учета рисков: ${affectedElement} +${additionalDuration} дней`)
         set({ fundingPlan: newFundingPlan })
       },
 
