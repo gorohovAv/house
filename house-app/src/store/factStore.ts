@@ -18,9 +18,27 @@ export interface PaymentScheduleItem {
   amount: number
   issued: number | null
   construction: string | null
-  procent: number
+  payedDays: number
+  requiredDays: number
   overallPrice: number
   overallDuration: number
+}
+
+export interface ConstructionPaymentItem {
+  dayIndex: number
+  amount: number
+  issued: number | null
+  payedDays: number
+  requiredDays: number
+  overallPrice: number
+  overallDuration: number
+}
+
+export interface PaymentScheduleDividedItem {
+  constructionType: string
+  days: ConstructionPaymentItem[]
+  isCompleted: boolean
+  isStarted: boolean
 }
 
 export interface FundingPlanItem {
@@ -36,6 +54,7 @@ export interface FactState {
   periods: Period[]
   currentPeriodIndex: number
   paymentSchedule: PaymentScheduleItem[]
+  paymentScheduleDivided: PaymentScheduleDividedItem[]
   fundingPlan: FundingPlanItem[]
   history: PaymentScheduleItem[]
   piggyBank: number
@@ -71,6 +90,11 @@ export interface FactState {
   getModifiedDuration: (constructionType: string) => number
   addDurationModification: (constructionType: string, additionalDuration: number) => void
   addIdleDays: (constructionType: string, idleDays: number) => void
+  generatePaymentScheduleDivided: () => void
+  buildPaymentScheduleFromDivided: () => void
+  updateConstructionStatus: (constructionType: string, isStarted?: boolean, isCompleted?: boolean) => void
+  processDayDivided: (day: number) => void
+  recalculateDayIndexes: () => void
 }
 
 export const useFactStore = create<FactState>()(
@@ -82,6 +106,7 @@ export const useFactStore = create<FactState>()(
       periods: [],
       currentPeriodIndex: 0,
       paymentSchedule: [],
+      paymentScheduleDivided: [],
       fundingPlan: [],
       history: [],
       piggyBank: 0,
@@ -107,7 +132,8 @@ export const useFactStore = create<FactState>()(
         setTimeout(() => {
           get().generatePeriods()
           get().generateFundingPlan()
-          get().generatePaymentSchedule()
+          get().generatePaymentScheduleDivided()
+          get().buildPaymentScheduleFromDivided()
           
           // Автоматически назначаем риск на первый период
           const { periods, assignRandomRisk } = get()
@@ -136,7 +162,8 @@ export const useFactStore = create<FactState>()(
           
           set({ planningRemainder })
           get().generateFundingPlan()
-          get().generatePaymentSchedule()
+          get().generatePaymentScheduleDivided()
+          get().buildPaymentScheduleFromDivided()
         }, 0)
       },
       
@@ -222,7 +249,7 @@ export const useFactStore = create<FactState>()(
       },
       
       generatePeriods: () => {
-        const { getTotalDuration, getModifiedDuration, selectedOptions } = get()
+        const { getModifiedDuration, selectedOptions } = get()
         
         // Рассчитываем общую длительность с учетом всех модификаций
         let totalDuration = 0
@@ -361,7 +388,8 @@ export const useFactStore = create<FactState>()(
                 amount: Math.ceil(dailyAmount),
                 issued: null,
                 construction: constructionType,
-                procent: 0, // issued = null, значит процент только 0
+                payedDays: 0,
+                requiredDays: overallDuration,
                 overallPrice: overallPrice,
                 overallDuration: overallDuration
               })
@@ -372,9 +400,6 @@ export const useFactStore = create<FactState>()(
         
         //console.log(`📊 График выплат сгенерирован: ${paymentSchedule.length} дней | Общая сумма: ${paymentSchedule.reduce((sum, p) => sum + p.amount, 0)} руб.`)
         set({ paymentSchedule })
-        
-        // Восстанавливаем данные из истории
-        get().restoreFromHistory()
       },
 
       generateFundingPlan: () => {
@@ -399,113 +424,12 @@ export const useFactStore = create<FactState>()(
       },
 
       processDay: (day: number) => {
-        const { fundingPlan, piggyBank, paymentSchedule } = get()
-        
-        //console.log(`📅 Обработка дня ${day}`)
-        //console.log(`🏦 КУБЫШКА ДО ОПЕРАЦИЙ: ${piggyBank} руб.`)
-        
-        // Зачисляем деньги по плану финансирования
-        const dayFunding = fundingPlan.filter(funding => funding.dayIndex === day)
-        const totalIncoming = dayFunding.reduce((sum, funding) => sum + funding.amount, 0)
-        
-        if (totalIncoming > 0) {
-          //console.log(`💰 ПОСТУПЛЕНИЕ В КУБЫШКУ: +${totalIncoming} руб. (день ${day})`)
-          //console.log(`🏦 КУБЫШКА ПОСЛЕ ПОСТУПЛЕНИЯ: ${piggyBank + totalIncoming} руб.`)
-        }
-        
-        // Обновляем кубышку
-        set({ piggyBank: piggyBank + totalIncoming })
-        //console.log(`🏦 КУБЫШКА ОБНОВЛЕНА: ${piggyBank + totalIncoming} руб.`)
-        
-        // Находим записи в paymentSchedule для этого дня
-        const dayPayments = paymentSchedule.filter(payment => payment.dayIndex === day)
-        
-        if (dayPayments.length === 0) {
-          //console.log(`⚠️ Нет записей в графике выплат для дня ${day}`)
-          return
-        }
-        
-        // Обрабатываем каждую запись для этого дня
-        const currentPiggyBank = get().piggyBank
-        
-        set((state) => {
-          const newPaymentSchedule = state.paymentSchedule.map(payment => {
-            if (payment.dayIndex === day && payment.issued === null) {
-              const requiredMoney = payment.amount
-              const isIdle = currentPiggyBank < requiredMoney
-              const issuedMoney = isIdle ? 0 : requiredMoney
-              
-              //console.log(`💳 ТРЕБУЕТСЯ: ${requiredMoney} руб. | ВЫДАНО: ${issuedMoney} руб. | ПРОСТОЙ: ${isIdle ? 'ДА' : 'НЕТ'}`)
-              
-              if (issuedMoney > 0) {
-                //console.log(`💸 СПИСАНИЕ С КУБЫШКИ: -${issuedMoney} руб. (день ${day})`)
-              }
-              
-              // Рассчитываем процент только если есть выдача денег
-              let newProcent = 0
-              if (issuedMoney > 0) {
-                // Находим текущий день строительства для этой конструкции
-                const constructionPayments = state.paymentSchedule
-                  .filter(p => p.construction === payment.construction && p.dayIndex <= day)
-                  .sort((a, b) => a.dayIndex - b.dayIndex)
-                
-                const currentDayInConstruction = constructionPayments.length
-                newProcent = Math.round((currentDayInConstruction / payment.overallDuration) * 100)
-                //console.log(`📈 ПРОГРЕСС: день ${currentDayInConstruction}/${payment.overallDuration} = ${newProcent}% (конструкция ${payment.construction})`)
-              } else if (issuedMoney === 0) {
-                // Простой - сохраняем предыдущий процент
-                const constructionPayments = state.paymentSchedule
-                  .filter(p => p.construction === payment.construction && p.dayIndex < day)
-                  .sort((a, b) => b.dayIndex - a.dayIndex)
-                
-                if (constructionPayments.length > 0) {
-                  const lastPayment = constructionPayments[0]
-                  if (lastPayment.issued !== null) {
-                    newProcent = lastPayment.procent
-                    //console.log(`⏸️ ПРОСТОЙ: процент сохранен ${newProcent}% (конструкция ${payment.construction})`)
-                  }
-                }
-                
-                // Добавляем день простоя для недостроенной конструкции
-                get().addIdleDays(payment.construction, 1)
-              }
-              
-              const updatedPayment = {
-                ...payment,
-                issued: issuedMoney,
-                procent: newProcent
-              }
-              
-              // Добавляем в историю
-              get().addToHistory(updatedPayment)
-              
-              return updatedPayment
-            }
-            return payment
-          })
-          
-          // Обновляем кубышку после всех операций
-          const totalIssued = dayPayments.reduce((sum, payment) => {
-            if (payment.issued === null) {
-              const requiredMoney = payment.amount
-              const isIdle = currentPiggyBank < requiredMoney
-              const issuedMoney = isIdle ? 0 : requiredMoney
-              return sum + issuedMoney
-            }
-            return sum + payment.issued
-          }, 0)
-          
-          //console.log(`🏦 КУБЫШКА ПОСЛЕ СПИСАНИЯ: ${currentPiggyBank - totalIssued} руб.`)
-          
-          return {
-            paymentSchedule: newPaymentSchedule,
-            piggyBank: currentPiggyBank - totalIssued
-          }
-        })
+        // Используем новую логику с разделенными списками
+        get().processDayDivided(day)
       },
 
       requestMoney: (amount: number) => {
-        const { planningRemainder, piggyBank } = get()
+        const { planningRemainder } = get()
         if (amount <= planningRemainder) {
           //console.log(`🏦 КУБЫШКА ДО ЗАПРОСА: ${piggyBank} руб.`)
           //console.log(`💰 ЗАПРОС ДОПОЛНИТЕЛЬНЫХ СРЕДСТВ: +${amount} руб.`)
@@ -550,6 +474,7 @@ export const useFactStore = create<FactState>()(
           periods: [],
           currentPeriodIndex: 0,
           paymentSchedule: [],
+          paymentScheduleDivided: [],
           fundingPlan: [],
           history: [],
           piggyBank: 0,
@@ -608,7 +533,8 @@ export const useFactStore = create<FactState>()(
                 amount: Math.ceil(dailyAmount),
                 issued: null,
                 construction: constructionType,
-                procent: 0,
+                payedDays: 0,
+                requiredDays: overallDuration,
                 overallPrice: overallPrice,
                 overallDuration: overallDuration
               })
@@ -635,6 +561,9 @@ export const useFactStore = create<FactState>()(
         //console.log(`📊 График выплат пересчитан: сохранено ${preservedPayments.length} записей, добавлено ${newPayments.length} новых`)
         //console.log(`🔄 Восстановлено из истории: ${historyMap.size} записей`)
         set({ paymentSchedule: updatedPaymentSchedule })
+        
+        // Пересобираем paymentScheduleDivided
+        get().recalculateDayIndexes()
       },
 
       recalculateFundingPlan: () => {
@@ -696,7 +625,8 @@ export const useFactStore = create<FactState>()(
                 amount: Math.ceil(dailyAmount),
                 issued: null,
                 construction: type,
-                procent: 0, // issued = null, значит процент только 0
+                payedDays: 0,
+                requiredDays: constructionDuration,
                 overallPrice: constructionCost,
                 overallDuration: constructionDuration
               })
@@ -712,8 +642,8 @@ export const useFactStore = create<FactState>()(
         const updatedPaymentSchedule = get().preserveIssuedHistory(newPaymentSchedule)
         set({ paymentSchedule: updatedPaymentSchedule })
         
-        // Восстанавливаем данные из истории
-        get().restoreFromHistory()
+        // Пересобираем paymentScheduleDivided
+        get().recalculateDayIndexes()
       },
 
       recalculateFundingPlanForAlternative: (affectedElement: string, additionalDuration: number) => {
@@ -812,7 +742,8 @@ export const useFactStore = create<FactState>()(
             amount: 0, // В дни простоя не тратим деньги
             issued: 0, // Простой
             construction: constructionType,
-            procent: constructionPayments[0].procent, // Сохраняем последний процент
+            payedDays: constructionPayments[0].payedDays, // Сохраняем последний прогресс
+            requiredDays: constructionPayments[0].requiredDays,
             overallPrice: option.cost,
             overallDuration: option.duration
           })
@@ -820,39 +751,284 @@ export const useFactStore = create<FactState>()(
 
         //console.log(`⏸️ Добавлено ${idleDays} дней простоя для ${constructionType} (дни ${lastDay + 1}-${lastDay + idleDays})`)
         set({ paymentSchedule: newPaymentSchedule })
-        
-        // Восстанавливаем данные из истории
-        get().restoreFromHistory()
       },
 
       addToHistory: (day: PaymentScheduleItem) => {
         set((state) => {
-          // Удаляем старую запись с таким же dayIndex если есть
-          const filteredHistory = state.history.filter(h => h.dayIndex !== day.dayIndex)
+          // Удаляем старую запись с таким же dayIndex и construction если есть
+          const filteredHistory = state.history.filter(h => 
+            !(h.dayIndex === day.dayIndex && h.construction === day.construction)
+          )
           return {
             history: [...filteredHistory, day]
           }
         })
-        //console.log(`📝 Добавлено в историю: день ${day.dayIndex}`)
+        //console.log(`📝 Добавлено в историю: день ${day.dayIndex} конструкция ${day.construction}`)
       },
 
       restoreFromHistory: () => {
         const { paymentSchedule, history } = get()
         
-        // Создаем карту истории по dayIndex
-        const historyMap = new Map<number, PaymentScheduleItem>()
+        // Создаем карту истории по dayIndex и construction
+        const historyMap = new Map<string, PaymentScheduleItem>()
         history.forEach(day => {
-          historyMap.set(day.dayIndex, day)
+          const key = `${day.dayIndex}-${day.construction}`
+          historyMap.set(key, day)
         })
         
         // Заменяем записи в paymentSchedule на записи из истории
         const restoredPaymentSchedule = paymentSchedule.map(payment => {
-          const historyDay = historyMap.get(payment.dayIndex)
+          const key = `${payment.dayIndex}-${payment.construction}`
+          const historyDay = historyMap.get(key)
           return historyDay || payment
         })
         
         //console.log(`🔄 Восстановлено из истории: ${historyMap.size} записей`)
         set({ paymentSchedule: restoredPaymentSchedule })
+      },
+
+      generatePaymentScheduleDivided: () => {
+        const { selectedOptions, periods, getModifiedDuration } = get()
+        const paymentScheduleDivided: PaymentScheduleDividedItem[] = []
+        
+        // Создаем разделенные списки для каждой конструкции
+        let currentDay = 1
+        Object.entries(selectedOptions).forEach(([constructionType, option]) => {
+          if (option) {
+            const modifiedDuration = getModifiedDuration(constructionType)
+            
+            // Находим риски, которые влияют на эту конструкцию
+            const constructionRisks = periods.filter(period => 
+              period.risk && 
+              period.selectedSolution === 'solution' && 
+              period.risk.affectedElement === constructionType
+            )
+            
+            // Рассчитываем общую длительность с учетом рисков
+            const totalRiskDuration = constructionRisks.reduce((sum, period) => 
+              sum + (period.risk?.duration || 0), 0
+            )
+            const overallDuration = modifiedDuration + totalRiskDuration
+            
+            // Рассчитываем общую стоимость с учетом рисков
+            const totalRiskCost = constructionRisks.reduce((sum, period) => 
+              sum + (period.risk?.cost || 0), 0
+            )
+            const overallPrice = option.cost + totalRiskCost
+            
+            const dailyAmount = overallPrice / overallDuration
+            const days: ConstructionPaymentItem[] = []
+            
+            for (let i = 0; i < overallDuration; i++) {
+              days.push({
+                dayIndex: currentDay + i,
+                amount: Math.ceil(dailyAmount),
+                issued: null,
+                payedDays: 0,
+                requiredDays: overallDuration,
+                overallPrice: overallPrice,
+                overallDuration: overallDuration
+              })
+            }
+            
+            paymentScheduleDivided.push({
+              constructionType,
+              days,
+              isCompleted: false,
+              isStarted: false
+            })
+            
+            currentDay += overallDuration
+          }
+        })
+        
+        set({ paymentScheduleDivided })
+      },
+
+      buildPaymentScheduleFromDivided: () => {
+        const { paymentScheduleDivided } = get()
+        const paymentSchedule: PaymentScheduleItem[] = []
+        
+        // Собираем все дни и сортируем по исходному dayIndex
+        const allDays: Array<{day: ConstructionPaymentItem, constructionType: string}> = []
+        
+        paymentScheduleDivided.forEach(construction => {
+          construction.days.forEach(day => {
+            allDays.push({ day, constructionType: construction.constructionType })
+          })
+        })
+        
+        // Сортируем по исходному dayIndex
+        allDays.sort((a, b) => a.day.dayIndex - b.day.dayIndex)
+        
+        // Пересчитываем индексы последовательно
+        allDays.forEach((item, index) => {
+          paymentSchedule.push({
+            dayIndex: index + 1,
+            amount: item.day.amount,
+            issued: item.day.issued,
+            construction: item.constructionType,
+            payedDays: item.day.payedDays,
+            requiredDays: item.day.requiredDays,
+            overallPrice: item.day.overallPrice,
+            overallDuration: item.day.overallDuration
+          })
+        })
+        
+        set({ paymentSchedule })
+      },
+
+      updateConstructionStatus: (constructionType: string, isStarted?: boolean, isCompleted?: boolean) => {
+        set((state) => ({
+          paymentScheduleDivided: state.paymentScheduleDivided.map(construction =>
+            construction.constructionType === constructionType
+              ? {
+                  ...construction,
+                  isStarted: isStarted !== undefined ? isStarted : construction.isStarted,
+                  isCompleted: isCompleted !== undefined ? isCompleted : construction.isCompleted
+                }
+              : construction
+          )
+        }))
+      },
+
+      processDayDivided: (day: number) => {
+        const { fundingPlan, piggyBank, paymentSchedule } = get()
+        
+        // Зачисляем деньги по плану финансирования
+        const dayFunding = fundingPlan.filter(funding => funding.dayIndex === day)
+        const totalIncoming = dayFunding.reduce((sum, funding) => sum + funding.amount, 0)
+        
+        if (totalIncoming > 0) {
+          set({ piggyBank: piggyBank + totalIncoming })
+        }
+        
+        // Находим записи в paymentSchedule для этого дня
+        const dayPayments = paymentSchedule.filter(payment => payment.dayIndex === day)
+        
+        if (dayPayments.length === 0) {
+          return
+        }
+        
+        // Обрабатываем каждую запись для этого дня
+        const currentPiggyBank = get().piggyBank
+        const newPaymentSchedule = [...paymentSchedule]
+        
+        for (const payment of dayPayments) {
+          if (payment.issued === null) {
+            const requiredMoney = payment.amount
+            const isIdle = currentPiggyBank < requiredMoney
+            const issuedMoney = isIdle ? 0 : requiredMoney
+            
+            // Рассчитываем прогресс
+            let payedDays = 0
+            if (issuedMoney > 0) {
+              const constructionPayments = newPaymentSchedule
+                .filter(p => p.construction === payment.construction && p.issued !== null && p.issued > 0)
+              payedDays = constructionPayments.length + 1
+            } else if (issuedMoney === 0) {
+              const constructionPayments = newPaymentSchedule
+                .filter(p => p.construction === payment.construction && p.issued !== null && p.issued > 0)
+              payedDays = constructionPayments.length
+            }
+            
+            const updatedPayment = {
+              ...payment,
+              issued: issuedMoney,
+              payedDays: payedDays
+            }
+            
+            // Обновляем запись в массиве
+            const paymentIndex = newPaymentSchedule.findIndex(p => p.dayIndex === day && p.construction === payment.construction)
+            if (paymentIndex !== -1) {
+              newPaymentSchedule[paymentIndex] = updatedPayment
+            }
+            
+            // Если простой - добавляем следующий день для той же конструкции
+            if (isIdle) {
+              const nextDay = day + 1
+              const idlePayment = {
+                ...payment,
+                dayIndex: nextDay,
+                issued: null,
+                payedDays: payedDays
+              }
+              newPaymentSchedule.push(idlePayment)
+            }
+          }
+        }
+        
+        // Обновляем кубышку после всех операций
+        const totalIssued = dayPayments.reduce((sum, payment) => {
+          if (payment.issued === null) {
+            const requiredMoney = payment.amount
+            const isIdle = currentPiggyBank < requiredMoney
+            const issuedMoney = isIdle ? 0 : requiredMoney
+            return sum + issuedMoney
+          }
+          return sum + payment.issued
+        }, 0)
+        
+        set({
+          paymentSchedule: newPaymentSchedule,
+          piggyBank: currentPiggyBank - totalIssued
+        })
+        
+        // Пересчитываем индексы в разделенных списках
+        get().recalculateDayIndexes()
+      },
+
+      recalculateDayIndexes: () => {
+        const { paymentSchedule } = get()
+        
+        // Создаем карту дней по конструкциям
+        const constructionDays = new Map<string, ConstructionPaymentItem[]>()
+        
+        paymentSchedule.forEach(payment => {
+          if (payment.construction) {
+            if (!constructionDays.has(payment.construction)) {
+              constructionDays.set(payment.construction, [])
+            }
+            constructionDays.get(payment.construction)!.push({
+              dayIndex: payment.dayIndex,
+              amount: payment.amount,
+              issued: payment.issued,
+              payedDays: payment.payedDays,
+              requiredDays: payment.requiredDays,
+              overallPrice: payment.overallPrice,
+              overallDuration: payment.overallDuration
+            })
+          }
+        })
+        
+        // Обновляем разделенные списки
+        const newPaymentScheduleDivided: PaymentScheduleDividedItem[] = []
+        let currentDay = 1
+        
+        Object.entries(constructionDays).forEach(([constructionType, days]) => {
+          // Сортируем дни по исходному dayIndex
+          const sortedDays = days.sort((a: ConstructionPaymentItem, b: ConstructionPaymentItem) => a.dayIndex - b.dayIndex)
+          
+          // Пересчитываем индексы последовательно
+          const recalculatedDays = sortedDays.map((day: ConstructionPaymentItem, index: number) => ({
+            ...day,
+            dayIndex: currentDay + index
+          }))
+          
+          // Находим существующий статус конструкции
+          const existingConstruction = get().paymentScheduleDivided.find(c => c.constructionType === constructionType)
+          
+          newPaymentScheduleDivided.push({
+            constructionType,
+            days: recalculatedDays,
+            isCompleted: existingConstruction?.isCompleted || false,
+            isStarted: existingConstruction?.isStarted || false
+          })
+          
+          currentDay += recalculatedDays.length
+        })
+        
+        set({ paymentScheduleDivided: newPaymentScheduleDivided })
       }
     }),
     {
