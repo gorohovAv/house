@@ -432,8 +432,8 @@ export const useFactStore = create<FactState>()(
           const newPaymentSchedule = state.paymentSchedule.map(payment => {
             if (payment.dayIndex === day && payment.issued === null) {
               const requiredMoney = payment.amount
-              const issuedMoney = Math.min(requiredMoney, currentPiggyBank)
-              const isIdle = issuedMoney < requiredMoney
+              const isIdle = currentPiggyBank < requiredMoney
+              const issuedMoney = isIdle ? 0 : requiredMoney
               
               console.log(`💳 ТРЕБУЕТСЯ: ${requiredMoney} руб. | ВЫДАНО: ${issuedMoney} руб. | ПРОСТОЙ: ${isIdle ? 'ДА' : 'НЕТ'}`)
               
@@ -488,7 +488,8 @@ export const useFactStore = create<FactState>()(
           const totalIssued = dayPayments.reduce((sum, payment) => {
             if (payment.issued === null) {
               const requiredMoney = payment.amount
-              const issuedMoney = Math.min(requiredMoney, currentPiggyBank)
+              const isIdle = currentPiggyBank < requiredMoney
+              const issuedMoney = isIdle ? 0 : requiredMoney
               return sum + issuedMoney
             }
             return sum + payment.issued
