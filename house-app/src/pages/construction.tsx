@@ -308,7 +308,7 @@ export default function ConstructionPage() {
                       </div>
                       <div className="time-indicator">
                         <TimeIcon />
-                        <span>{currentRisk.duration} {getDayDeclension(currentRisk.duration)}</span>
+                        <span>0</span>
                       </div>
                     </div>
                   </div>
@@ -325,7 +325,7 @@ export default function ConstructionPage() {
                       </div>
                       <div className="time-indicator">
                         <TimeIcon />
-                        <span>+{Math.ceil(currentRisk.duration * 1.5)} {getDayDeclension(Math.ceil(currentRisk.duration * 1.5))}</span>
+                        <span>+{currentRisk.duration} {getDayDeclension(currentRisk.duration)}</span>
                       </div>
                     </div>
                   </div>

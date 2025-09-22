@@ -212,8 +212,7 @@ export const useFactStore = create<FactState>()(
             get().recalculatePaymentSchedule()
             get().recalculateFundingPlan()
           } else {
-            // Альтернатива - увеличиваем время на 50%, но без денежных штрафов
-            const additionalDuration = Math.ceil(period.risk.duration * 1.5)
+            const additionalDuration = Math.ceil(period.risk.duration)
             if (additionalDuration > 0) {
               get().recalculatePaymentScheduleForAlternative(period.risk.affectedElement, additionalDuration)
               get().recalculateFundingPlanForAlternative(period.risk.affectedElement, additionalDuration)
