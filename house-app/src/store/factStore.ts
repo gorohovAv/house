@@ -113,7 +113,7 @@ export const useFactStore = create<FactState>()(
           const { periods, assignRandomRisk } = get()
           if (periods.length > 0) {
             assignRandomRisk(periods[0].id)
-            console.log(`🎲 Риск назначен на период 1 (инициализация)`)
+            //console.log(`🎲 Риск назначен на период 1 (инициализация)`)
           }
         }, 0)
       },
@@ -194,7 +194,7 @@ export const useFactStore = create<FactState>()(
         const { periods } = get()
         const period = periods.find(p => p.id === periodId)
         
-        console.log(`🎯 Решение по риску: ${solution === 'solution' ? 'Решение' : 'Альтернатива'} | Период ${periodId}`)
+        //console.log(`🎯 Решение по риску: ${solution === 'solution' ? 'Решение' : 'Альтернатива'} | Период ${periodId}`)
         
         set((state) => ({
           periods: state.periods.map((period: Period) =>
@@ -301,7 +301,7 @@ export const useFactStore = create<FactState>()(
         })
         
         if (availableRisks.length === 0) {
-          console.log(`⚠️ Нет доступных рисков для ${currentConstructionType} (${currentConstructionStyle})`)
+          //console.log(`⚠️ Нет доступных рисков для ${currentConstructionType} (${currentConstructionStyle})`)
           return
         }
         
@@ -312,7 +312,7 @@ export const useFactStore = create<FactState>()(
                            !currentConstructionStyle || 
                            !randomRisk.affectedStyle.split(', ').map(s => s.trim()).includes(currentConstructionStyle)
         
-        console.log(`🎲 Выбран риск ${randomRisk.id} для ${currentConstructionType} (${currentConstructionStyle}) | Защита: ${isProtected ? 'ДА' : 'НЕТ'}`)
+        //console.log(`🎲 Выбран риск ${randomRisk.id} для ${currentConstructionType} (${currentConstructionStyle}) | Защита: ${isProtected ? 'ДА' : 'НЕТ'}`)
         
         set((state) => ({
           periods: state.periods.map((period: Period) =>
@@ -370,7 +370,7 @@ export const useFactStore = create<FactState>()(
           }
         })
         
-        console.log(`📊 График выплат сгенерирован: ${paymentSchedule.length} дней | Общая сумма: ${paymentSchedule.reduce((sum, p) => sum + p.amount, 0)} руб.`)
+        //console.log(`📊 График выплат сгенерирован: ${paymentSchedule.length} дней | Общая сумма: ${paymentSchedule.reduce((sum, p) => sum + p.amount, 0)} руб.`)
         set({ paymentSchedule })
         
         // Восстанавливаем данные из истории
@@ -394,34 +394,34 @@ export const useFactStore = create<FactState>()(
           }
         })
         
-        console.log(`💰 План финансирования сгенерирован: ${fundingPlan.length} траншей | Общая сумма: ${fundingPlan.reduce((sum, f) => sum + f.amount, 0)} руб.`)
+        //console.log(`💰 План финансирования сгенерирован: ${fundingPlan.length} траншей | Общая сумма: ${fundingPlan.reduce((sum, f) => sum + f.amount, 0)} руб.`)
         set({ fundingPlan })
       },
 
       processDay: (day: number) => {
         const { fundingPlan, piggyBank, paymentSchedule } = get()
         
-        console.log(`📅 Обработка дня ${day}`)
-        console.log(`🏦 КУБЫШКА ДО ОПЕРАЦИЙ: ${piggyBank} руб.`)
+        //console.log(`📅 Обработка дня ${day}`)
+        //console.log(`🏦 КУБЫШКА ДО ОПЕРАЦИЙ: ${piggyBank} руб.`)
         
         // Зачисляем деньги по плану финансирования
         const dayFunding = fundingPlan.filter(funding => funding.dayIndex === day)
         const totalIncoming = dayFunding.reduce((sum, funding) => sum + funding.amount, 0)
         
         if (totalIncoming > 0) {
-          console.log(`💰 ПОСТУПЛЕНИЕ В КУБЫШКУ: +${totalIncoming} руб. (день ${day})`)
-          console.log(`🏦 КУБЫШКА ПОСЛЕ ПОСТУПЛЕНИЯ: ${piggyBank + totalIncoming} руб.`)
+          //console.log(`💰 ПОСТУПЛЕНИЕ В КУБЫШКУ: +${totalIncoming} руб. (день ${day})`)
+          //console.log(`🏦 КУБЫШКА ПОСЛЕ ПОСТУПЛЕНИЯ: ${piggyBank + totalIncoming} руб.`)
         }
         
         // Обновляем кубышку
         set({ piggyBank: piggyBank + totalIncoming })
-        console.log(`🏦 КУБЫШКА ОБНОВЛЕНА: ${piggyBank + totalIncoming} руб.`)
+        //console.log(`🏦 КУБЫШКА ОБНОВЛЕНА: ${piggyBank + totalIncoming} руб.`)
         
         // Находим записи в paymentSchedule для этого дня
         const dayPayments = paymentSchedule.filter(payment => payment.dayIndex === day)
         
         if (dayPayments.length === 0) {
-          console.log(`⚠️ Нет записей в графике выплат для дня ${day}`)
+          //console.log(`⚠️ Нет записей в графике выплат для дня ${day}`)
           return
         }
         
@@ -435,10 +435,10 @@ export const useFactStore = create<FactState>()(
               const isIdle = currentPiggyBank < requiredMoney
               const issuedMoney = isIdle ? 0 : requiredMoney
               
-              console.log(`💳 ТРЕБУЕТСЯ: ${requiredMoney} руб. | ВЫДАНО: ${issuedMoney} руб. | ПРОСТОЙ: ${isIdle ? 'ДА' : 'НЕТ'}`)
+              //console.log(`💳 ТРЕБУЕТСЯ: ${requiredMoney} руб. | ВЫДАНО: ${issuedMoney} руб. | ПРОСТОЙ: ${isIdle ? 'ДА' : 'НЕТ'}`)
               
               if (issuedMoney > 0) {
-                console.log(`💸 СПИСАНИЕ С КУБЫШКИ: -${issuedMoney} руб. (день ${day})`)
+                //console.log(`💸 СПИСАНИЕ С КУБЫШКИ: -${issuedMoney} руб. (день ${day})`)
               }
               
               // Рассчитываем процент только если есть выдача денег
@@ -451,7 +451,7 @@ export const useFactStore = create<FactState>()(
                 
                 const currentDayInConstruction = constructionPayments.length
                 newProcent = Math.round((currentDayInConstruction / payment.overallDuration) * 100)
-                console.log(`📈 ПРОГРЕСС: день ${currentDayInConstruction}/${payment.overallDuration} = ${newProcent}% (конструкция ${payment.construction})`)
+                //console.log(`📈 ПРОГРЕСС: день ${currentDayInConstruction}/${payment.overallDuration} = ${newProcent}% (конструкция ${payment.construction})`)
               } else if (issuedMoney === 0) {
                 // Простой - сохраняем предыдущий процент
                 const constructionPayments = state.paymentSchedule
@@ -462,7 +462,7 @@ export const useFactStore = create<FactState>()(
                   const lastPayment = constructionPayments[0]
                   if (lastPayment.issued !== null) {
                     newProcent = lastPayment.procent
-                    console.log(`⏸️ ПРОСТОЙ: процент сохранен ${newProcent}% (конструкция ${payment.construction})`)
+                    //console.log(`⏸️ ПРОСТОЙ: процент сохранен ${newProcent}% (конструкция ${payment.construction})`)
                   }
                 }
                 
@@ -495,7 +495,7 @@ export const useFactStore = create<FactState>()(
             return sum + payment.issued
           }, 0)
           
-          console.log(`🏦 КУБЫШКА ПОСЛЕ СПИСАНИЯ: ${currentPiggyBank - totalIssued} руб.`)
+          //console.log(`🏦 КУБЫШКА ПОСЛЕ СПИСАНИЯ: ${currentPiggyBank - totalIssued} руб.`)
           
           return {
             paymentSchedule: newPaymentSchedule,
@@ -507,16 +507,16 @@ export const useFactStore = create<FactState>()(
       requestMoney: (amount: number) => {
         const { planningRemainder, piggyBank } = get()
         if (amount <= planningRemainder) {
-          console.log(`🏦 КУБЫШКА ДО ЗАПРОСА: ${piggyBank} руб.`)
-          console.log(`💰 ЗАПРОС ДОПОЛНИТЕЛЬНЫХ СРЕДСТВ: +${amount} руб.`)
-          console.log(`🏦 КУБЫШКА ПОСЛЕ ЗАПРОСА: ${piggyBank + amount} руб.`)
+          //console.log(`🏦 КУБЫШКА ДО ЗАПРОСА: ${piggyBank} руб.`)
+          //console.log(`💰 ЗАПРОС ДОПОЛНИТЕЛЬНЫХ СРЕДСТВ: +${amount} руб.`)
+          //console.log(`🏦 КУБЫШКА ПОСЛЕ ЗАПРОСА: ${piggyBank + amount} руб.`)
           
           set((state) => ({
             piggyBank: state.piggyBank + amount,
             planningRemainder: state.planningRemainder - amount
           }))
         } else {
-          console.log(`❌ ЗАПРОС ОТКЛОНЕН: недостаточно средств в планируемом остатке (${planningRemainder} руб.)`)
+          //console.log(`❌ ЗАПРОС ОТКЛОНЕН: недостаточно средств в планируемом остатке (${planningRemainder} руб.)`)
         }
       },
 
@@ -526,7 +526,7 @@ export const useFactStore = create<FactState>()(
         // Переходим к следующему периоду
         const nextPeriodIndex = currentPeriodIndex + 1
         
-        console.log(`🔄 Переход к периоду ${nextPeriodIndex + 1}`)
+        //console.log(`🔄 Переход к периоду ${nextPeriodIndex + 1}`)
         
         set({
           currentPeriodIndex: nextPeriodIndex
@@ -537,7 +537,7 @@ export const useFactStore = create<FactState>()(
           const nextPeriod = periods[nextPeriodIndex]
           if (nextPeriod) {
             assignRandomRisk(nextPeriod.id)
-            console.log(`🎲 Риск назначен на период ${nextPeriodIndex + 1}`)
+            //console.log(`🎲 Риск назначен на период ${nextPeriodIndex + 1}`)
           }
         }
       },
@@ -565,12 +565,12 @@ export const useFactStore = create<FactState>()(
         // Находим текущий период
         const currentPeriod = periods[currentPeriodIndex]
         if (!currentPeriod) {
-          console.log('❌ Текущий период не найден')
+          //console.log('❌ Текущий период не найден')
           return
         }
         
         const startDay = currentPeriod.startDay
-        console.log(`📊 Пересчет графика выплат с дня ${startDay} (период ${currentPeriodIndex + 1})`)
+        //console.log(`📊 Пересчет графика выплат с дня ${startDay} (период ${currentPeriodIndex + 1})`)
         
         // Сохраняем все записи до дня начала периода
         const preservedPayments = paymentSchedule.filter(payment => payment.dayIndex < startDay)
@@ -632,8 +632,8 @@ export const useFactStore = create<FactState>()(
           return historyDay || payment
         })
         
-        console.log(`📊 График выплат пересчитан: сохранено ${preservedPayments.length} записей, добавлено ${newPayments.length} новых`)
-        console.log(`🔄 Восстановлено из истории: ${historyMap.size} записей`)
+        //console.log(`📊 График выплат пересчитан: сохранено ${preservedPayments.length} записей, добавлено ${newPayments.length} новых`)
+        //console.log(`🔄 Восстановлено из истории: ${historyMap.size} записей`)
         set({ paymentSchedule: updatedPaymentSchedule })
       },
 
@@ -669,7 +669,7 @@ export const useFactStore = create<FactState>()(
           }
         })
         
-        console.log(`💰 План финансирования пересчитан БЕЗ учета рисков: ${fundingPlan.length} траншей | Общая сумма: ${fundingPlan.reduce((sum, f) => sum + f.amount, 0)} руб.`)
+        //console.log(`💰 План финансирования пересчитан БЕЗ учета рисков: ${fundingPlan.length} траншей | Общая сумма: ${fundingPlan.reduce((sum, f) => sum + f.amount, 0)} руб.`)
         set({ fundingPlan })
       },
 
@@ -706,7 +706,7 @@ export const useFactStore = create<FactState>()(
           }
         }
         
-        console.log(`📊 График выплат пересчитан для альтернативы: +${additionalDuration} дней для ${affectedElement}`)
+        //console.log(`📊 График выплат пересчитан для альтернативы: +${additionalDuration} дней для ${affectedElement}`)
         
         // Сохраняем историю issued значений
         const updatedPaymentSchedule = get().preserveIssuedHistory(newPaymentSchedule)
@@ -741,7 +741,7 @@ export const useFactStore = create<FactState>()(
           }
         }
         
-        console.log(`💰 План финансирования пересчитан для альтернативы БЕЗ учета рисков: ${affectedElement} +${additionalDuration} дней`)
+        //console.log(`💰 План финансирования пересчитан для альтернативы БЕЗ учета рисков: ${affectedElement} +${additionalDuration} дней`)
         set({ fundingPlan: newFundingPlan })
       },
 
@@ -765,7 +765,7 @@ export const useFactStore = create<FactState>()(
           return payment
         })
         
-        console.log(`📋 Сохранена история issued значений: ${issuedHistory.size} записей`)
+        //console.log(`📋 Сохранена история issued значений: ${issuedHistory.size} записей`)
         return updatedPaymentSchedule
       },
 
@@ -786,7 +786,7 @@ export const useFactStore = create<FactState>()(
             [constructionType]: (state.constructionDurationModifications[constructionType] || 0) + additionalDuration
           }
         }))
-        console.log(`⏱️ Модификация длительности ${constructionType}: +${additionalDuration} дней (общее: +${(get().constructionDurationModifications[constructionType] || 0) + additionalDuration})`)
+        //console.log(`⏱️ Модификация длительности ${constructionType}: +${additionalDuration} дней (общее: +${(get().constructionDurationModifications[constructionType] || 0) + additionalDuration})`)
       },
 
       addIdleDays: (constructionType: string, idleDays: number) => {
@@ -818,7 +818,7 @@ export const useFactStore = create<FactState>()(
           })
         }
 
-        console.log(`⏸️ Добавлено ${idleDays} дней простоя для ${constructionType} (дни ${lastDay + 1}-${lastDay + idleDays})`)
+        //console.log(`⏸️ Добавлено ${idleDays} дней простоя для ${constructionType} (дни ${lastDay + 1}-${lastDay + idleDays})`)
         set({ paymentSchedule: newPaymentSchedule })
         
         // Восстанавливаем данные из истории
@@ -833,7 +833,7 @@ export const useFactStore = create<FactState>()(
             history: [...filteredHistory, day]
           }
         })
-        console.log(`📝 Добавлено в историю: день ${day.dayIndex}`)
+        //console.log(`📝 Добавлено в историю: день ${day.dayIndex}`)
       },
 
       restoreFromHistory: () => {
@@ -851,7 +851,7 @@ export const useFactStore = create<FactState>()(
           return historyDay || payment
         })
         
-        console.log(`🔄 Восстановлено из истории: ${historyMap.size} записей`)
+        //console.log(`🔄 Восстановлено из истории: ${historyMap.size} записей`)
         set({ paymentSchedule: restoredPaymentSchedule })
       }
     }),
