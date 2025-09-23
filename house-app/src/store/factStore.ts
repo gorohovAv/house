@@ -86,6 +86,10 @@ export interface FactState {
   ) => void;
   addIdleDays: (constructionType: string, idleDays: number) => void;
   insertDayAt: (insertDay: number, newDay: PaymentScheduleItem) => void;
+  updateConstructionCost: (
+    constructionType: string,
+    additionalCost: number
+  ) => void;
 }
 
 export const useFactStore = create<FactState>()(
@@ -233,9 +237,11 @@ export const useFactStore = create<FactState>()(
         // Обрабатываем последствия выбора решения
         if (period && period.risk) {
           if (solution === "solution") {
-            // Принимаем решение - пересчитываем графики с учетом штрафов
-            // Штрафы будут размазаны по дням строительства через пересчет графиков
-            get().recalculatePaymentSchedule();
+            // Принимаем решение - обновляем стоимость дней с затронутой конструкцией
+            get().updateConstructionCost(
+              period.risk.affectedElement,
+              period.risk.cost
+            );
             get().recalculateFundingPlan();
           } else {
             const additionalDuration = Math.ceil(period.risk.duration);
@@ -1080,6 +1086,39 @@ export const useFactStore = create<FactState>()(
 
         console.log(`🔄 Восстановлено из истории: ${historyMap.size} записей`);
         set({ paymentSchedule: restoredPaymentSchedule });
+      },
+
+      updateConstructionCost: (
+        constructionType: string,
+        additionalCost: number
+      ) => {
+        const { paymentSchedule } = get();
+
+        console.log(
+          `💰 Обновление стоимости ${constructionType}: +${additionalCost} руб.`
+        );
+
+        set((state) => ({
+          paymentSchedule: state.paymentSchedule.map((payment) => {
+            if (payment.construction === constructionType) {
+              const newOverallPrice = payment.overallPrice + additionalCost;
+              const newDailyAmount = Math.floor(
+                newOverallPrice / payment.overallDuration
+              );
+
+              console.log(
+                `📊 День ${payment.dayIndex}: ${payment.amount} → ${newDailyAmount} руб.`
+              );
+
+              return {
+                ...payment,
+                amount: newDailyAmount,
+                overallPrice: newOverallPrice,
+              };
+            }
+            return payment;
+          }),
+        }));
       },
     }),
     {
