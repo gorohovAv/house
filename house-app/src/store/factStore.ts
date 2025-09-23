@@ -85,6 +85,7 @@ export interface FactState {
     additionalDuration: number
   ) => void;
   addIdleDays: (constructionType: string, idleDays: number) => void;
+  insertDayAt: (insertDay: number, newDay: PaymentScheduleItem) => void;
 }
 
 export const useFactStore = create<FactState>()(
@@ -518,6 +519,8 @@ export const useFactStore = create<FactState>()(
         // Обрабатываем каждую запись для этого дня
         const currentPiggyBank = get().piggyBank;
 
+        let constructionsNeedingIdleDay: string[] = [];
+
         set((state) => {
           const newPaymentSchedule = state.paymentSchedule.map((payment) => {
             if (payment.dayIndex === day && payment.issued === null) {
@@ -540,7 +543,7 @@ export const useFactStore = create<FactState>()(
               // Рассчитываем дни оплаты только если есть выдача денег
               let newDaysPayed = 0;
               if (issuedMoney > 0) {
-                // Находим текущий день строительства для этой конструкции
+                // Считаем количество дней строительства (включая текущий день)
                 const constructionPayments = state.paymentSchedule
                   .filter(
                     (p) =>
@@ -549,10 +552,9 @@ export const useFactStore = create<FactState>()(
                   )
                   .sort((a, b) => a.dayIndex - b.dayIndex);
 
-                const currentDayInConstruction = constructionPayments.length;
-                newDaysPayed = currentDayInConstruction;
+                newDaysPayed = constructionPayments.length;
                 console.log(
-                  `📈 ПРОГРЕСС: день ${currentDayInConstruction}/${payment.overallDuration} = ${newDaysPayed} дней оплачено (конструкция ${payment.construction})`
+                  `📈 ПРОГРЕСС: ${newDaysPayed}/${payment.overallDuration} дней оплачено (конструкция ${payment.construction})`
                 );
 
                 // Объясняем логику строительства
@@ -588,8 +590,12 @@ export const useFactStore = create<FactState>()(
                   }
                 }
 
-                // Добавляем день простоя для недостроенной конструкции
-                get().addIdleDays(payment.construction, 1);
+                // Помечаем конструкцию для добавления дня достройки
+                if (
+                  !constructionsNeedingIdleDay.includes(payment.construction)
+                ) {
+                  constructionsNeedingIdleDay.push(payment.construction);
+                }
               }
 
               const updatedPayment = {
@@ -626,6 +632,13 @@ export const useFactStore = create<FactState>()(
             piggyBank: currentPiggyBank - totalIssued,
           };
         });
+
+        // Добавляем дни достройки для конструкций с простом
+        if (constructionsNeedingIdleDay.length > 0) {
+          constructionsNeedingIdleDay.forEach((constructionType) => {
+            get().addIdleDays(constructionType, 1);
+          });
+        }
       },
 
       requestMoney: (amount: number) => {
@@ -971,6 +984,30 @@ export const useFactStore = create<FactState>()(
         );
       },
 
+      insertDayAt: (insertDay: number, newDay: PaymentScheduleItem) => {
+        const { paymentSchedule } = get();
+        const newPaymentSchedule = [...paymentSchedule];
+
+        // Сдвигаем ВСЕ дни с индексом >= insertDay на +1
+        const shiftedSchedule = newPaymentSchedule.map((payment) => {
+          if (payment.dayIndex >= insertDay) {
+            return { ...payment, dayIndex: payment.dayIndex + 1 };
+          }
+          return payment;
+        });
+
+        // Вставляем новый день
+        shiftedSchedule.push(newDay);
+
+        // Сортируем по dayIndex
+        shiftedSchedule.sort((a, b) => a.dayIndex - b.dayIndex);
+
+        console.log(
+          `📅 Вставлен день ${insertDay} для ${newDay.construction}, сдвинуты ВСЕ дни >= ${insertDay}`
+        );
+        set({ paymentSchedule: shiftedSchedule });
+      },
+
       addIdleDays: (constructionType: string, idleDays: number) => {
         const { paymentSchedule, selectedOptions } = get();
         const option = selectedOptions[constructionType];
@@ -984,32 +1021,29 @@ export const useFactStore = create<FactState>()(
         if (constructionPayments.length === 0) return;
 
         const lastDay = constructionPayments[0].dayIndex;
-        const newPaymentSchedule = [...paymentSchedule];
+        const insertDay = lastDay + 1; // Вставляем сразу после последнего дня
 
-        // Добавляем дни простоя после последнего дня строительства
-        for (let i = 1; i <= idleDays; i++) {
-          const idleDay = lastDay + i;
-          newPaymentSchedule.push({
-            dayIndex: idleDay,
-            amount: 0, // В дни простоя не тратим деньги
-            issued: 0, // Простой
-            construction: constructionType,
-            daysRequired: option.duration,
-            daysPayed: constructionPayments[0].daysPayed, // Сохраняем последнее количество оплаченных дней
-            overallPrice: option.cost,
-            overallDuration: option.duration,
-          });
-        }
+        // Используем данные из последней записи для консистентности
+        const lastPayment = constructionPayments[0];
+
+        // Создаем новый день для достройки конструкции
+        const newDay: PaymentScheduleItem = {
+          dayIndex: insertDay,
+          amount: lastPayment.amount, // Используем ту же дневную сумму
+          issued: null, // Не обработан
+          construction: constructionType,
+          daysRequired: lastPayment.daysRequired,
+          daysPayed: lastPayment.daysPayed, // Сохраняем прогресс
+          overallPrice: lastPayment.overallPrice,
+          overallDuration: lastPayment.overallDuration,
+        };
+
+        // Вставляем день с сдвигом индексов
+        get().insertDayAt(insertDay, newDay);
 
         console.log(
-          `⏸️ Добавлено ${idleDays} дней простоя для ${constructionType} (дни ${
-            lastDay + 1
-          }-${lastDay + idleDays})`
+          `⏸️ Добавлен день достройки для ${constructionType} (день ${insertDay})`
         );
-        set({ paymentSchedule: newPaymentSchedule });
-
-        // Восстанавливаем данные из истории
-        get().restoreFromHistory();
       },
 
       addToHistory: (day: PaymentScheduleItem) => {
