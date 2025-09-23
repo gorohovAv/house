@@ -146,6 +146,14 @@ export default function ConstructionPage() {
   const currentCard = mockCards[currentCardIndex];
   const currentSelection = selectedOptions[currentCard?.title] || undefined;
 
+  // Функция проверки блокировки конструкций
+  const isConstructionLocked = (constructionType: string): boolean => {
+    return paymentSchedule.some(
+      (payment) =>
+        payment.construction === constructionType && payment.issued !== null
+    );
+  };
+
   useEffect(() => {
     initializeFromPlan();
   }, [initializeFromPlan]);
@@ -451,6 +459,7 @@ export default function ConstructionPage() {
                 options={currentCard.options}
                 currentSelection={currentSelection}
                 onOptionSelect={handleOptionSelect}
+                isLocked={isConstructionLocked(currentCard.title)}
               />
             )}
 

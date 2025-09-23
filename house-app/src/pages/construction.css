@@ -62,7 +62,7 @@
 .risk-card {
   background: var(--color-button2-primary);
   border: 1px solid var(--color-secondary);
-  
+
   border-radius: 30px;
   padding: 16px;
   display: flex;
@@ -195,7 +195,7 @@
 
 .protection-card {
   background: var(--color-card);
-  border: 2px solid #4CAF50;
+  border: 2px solid #4caf50;
   border-radius: 30px;
   padding: 16px;
   display: flex;
@@ -211,7 +211,7 @@
 }
 
 .protection-indicator {
-  background: #4CAF50;
+  background: #4caf50;
   border-radius: 20px;
   padding: 10px;
   display: flex;
@@ -252,7 +252,7 @@
 }
 
 .protection-button {
-  background: #4CAF50;
+  background: #4caf50;
   color: var(--color-text);
   border: none;
   border-radius: 8px;
@@ -388,6 +388,22 @@
   background: rgba(255, 105, 16, 0.1);
 }
 
+.option-item.locked {
+  border-color: #666;
+  background: rgba(102, 102, 102, 0.1);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.option-item.locked:hover {
+  background: rgba(102, 102, 102, 0.1);
+}
+
+.locked-indicator {
+  font-size: 12px;
+  margin-left: 8px;
+}
+
 .option-text {
   font-size: 12px;
   font-weight: 700;
@@ -451,21 +467,19 @@
   background: #e55a0a;
 }
 
-
-
 @media (max-width: 375px) {
   .construction-container {
     padding: 0 12px 20px 12px;
   }
-  
+
   .header {
     padding: 16px 12px;
   }
-  
+
   .title {
     font-size: 20px;
   }
-  
+
   .period-badge {
     font-size: 12px;
     padding: 8px 12px;
