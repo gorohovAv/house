@@ -551,8 +551,12 @@ export const useFactStore = create<FactState>()(
                       p.dayIndex <= day
                   )
                   .sort((a, b) => a.dayIndex - b.dayIndex);
+                const constructionZeroPayments = constructionPayments.filter(
+                  (p) => p.issued === 0
+                );
 
-                newDaysPayed = constructionPayments.length;
+                newDaysPayed =
+                  constructionPayments.length - constructionZeroPayments.length;
                 console.log(
                   `📈 ПРОГРЕСС: ${newDaysPayed}/${payment.overallDuration} дней оплачено (конструкция ${payment.construction})`
                 );
