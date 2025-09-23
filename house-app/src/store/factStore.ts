@@ -90,6 +90,7 @@ export interface FactState {
     constructionType: string,
     additionalCost: number
   ) => void;
+  shouldContinueProcessing: (day: number) => boolean;
 }
 
 export const useFactStore = create<FactState>()(
@@ -564,7 +565,13 @@ export const useFactStore = create<FactState>()(
       },
 
       processDay: (day: number) => {
-        const { fundingPlan, piggyBank, paymentSchedule } = get();
+        const {
+          fundingPlan,
+          piggyBank,
+          paymentSchedule,
+          periods,
+          currentPeriodIndex,
+        } = get();
 
         console.log(`📅 Обработка дня ${day}`);
         console.log(`🏦 КУБЫШКА ДО ОПЕРАЦИЙ: ${piggyBank} руб.`);
@@ -597,6 +604,14 @@ export const useFactStore = create<FactState>()(
         );
 
         if (dayPayments.length === 0) {
+          // Проверяем, нужно ли продолжать обработку
+          if (get().shouldContinueProcessing(day)) {
+            console.log(
+              `📅 Продолжаем обработку после последнего периода (день ${day})`
+            );
+            return;
+          }
+
           console.log(`⚠️ Нет записей в графике выплат для дня ${day}`);
           return;
         }
@@ -749,7 +764,12 @@ export const useFactStore = create<FactState>()(
       },
 
       moveToNextPeriod: () => {
-        const { currentPeriodIndex, periods, assignRandomRisk } = get();
+        const {
+          currentPeriodIndex,
+          periods,
+          assignRandomRisk,
+          paymentSchedule,
+        } = get();
 
         // Переходим к следующему периоду
         const nextPeriodIndex = currentPeriodIndex + 1;
@@ -760,12 +780,32 @@ export const useFactStore = create<FactState>()(
           currentPeriodIndex: nextPeriodIndex,
         });
 
-        // Назначаем риск на новый период
+        // Назначаем риск на новый период только если он существует
         if (nextPeriodIndex < periods.length) {
           const nextPeriod = periods[nextPeriodIndex];
           if (nextPeriod) {
             assignRandomRisk(nextPeriod.id);
             console.log(`🎲 Риск назначен на период ${nextPeriodIndex + 1}`);
+          }
+        } else {
+          // Если это был последний период, продолжаем обработку до конца paymentSchedule
+          const maxDayInSchedule = Math.max(
+            ...paymentSchedule.map((p) => p.dayIndex)
+          );
+          console.log(
+            `📅 Последний период завершен, продолжаем обработку до дня ${maxDayInSchedule}`
+          );
+
+          // Автоматически обрабатываем все оставшиеся дни
+          const currentPeriod = periods[periods.length - 1];
+          if (currentPeriod) {
+            const startDay = currentPeriod.endDay + 1;
+            for (let day = startDay; day <= maxDayInSchedule; day++) {
+              console.log(
+                `🔄 Автоматическая обработка дня ${day} после последнего периода`
+              );
+              get().processDay(day);
+            }
           }
         }
       },
@@ -1335,6 +1375,34 @@ export const useFactStore = create<FactState>()(
             return payment;
           }),
         }));
+      },
+
+      shouldContinueProcessing: (day: number) => {
+        const { paymentSchedule, periods, currentPeriodIndex } = get();
+
+        // Находим максимальный день в paymentSchedule
+        const maxDayInSchedule = Math.max(
+          ...paymentSchedule.map((p) => p.dayIndex)
+        );
+
+        // Если день больше максимального дня в расписании, обработка не нужна
+        if (day > maxDayInSchedule) {
+          return false;
+        }
+
+        // Если это последний период и день больше или равен концу последнего периода
+        const isLastPeriod = currentPeriodIndex >= periods.length - 1;
+        if (isLastPeriod && periods.length > 0) {
+          const lastPeriod = periods[periods.length - 1];
+          if (lastPeriod && day >= lastPeriod.endDay) {
+            // Продолжаем обработку до конца paymentSchedule
+            return day <= maxDayInSchedule;
+          }
+        }
+
+        // Для обычных периодов проверяем, есть ли записи для этого дня
+        const dayPayments = paymentSchedule.filter((p) => p.dayIndex === day);
+        return dayPayments.length > 0;
       },
     }),
     {
