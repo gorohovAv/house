@@ -337,34 +337,23 @@ export const useFactStore = create<FactState>()(
           }
         }
 
-        // Фильтруем риски по условиям выпадения
+        // Берем ВСЕ риски для данного элемента конструкции
         const availableRisks = RISKS.filter((risk) => {
-          // Проверяем соответствие элемента конструкции
-          if (risk.affectedElement !== currentConstructionType) {
-            return false;
-          }
-
-          // Проверяем соответствие стиля (может быть несколько через запятую)
-          if (!currentConstructionStyle) return false;
-          const riskStyles = risk.affectedStyle
-            .split(", ")
-            .map((s) => s.trim());
-          return riskStyles.includes(currentConstructionStyle);
+          return risk.affectedElement === currentConstructionType;
         });
 
         if (availableRisks.length === 0) {
-          console.log(
-            `⚠️ Нет доступных рисков для ${currentConstructionType} (${currentConstructionStyle})`
-          );
+          console.log(`⚠️ Нет доступных рисков для ${currentConstructionType}`);
           return;
         }
 
+        // Случайно выбираем любой риск для этого элемента
         const randomRisk =
           availableRisks[Math.floor(Math.random() * availableRisks.length)];
 
         // Проверяем, защищен ли пользователь от этого риска
+        // Пользователь защищен, если стиль риска НЕ совпадает с выбранным стилем
         const isProtected =
-          randomRisk.affectedElement !== currentConstructionType ||
           !currentConstructionStyle ||
           !randomRisk.affectedStyle
             .split(", ")
