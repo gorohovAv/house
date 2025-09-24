@@ -45,7 +45,7 @@ export const ArrowRightIcon = () => (
 
 export const CupGoldIcon = () => (
   <img
-    src="/src/assets/icons/cup-gold.svg"
+    src="/src/assets/icons/сupGold.svg"
     alt="Gold Cup"
     width="48"
     height="48"
@@ -54,7 +54,7 @@ export const CupGoldIcon = () => (
 
 export const CupSilverIcon = () => (
   <img
-    src="/src/assets/icons/cup-silver.svg"
+    src="/src/assets/icons/сupSilver.svg"
     alt="Silver Cup"
     width="48"
     height="48"
@@ -63,7 +63,7 @@ export const CupSilverIcon = () => (
 
 export const CupBronzeIcon = () => (
   <img
-    src="/src/assets/icons/cup-bronze.svg"
+    src="/src/assets/icons/сupBronze.svg"
     alt="Bronze Cup"
     width="48"
     height="48"
