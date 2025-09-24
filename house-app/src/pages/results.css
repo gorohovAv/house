@@ -20,8 +20,7 @@
   left: 0;
   width: 141px;
   height: 263px;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 141 263"><path d="M0 0L141 0L141 263L0 263Z" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/></svg>')
-    no-repeat;
+  background: url("/src/assets/icons/VectorUp.svg") no-repeat;
   pointer-events: none;
 }
 
@@ -32,8 +31,7 @@
   right: 0;
   width: 141px;
   height: 263px;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 141 263"><path d="M0 0L141 0L141 263L0 263Z" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/></svg>')
-    no-repeat;
+  background: url("/src/assets/icons/VectorDown.svg") no-repeat;
   pointer-events: none;
 }
 
