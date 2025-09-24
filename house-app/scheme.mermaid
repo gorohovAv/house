@@ -1,0 +1,125 @@
+graph TB
+    subgraph "Инициализация"
+        A[initializeFromPlan] --> B[Копирует данные из planStore]
+        B --> C[Генерирует периоды]
+        C --> D[Генерирует план финансирования]
+        D --> E[Генерирует график выплат]
+        E --> F[Назначает риск на первый период]
+    end
+
+    subgraph "Управление опциями"
+        G[selectOption] --> H[Обновляет selectedOptions]
+        H --> I[Пересчитывает planningRemainder]
+        I --> J[Обновляет планы финансирования и выплат]
+        K[clearSelection] --> L[Удаляет опцию из selectedOptions]
+    end
+
+    subgraph "Генерация периодов"
+        M[generatePeriods] --> N[Рассчитывает общую длительность]
+        N --> O[Создает 5 периодов]
+        O --> P[Распределяет дни между периодами]
+    end
+
+    subgraph "Система рисков"
+        Q[assignRandomRisk] --> R[Определяет текущую конструкцию]
+        R --> S[Выбирает случайный риск]
+        S --> T[Проверяет защиту пользователя]
+        T --> U[Назначает риск периоду]
+        V[selectRiskSolution] --> W{Решение}
+        W -->|solution| X[Обновляет стоимость конструкции]
+        W -->|alternative| Y[Добавляет дни к длительности]
+        X --> Z[Пересчитывает планы]
+        Y --> Z
+    end
+
+    subgraph "Планирование финансирования"
+        AA[generateFundingPlan] --> BB[Создает транши по дням]
+        BB --> CC[Учитывает модификации длительности]
+        DD[recalculateFundingPlan] --> EE[Пересчитывает БЕЗ рисков]
+        FF[recalculateFundingPlanForAlternative] --> GG[Добавляет дни к длительности]
+    end
+
+    subgraph "График выплат"
+        HH[generatePaymentSchedule] --> II[Распределяет стоимость по дням]
+        II --> JJ[Учитывает риски и модификации]
+        JJ --> KK[Специальная логика для стен]
+        KK --> LL[Восстанавливает из истории]
+        MM[recalculatePaymentSchedule] --> NN[Сохраняет предыдущие записи]
+        NN --> OO[Создает новый график с текущего периода]
+        OO --> PP[Восстанавливает из истории]
+        QQ[recalculatePaymentScheduleForAlternative] --> RR[Добавляет модификацию длительности]
+        RR --> SS[Создает новый график]
+        SS --> TT[Сохраняет историю issued]
+    end
+
+    subgraph "Обработка дней"
+        UU[processDay] --> VV[Зачисляет деньги в кубышку]
+        VV --> WW[Находит записи для дня]
+        WW --> XX{Есть записи?}
+        XX -->|Да| YY[Обрабатывает каждую запись]
+        XX -->|Нет| ZZ[Проверяет продолжение обработки]
+        YY --> AAA{Достаточно денег?}
+        AAA -->|Да| BBB[Выдает деньги]
+        AAA -->|Нет| CCC[Простой - issued = 0]
+        BBB --> DDD[Обновляет прогресс строительства]
+        CCC --> EEE[Добавляет день достройки]
+        DDD --> FFF[Добавляет в историю]
+        EEE --> FFF
+    end
+
+    subgraph "Управление историей"
+        GGG[addToHistory] --> HHH[Сохраняет запись дня]
+        III[restoreFromHistory] --> JJJ[Восстанавливает из истории]
+        KKK[preserveIssuedHistory] --> LLL[Сохраняет issued значения]
+    end
+
+    subgraph "Модификации"
+        MMM[addDurationModification] --> NNN[Добавляет дни к конструкции]
+        OOO[addIdleDays] --> PPP[Добавляет день достройки]
+        PPP --> QQQ[insertDayAt]
+        QQQ --> RRR[Сдвигает все дни >= insertDay]
+        SSS[updateConstructionCost] --> TTT[Обновляет стоимость конструкции]
+    end
+
+    subgraph "Переходы между периодами"
+        UUU[moveToNextPeriod] --> VVV[Увеличивает currentPeriodIndex]
+        VVV --> WWW{Есть следующий период?}
+        WWW -->|Да| XXX[Назначает риск на период]
+        WWW -->|Нет| YYY[Автоматически обрабатывает оставшиеся дни]
+    end
+
+    subgraph "Дополнительные функции"
+        ZZZ[requestMoney] --> AAAA{Достаточно в planningRemainder?}
+        AAAA -->|Да| BBBB[Добавляет в кубышку]
+        AAAA -->|Нет| CCCC[Отклоняет запрос]
+        DDDD[resetFact] --> EEEE[Сбрасывает все данные]
+    end
+
+    subgraph "Вычисляемые значения"
+        FFFF[getTotalCost] --> GGGG[Сумма всех опций]
+        HHHH[getTotalDuration] --> IIII[Сумма длительностей]
+        JJJJ[getRiskCosts] --> KKKK[Сумма решенных рисков]
+        LLLL[getRiskDuration] --> MMMM[Сумма длительностей рисков]
+        NNNN[getRemainingBudget] --> OOOO[Бюджет - общая стоимость]
+        PPPP[getRemainingDuration] --> QQQQ[Длительность - общая длительность]
+        RRRR[getModifiedDuration] --> SSSS[Базовая длительность + модификации]
+    end
+
+    subgraph "Сохранение состояния"
+        TTTT[SessionStorage] --> UUUU[persist middleware]
+        UUUU --> VVVV[Автоматическое сохранение]
+    end
+
+    %% Связи между основными блоками
+    A --> M
+    A --> AA
+    A --> HH
+    G --> AA
+    G --> HH
+    Q --> V
+    V --> MM
+    V --> DD
+    UU --> GGG
+    UU --> MMM
+    UUU --> Q
+    UUU --> UU

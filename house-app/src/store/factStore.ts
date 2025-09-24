@@ -243,7 +243,7 @@ export const useFactStore = create<FactState>()(
               period.risk.affectedElement,
               period.risk.cost
             );
-            get().recalculateFundingPlan();
+            //get().recalculateFundingPlan();
           } else {
             const additionalDuration = Math.ceil(period.risk.duration);
             if (additionalDuration > 0) {
@@ -251,10 +251,10 @@ export const useFactStore = create<FactState>()(
                 period.risk.affectedElement,
                 additionalDuration
               );
-              get().recalculateFundingPlanForAlternative(
-                period.risk.affectedElement,
-                additionalDuration
-              );
+              //get().recalculateFundingPlanForAlternative(
+              //  period.risk.affectedElement,
+              //  additionalDuration
+              //);
             }
           }
         }
