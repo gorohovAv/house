@@ -42,6 +42,41 @@
   color: var(--color-text);
 }
 
+.completion-card {
+  background: var(--color-button2-primary);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.completion-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.completion-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.completion-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.completion-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.5;
+  margin: 0;
+}
+
 .construction-container {
   flex: 1;
   display: flex;

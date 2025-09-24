@@ -1,11 +1,12 @@
-import { Routes, Route } from 'react-router-dom'
-import { TourProvider } from './components/TourProvider'
-import TourOverlay from './components/TourOverlay'
-import OnboardingPage from './pages/onboarding'
-import HousePage from './pages/house'
-import AnalyticsPage from './pages/analytics'
-import ConstructionPage from './pages/construction'
-import './App.css'
+import { Routes, Route } from "react-router-dom";
+import { TourProvider } from "./components/TourProvider";
+import TourOverlay from "./components/TourOverlay";
+import OnboardingPage from "./pages/onboarding";
+import HousePage from "./pages/house";
+import AnalyticsPage from "./pages/analytics";
+import ConstructionPage from "./pages/construction";
+import ResultsPage from "./pages/results";
+import "./App.css";
 
 function App() {
   return (
@@ -16,10 +17,11 @@ function App() {
           <Route path="/plan" element={<HousePage />} />
           <Route path="/construction" element={<ConstructionPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/results" element={<ResultsPage />} />
         </Routes>
       </TourOverlay>
     </TourProvider>
-  )
+  );
 }
 
-export default App
+export default App;

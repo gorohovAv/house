@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./construction.css";
 import { useFactStore } from "../store/factStore";
 import { usePlanStore } from "../store/store";
@@ -117,6 +118,7 @@ const mockCards = getCardsFromConstants();
 export default function ConstructionPage() {
   const [roofType, setRoofType] = useState<string>("");
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const navigate = useNavigate();
 
   const {
     selectedOptions,
@@ -146,6 +148,9 @@ export default function ConstructionPage() {
   const currentCard = mockCards[currentCardIndex];
   const currentSelection = selectedOptions[currentCard?.title] || undefined;
 
+  // Проверяем, завершены ли все периоды
+  const isAllPeriodsCompleted = currentPeriodIndex >= periods.length;
+
   // Функция проверки блокировки конструкций
   const isConstructionLocked = (constructionType: string): boolean => {
     return paymentSchedule.some(
@@ -157,6 +162,17 @@ export default function ConstructionPage() {
   useEffect(() => {
     initializeFromPlan();
   }, [initializeFromPlan]);
+
+  // Переход на страницу результатов после завершения всех периодов
+  useEffect(() => {
+    if (isAllPeriodsCompleted) {
+      const timer = setTimeout(() => {
+        navigate("/results");
+      }, 2000); // Небольшая задержка для показа финального состояния
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAllPeriodsCompleted, navigate]);
 
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
@@ -263,11 +279,26 @@ export default function ConstructionPage() {
       <div className="construction-scroll-container">
         <div className="header">
           <h1 className="title">Строительство</h1>
-          <div className="period-badge">Период {currentPeriodIndex + 1}</div>
+          <div className="period-badge">
+            {isAllPeriodsCompleted
+              ? "Завершено"
+              : `Период ${currentPeriodIndex + 1}`}
+          </div>
         </div>
 
         <div className="construction-container">
-          {currentRisk ? (
+          {isAllPeriodsCompleted ? (
+            <div className="completion-card">
+              <div className="completion-content">
+                <div className="completion-icon">🏠</div>
+                <div className="completion-title">Строительство завершено!</div>
+                <div className="completion-text">
+                  Поздравляем! Вы успешно построили свой дом. Переходим к
+                  результатам...
+                </div>
+              </div>
+            </div>
+          ) : currentRisk ? (
             currentPeriod?.isProtected ? (
               <div className="protection-card">
                 <div className="protection-header">
