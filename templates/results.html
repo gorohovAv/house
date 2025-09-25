@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Результаты строительства</title>
+    <title>Рейтинг</title>
     <style>
       * {
         margin: 0;
@@ -12,204 +12,159 @@
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: "Inter", sans-serif;
+        background: linear-gradient(
+          -65deg,
+          rgba(0, 34, 70, 1) 0%,
+          rgba(0, 84, 172, 1) 100%
+        );
         min-height: 100vh;
-        padding: 20px;
-      }
-
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-      }
-
-      .header {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
-        padding: 30px;
-        text-align: center;
-      }
-
-      .header h1 {
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-        font-weight: 700;
-      }
-
-      .header p {
-        font-size: 1.1rem;
-        opacity: 0.9;
-      }
-
-      .stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        padding: 30px;
-        background: #f8f9fa;
-      }
-
-      .stat-card {
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        text-align: center;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        transition: transform 0.3s ease;
-      }
-
-      .stat-card:hover {
-        transform: translateY(-5px);
-      }
-
-      .stat-number {
-        font-size: 2rem;
-        font-weight: bold;
-        color: #4facfe;
-        margin-bottom: 5px;
-      }
-
-      .stat-label {
-        color: #666;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-
-      .results-section {
-        padding: 30px;
-      }
-
-      .section-title {
-        font-size: 1.8rem;
-        margin-bottom: 25px;
-        color: #333;
-        text-align: center;
-      }
-
-      .results-list {
-        display: grid;
-        gap: 20px;
-      }
-
-      .result-card {
-        background: white;
-        border: 2px solid #e9ecef;
-        border-radius: 15px;
-        padding: 25px;
-        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0;
         position: relative;
         overflow: hidden;
       }
 
-      .result-card:hover {
-        border-color: #4facfe;
-        box-shadow: 0 10px 30px rgba(79, 172, 254, 0.2);
-        transform: translateY(-2px);
-      }
-
-      .result-card::before {
+      body::before {
         content: "";
         position: absolute;
-        top: 0;
+        top: 50px;
         left: 0;
+        width: 200px;
+        height: 300px;
+        background: url("data:image/svg+xml,%3Csvg width='200' height='300' viewBox='0 0 200 300' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100 0L200 100L100 200L0 100L100 0Z' fill='%23FF6910' fill-opacity='0.1'/%3E%3Cpath d='M100 100L200 200L100 300L0 200L100 100Z' fill='%23FF6910' fill-opacity='0.1'/%3E%3C/svg%3E")
+          no-repeat;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      body::after {
+        content: "";
+        position: absolute;
+        bottom: 50px;
         right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #4facfe, #00f2fe);
+        width: 200px;
+        height: 300px;
+        background: url("data:image/svg+xml,%3Csvg width='200' height='300' viewBox='0 0 200 300' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100 0L200 100L100 200L0 100L100 0Z' fill='%23FF6910' fill-opacity='0.1'/%3E%3Cpath d='M100 100L200 200L100 300L0 200L100 100Z' fill='%23FF6910' fill-opacity='0.1'/%3E%3C/svg%3E")
+          no-repeat;
+        pointer-events: none;
+        z-index: 0;
       }
 
-      .result-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-
-      .result-name {
-        font-size: 1.4rem;
-        font-weight: 600;
-        color: #333;
-      }
-
-      .result-rank {
-        background: linear-gradient(135deg, #4facfe, #00f2fe);
-        color: white;
-        padding: 8px 16px;
+      .results-container {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        background: rgba(0, 34, 70, 0.9);
         border-radius: 20px;
-        font-weight: bold;
-        font-size: 0.9rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
       }
 
-      .result-details {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
-      }
-
-      .detail-item {
-        text-align: center;
-      }
-
-      .detail-label {
-        font-size: 0.8rem;
-        color: #666;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 5px;
-      }
-
-      .detail-value {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #333;
-      }
-
-      .detail-value.positive {
-        color: #28a745;
-      }
-
-      .detail-value.negative {
-        color: #dc3545;
-      }
-
-      .detail-value.neutral {
-        color: #6c757d;
-      }
-
-      .differences {
+      .results-header {
+        width: 100%;
+        padding: 16px 0;
         display: flex;
-        justify-content: space-around;
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
-        margin-top: 15px;
+        justify-content: center;
+        border-bottom: 1px solid #d3d4d7;
       }
 
-      .difference-item {
+      .results-title {
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        font-size: 36px;
+        font-weight: 700;
+        line-height: 1.14;
+        margin: 0;
         text-align: center;
       }
 
-      .difference-label {
-        font-size: 0.8rem;
-        color: #666;
-        margin-bottom: 5px;
+      .results-content {
+        flex: 1;
+        width: 100%;
+        padding: 0 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
       }
 
-      .difference-value {
-        font-size: 1.2rem;
-        font-weight: bold;
+      .results-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 16px;
+        height: 48px;
+        border-radius: 16px;
+        background: transparent;
+        transition: background-color 0.2s ease;
+      }
+
+      .results-item-current {
+        background: #ff6910;
+        border-radius: 16px;
+      }
+
+      .results-item-last {
+        border-radius: 16px;
+      }
+
+      .results-position {
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.2;
+        min-width: 32px;
+        text-align: center;
+      }
+
+      .results-icon {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .results-name {
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.2;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .results-divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 48px;
+        padding: 0 16px;
+        border-top: 1px solid #2965a5;
+        border-bottom: 1px solid #2965a5;
+      }
+
+      .results-divider span {
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.2;
       }
 
       .no-results {
         text-align: center;
         padding: 60px 20px;
-        color: #666;
+        color: #fff;
       }
 
       .no-results h3 {
@@ -217,143 +172,109 @@
         margin-bottom: 10px;
       }
 
-      .api-info {
-        background: #e3f2fd;
-        padding: 20px;
-        margin: 20px 30px;
-        border-radius: 10px;
-        border-left: 4px solid #2196f3;
+      /* Иконки для позиций */
+      .trophy-gold {
+        width: 48px;
+        height: 48px;
+        background: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M24 4L30 16H42L32 24L36 36L24 30L12 36L16 24L6 16H18L24 4Z' fill='%23FFD700'/%3E%3C/svg%3E")
+          no-repeat center;
+        background-size: contain;
       }
 
-      .api-info h4 {
-        color: #1976d2;
-        margin-bottom: 10px;
+      .trophy-silver {
+        width: 48px;
+        height: 48px;
+        background: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M24 4L30 16H42L32 24L36 36L24 30L12 36L16 24L6 16H18L24 4Z' fill='%23C0C0C0'/%3E%3C/svg%3E")
+          no-repeat center;
+        background-size: contain;
       }
 
-      .api-endpoint {
-        background: #f5f5f5;
-        padding: 10px;
-        border-radius: 5px;
-        font-family: monospace;
-        margin: 5px 0;
-        font-size: 0.9rem;
+      .trophy-bronze {
+        width: 48px;
+        height: 48px;
+        background: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M24 4L30 16H42L32 24L36 36L24 30L12 36L16 24L6 16H18L24 4Z' fill='%23CD7F32'/%3E%3C/svg%3E")
+          no-repeat center;
+        background-size: contain;
       }
 
+      .medal {
+        width: 48px;
+        height: 48px;
+        background: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='24' cy='24' r='20' fill='%23FF6910'/%3E%3C/svg%3E")
+          no-repeat center;
+        background-size: contain;
+      }
+
+      /* Адаптивность для мобильных устройств */
       @media (max-width: 768px) {
-        .container {
+        .results-container {
           margin: 10px;
           border-radius: 15px;
         }
 
-        .header h1 {
-          font-size: 2rem;
+        .results-content {
+          padding: 0 8px;
         }
 
-        .result-header {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 10px;
+        .results-item {
+          padding: 0 8px;
         }
+      }
 
-        .result-details {
-          grid-template-columns: repeat(2, 1fr);
+      @media (min-width: 769px) {
+        .results-container {
+          max-width: 1000px;
         }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="header">
-        <h1>🏗️ Результаты строительства</h1>
-        <p>Анализ эффективности проектов</p>
+    <div class="results-container">
+      <div class="results-header">
+        <h1 class="results-title">Рейтинг</h1>
       </div>
 
       {{if .results}}
-      <div class="stats">
-        <div class="stat-card">
-          <div class="stat-number">{{len .results}}</div>
-          <div class="stat-label">Всего проектов</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">{{index .results 0 | .CostDifference}}</div>
-          <div class="stat-label">Лучшая экономия (₽)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">
-            {{index .results (sub (len .results) 1) | .CostDifference}}
+      <div class="results-content">
+        {{range $index, $result := .results}}
+        <div class="results-item {{if eq $index 0}}results-item-current{{end}}">
+          <span class="results-position">{{add $index 1}}</span>
+          <div class="results-icon">
+            {{if eq $index 0}}
+            <div class="trophy-gold"></div>
+            {{else if eq $index 1}}
+            <div class="trophy-silver"></div>
+            {{else if eq $index 2}}
+            <div class="trophy-bronze"></div>
+            {{else}}
+            <div class="medal"></div>
+            {{end}}
           </div>
-          <div class="stat-label">Худшая экономия (₽)</div>
+          <span class="results-name">{{$result.Name}}</span>
         </div>
+        {{end}} {{if gt (len .results) 10}}
+        <div class="results-divider">
+          <span>...</span>
+        </div>
+
+        <div class="results-item results-item-last">
+          <span class="results-position">{{len .results}}</span>
+          <div class="results-icon">
+            <div class="medal"></div>
+          </div>
+          <span class="results-name"
+            >{{index .results (sub (len .results) 1) | .Name}}</span
+          >
+        </div>
+        {{end}}
       </div>
 
-      <div class="results-section">
-        <h2 class="section-title">Рейтинг проектов</h2>
-        <div class="results-list">
-          {{range $index, $result := .results}}
-          <div class="result-card">
-            <div class="result-header">
-              <div class="result-name">{{$result.Name}}</div>
-              <div class="result-rank">#{{add $index 1}}</div>
-            </div>
-
-            <div class="result-details">
-              <div class="detail-item">
-                <div class="detail-label">План. длительность</div>
-                <div class="detail-value">{{$result.PlannedDuration}} дн.</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-label">Факт. длительность</div>
-                <div class="detail-value">{{$result.ActualDuration}} дн.</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-label">План. стоимость</div>
-                <div class="detail-value">{{$result.PlannedCost}} ₽</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-label">Факт. стоимость</div>
-                <div class="detail-value">{{$result.ActualCost}} ₽</div>
-              </div>
-            </div>
-
-            <div class="differences">
-              <div class="difference-item">
-                <div class="difference-label">Разница в стоимости</div>
-                <div
-                  class="difference-value {{if gt $result.CostDifference 0}}negative{{else if lt $result.CostDifference 0}}positive{{else}}neutral{{end}}"
-                >
-                  {{if gt $result.CostDifference
-                  0}}+{{end}}{{$result.CostDifference}} ₽
-                </div>
-              </div>
-              <div class="difference-item">
-                <div class="difference-label">Разница в длительности</div>
-                <div
-                  class="difference-value {{if gt $result.DurationDifference 0}}negative{{else if lt $result.DurationDifference 0}}positive{{else}}neutral{{end}}"
-                >
-                  {{if gt $result.DurationDifference
-                  0}}+{{end}}{{$result.DurationDifference}} дн.
-                </div>
-              </div>
-            </div>
-          </div>
-          {{end}}
-        </div>
-      </div>
       {{else}}
       <div class="no-results">
         <h3>📋 Пока нет результатов</h3>
         <p>Добавьте первый результат через API</p>
       </div>
       {{end}}
-
-      <div class="api-info">
-        <h4>🔗 API эндпоинты</h4>
-        <div class="api-endpoint">POST /api/results - Добавить результат</div>
-        <div class="api-endpoint">
-          GET /api/results - Получить все результаты (JSON)
-        </div>
-        <div class="api-endpoint">GET / - Эта страница (HTML)</div>
-      </div>
     </div>
   </body>
 </html>
