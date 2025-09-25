@@ -143,7 +143,7 @@ const ComparisonPage: React.FC = () => {
             <div className="section-header">
               <h2 className="section-title">Проект дома</h2>
             </div>
-            <div className="house-display">
+            <div className="house-display-comparison">
               <LayeredCanvas config={plannedHouseConfig} />
             </div>
             <div className="indicators-block">
@@ -170,7 +170,7 @@ const ComparisonPage: React.FC = () => {
             <div className="section-header">
               <h2 className="section-title">Итоговая постройка</h2>
             </div>
-            <div className="house-display">
+            <div className="house-display-comparison">
               <LayeredCanvas config={getActualHouseConfig()} />
             </div>
             <div className="indicators-block">

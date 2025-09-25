@@ -185,7 +185,8 @@
   min-width: 120px;
 }
 
-.option-money, .option-time {
+.option-money,
+.option-time {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -248,12 +249,11 @@
   background: var(--color-button2-secondary);
 }
 
-
 .layered-canvas {
   width: 100%;
   height: 100%;
   border-radius: 12px;
-  background: var(--color-primary);
+  /*background: var(--color-primary);*/
 }
 
 .canvas-loading {
@@ -277,8 +277,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Мобильная оптимизация */
@@ -287,21 +291,21 @@
     width: 100%;
     max-width: 288px;
   }
-  
+
   .indicators {
     width: 100%;
     max-width: 288px;
   }
-  
+
   .controls-panel {
     width: 100%;
     max-width: 100%;
   }
-  
+
   .header {
     padding: 16px 12px;
   }
-  
+
   .house-container {
     padding: 16px 12px;
   }

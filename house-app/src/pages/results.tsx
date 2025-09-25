@@ -7,6 +7,7 @@ import {
   MedalIcon,
 } from "../components/Icons";
 import type { ResultItem, ConstructionResult } from "../types/api";
+import { useOnboardingStore } from "../store/onboardingStore";
 import "./results.css";
 
 // Базовый URL API
@@ -21,6 +22,7 @@ const Results: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showCongratsModal, setShowCongratsModal] = useState(false);
   const navigate = useNavigate();
+  const { projectName } = useOnboardingStore();
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -32,12 +34,12 @@ const Results: React.FC = () => {
 
         const data: ConstructionResult[] = await response.json();
 
-        // Добавляем позицию и отмечаем текущего пользователя (последний результат)
+        // Добавляем позицию и отмечаем текущего пользователя по названию дома
         const resultsWithPosition: ResultItem[] = data.map(
           (item: ConstructionResult, index: number) => ({
             ...item,
             position: index + 1,
-            isCurrentUser: index === data.length - 1, // Последний результат - текущий пользователь
+            isCurrentUser: item.name === projectName, // Текущий пользователь определяется по названию дома
           })
         );
 
