@@ -6,14 +6,15 @@ import {
   CupBronzeIcon,
   MedalIcon,
 } from "../components/Icons";
+import type { ResultItem, ConstructionResult } from "../types/api";
 import "./results.css";
 
-interface ResultItem {
-  id: number;
-  position: number;
-  name: string;
-  isCurrentUser?: boolean;
-}
+// Базовый URL API
+const API_URL =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://localhost:8080/api"
+    : "https://scheduler-assistant.ru/api";
 
 const Results: React.FC = () => {
   const [results, setResults] = useState<ResultItem[]>([]);
@@ -21,24 +22,65 @@ const Results: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Заглушка данных для визуального теста
-    const mockResults: ResultItem[] = [
-      { id: 1, position: 1, name: "Усадьба Васнецова", isCurrentUser: true },
-      { id: 2, position: 2, name: "Домик Константинова" },
-      { id: 3, position: 3, name: "Дача Потапова" },
-      { id: 4, position: 4, name: "Строю домик" },
-      { id: 5, position: 5, name: "Лучший дом" },
-      { id: 6, position: 6, name: "Очень длинный ник не вмещается" },
-      { id: 7, position: 7, name: "Зая из рая" },
-      { id: 8, position: 8, name: "katusha_22" },
-      { id: 9, position: 185, name: "Строю дом" },
-    ];
+    const fetchResults = async () => {
+      try {
+        const response = await fetch(`${API_URL}/results`);
+        if (!response.ok) {
+          throw new Error("Ошибка при загрузке результатов");
+        }
 
-    // Имитация загрузки с бэка
-    setTimeout(() => {
-      setResults(mockResults);
-      setLoading(false);
-    }, 1000);
+        const data: ConstructionResult[] = await response.json();
+
+        // Добавляем позицию и отмечаем текущего пользователя (последний результат)
+        const resultsWithPosition: ResultItem[] = data.map(
+          (item: ConstructionResult, index: number) => ({
+            ...item,
+            position: index + 1,
+            isCurrentUser: index === data.length - 1, // Последний результат - текущий пользователь
+          })
+        );
+
+        setResults(resultsWithPosition);
+        setLoading(false);
+      } catch (error) {
+        console.error("Ошибка при загрузке результатов:", error);
+
+        // Fallback на заглушку при ошибке
+        const mockResults: ResultItem[] = [
+          {
+            id: 1,
+            position: 1,
+            name: "Усадьба Васнецова",
+            isCurrentUser: false,
+            planned_duration: 90,
+            planned_cost: 50000,
+            actual_duration: 95,
+            actual_cost: 52000,
+            cost_difference: 2000,
+            duration_difference: 5,
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: 2,
+            position: 2,
+            name: "Домик Константинова",
+            isCurrentUser: false,
+            planned_duration: 90,
+            planned_cost: 50000,
+            actual_duration: 100,
+            actual_cost: 55000,
+            cost_difference: 5000,
+            duration_difference: 10,
+            created_at: new Date().toISOString(),
+          },
+        ];
+
+        setResults(mockResults);
+        setLoading(false);
+      }
+    };
+
+    fetchResults();
   }, []);
 
   const getIconForPosition = (position: number) => {
@@ -83,17 +125,25 @@ const Results: React.FC = () => {
           </div>
         ))}
 
-        <div className="results-divider">
-          <span>...</span>
-        </div>
-
-        <div className="results-item results-item-last">
-          <span className="results-position">185</span>
-          <div className="results-icon">
-            <MedalIcon />
+        {results.length > 10 && (
+          <div className="results-divider">
+            <span>...</span>
           </div>
-          <span className="results-name">Строю дом</span>
-        </div>
+        )}
+
+        {results.length > 10 && (
+          <div className="results-item results-item-last">
+            <span className="results-position">
+              {results[results.length - 1].position}
+            </span>
+            <div className="results-icon">
+              {getIconForPosition(results[results.length - 1].position)}
+            </div>
+            <span className="results-name">
+              {results[results.length - 1].name}
+            </span>
+          </div>
+        )}
       </div>
 
       <button className="results-play-again" onClick={handlePlayAgain}>

@@ -19,9 +19,9 @@ type ConstructionResult struct {
 	ID                    uint      `json:"id" gorm:"primaryKey"`
 	Name                  string    `json:"name" gorm:"not null"`
 	PlannedDuration       int       `json:"planned_duration"`       // в днях
-	PlannedCost           int       `json:"planned_cost"`           // в рублях
+	PlannedCost           int       `json:"planned_cost"`           
 	ActualDuration        int       `json:"actual_duration"`        // в днях
-	ActualCost            int       `json:"actual_cost"`            // в рублях
+	ActualCost            int       `json:"actual_cost"`            
 	CostDifference        int       `json:"cost_difference"`        // разница в стоимости
 	DurationDifference    int       `json:"duration_difference"`    // разница в длительности
 	CreatedAt             time.Time `json:"created_at"`
@@ -62,11 +62,11 @@ func main() {
 	// Настройка Gin
 	r := gin.Default()
 
-	// Настройка CORS для React приложения
+	// Настройка CORS
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://93.183.68.113:8080", "http://93.183.68.113", "http://scheduler-assistant.ru", "https://scheduler-assistant.ru"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))

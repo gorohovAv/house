@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./construction.css";
 import { useFactStore } from "../store/factStore";
 import { usePlanStore } from "../store/store";
+import { useOnboardingStore } from "../store/onboardingStore";
 import { CONSTRUCTION_OPTIONS } from "../constants";
 import LayeredCanvas from "../components/LayeredCanvas";
 import Indicators from "../components/Indicators";
@@ -18,6 +19,14 @@ import { useTour } from "../components/TourProvider";
 import { useTourStorage } from "../hooks/useTourStorage";
 import { CONSTRUCTION_TOUR } from "../config/tours";
 import type { ConstructionOption } from "../constants";
+import type { CreateResultRequest } from "../types/api";
+
+// Базовый URL API
+const API_URL =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://localhost:8080/api"
+    : "https://scheduler-assistant.ru/api";
 
 const getDayDeclension = (count: number): string => {
   if (count % 10 === 1 && count % 100 !== 11) {
@@ -125,6 +134,10 @@ export default function ConstructionPage() {
     selectOption,
     getRemainingBudget,
     getRemainingDuration,
+    getTotalCost,
+    getTotalDuration,
+    getRiskCosts,
+    getRiskDuration,
     periods,
     currentPeriodIndex,
     selectRiskSolution,
@@ -137,9 +150,11 @@ export default function ConstructionPage() {
     paymentSchedule,
     planningRemainder,
     duration,
+    budget,
   } = useFactStore();
 
   const planStore = usePlanStore();
+  const { projectName } = useOnboardingStore();
   const { startTour } = useTour();
   const { isTourCompleted } = useTourStorage();
 
@@ -163,9 +178,57 @@ export default function ConstructionPage() {
     initializeFromPlan();
   }, [initializeFromPlan]);
 
+  // Функция отправки результатов на бэкенд
+  const sendResultsToBackend = async () => {
+    try {
+      // Получаем данные из стора плана
+      const plannedDuration = planStore.getTotalDuration();
+      const plannedCost = planStore.getTotalCost();
+
+      // Рассчитываем фактические данные из paymentSchedule
+      const actualCost = paymentSchedule.reduce((total, payment) => {
+        return total + (payment.issued || 0);
+      }, 0);
+
+      // Фактическая длительность - количество дней, когда были выданы деньги
+      const actualDuration = paymentSchedule.filter(
+        (payment) => payment.issued !== null && payment.issued > 0
+      ).length;
+
+      const resultData: CreateResultRequest = {
+        name: projectName || "Игрок",
+        planned_duration: plannedDuration,
+        planned_cost: plannedCost,
+        actual_duration: actualDuration,
+        actual_cost: actualCost,
+      };
+
+      console.log("📊 Данные для отправки:", resultData);
+
+      const response = await fetch(`${API_URL}/results`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(resultData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Ошибка при отправке результатов");
+      }
+
+      console.log("Результаты успешно отправлены на бэкенд");
+    } catch (error) {
+      console.error("Ошибка при отправке результатов:", error);
+    }
+  };
+
   // Переход на страницу результатов после завершения всех периодов
   useEffect(() => {
     if (isAllPeriodsCompleted) {
+      // Отправляем результаты на бэкенд
+      sendResultsToBackend();
+
       const timer = setTimeout(() => {
         navigate("/results");
       }, 2000); // Небольшая задержка для показа финального состояния
