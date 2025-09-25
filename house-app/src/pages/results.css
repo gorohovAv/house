@@ -165,6 +165,103 @@
   background: #1a4370;
 }
 
+/* Модалка поздравления */
+.congrats-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 34, 70, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.congrats-modal {
+  background: linear-gradient(
+    -31deg,
+    rgba(0, 34, 70, 1) 0%,
+    rgba(0, 84, 172, 1) 100%
+  );
+  border: 2px solid #2965a5;
+  border-radius: 30px;
+  padding: 16px;
+  width: 100%;
+  max-width: 343px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.congrats-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+}
+
+.congrats-header svg {
+  width: 48px;
+  height: 48px;
+}
+
+.congrats-title {
+  color: #fff;
+  font-family: "Inter", sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.14;
+  margin: 0;
+}
+
+.congrats-subtitle {
+  color: #fff;
+  font-family: "Inter", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.17;
+  margin: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.congrats-text {
+  color: #fff;
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.congrats-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  color: #bdbdbd;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.congrats-close:hover {
+  color: #fff;
+}
+
 /* Адаптивность для мобильных устройств */
 @media (max-width: 375px) {
   .results-container {
@@ -181,5 +278,10 @@
 
   .results-play-again {
     margin: 16px 8px;
+  }
+
+  .congrats-modal {
+    margin: 16px;
+    max-width: calc(100% - 32px);
   }
 }

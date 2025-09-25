@@ -19,6 +19,7 @@ const API_URL =
 const Results: React.FC = () => {
   const [results, setResults] = useState<ResultItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCongratsModal, setShowCongratsModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,6 +43,17 @@ const Results: React.FC = () => {
 
         setResults(resultsWithPosition);
         setLoading(false);
+
+        // Показываем модалку поздравления для текущего пользователя
+        if (resultsWithPosition.length > 0) {
+          const currentUser = resultsWithPosition.find((r) => r.isCurrentUser);
+          if (currentUser && currentUser.position === 1) {
+            // Небольшая задержка для корректного отображения модалки
+            setTimeout(() => {
+              setShowCongratsModal(true);
+            }, 100);
+          }
+        }
       } catch (error) {
         console.error("Ошибка при загрузке результатов:", error);
 
@@ -50,8 +62,8 @@ const Results: React.FC = () => {
           {
             id: 1,
             position: 1,
-            name: "Усадьба Васнецова",
-            isCurrentUser: false,
+            name: "Мой дом",
+            isCurrentUser: true,
             planned_duration: 90,
             planned_cost: 50000,
             actual_duration: 95,
@@ -63,6 +75,19 @@ const Results: React.FC = () => {
           {
             id: 2,
             position: 2,
+            name: "Усадьба Васнецова",
+            isCurrentUser: false,
+            planned_duration: 90,
+            planned_cost: 50000,
+            actual_duration: 95,
+            actual_cost: 52000,
+            cost_difference: 2000,
+            duration_difference: 5,
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: 3,
+            position: 3,
             name: "Домик Константинова",
             isCurrentUser: false,
             planned_duration: 90,
@@ -77,6 +102,14 @@ const Results: React.FC = () => {
 
         setResults(mockResults);
         setLoading(false);
+
+        // Показываем модалку для первого места в fallback данных
+        const currentUser = mockResults.find((r) => r.isCurrentUser);
+        if (currentUser && currentUser.position === 1) {
+          setTimeout(() => {
+            setShowCongratsModal(true);
+          }, 100);
+        }
       }
     };
 
@@ -149,6 +182,30 @@ const Results: React.FC = () => {
       <button className="results-play-again" onClick={handlePlayAgain}>
         Играть заново
       </button>
+
+      {/* Модалка поздравления */}
+      {showCongratsModal && (
+        <div className="congrats-modal-overlay">
+          <div className="congrats-modal">
+            <div className="congrats-header">
+              <CupGoldIcon />
+              <h2 className="congrats-title">1 место</h2>
+            </div>
+            <h3 className="congrats-subtitle">Поздравляем! 🎉🏠</h3>
+            <p className="congrats-text">
+              Ты построил свой идеальный дом! От заливки фундамента до уютного
+              благоустройства — ты проделал огромный путь. Теперь в этом доме
+              живут твои старания и усердие!
+            </p>
+            <button
+              className="congrats-close"
+              onClick={() => setShowCongratsModal(false)}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

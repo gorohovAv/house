@@ -223,14 +223,14 @@ export default function ConstructionPage() {
     }
   };
 
-  // Переход на страницу результатов после завершения всех периодов
+  // Переход на страницу сравнения после завершения всех периодов
   useEffect(() => {
     if (isAllPeriodsCompleted) {
       // Отправляем результаты на бэкенд
       sendResultsToBackend();
 
       const timer = setTimeout(() => {
-        navigate("/results");
+        navigate("/comparison");
       }, 2000); // Небольшая задержка для показа финального состояния
 
       return () => clearTimeout(timer);
