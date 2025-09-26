@@ -582,14 +582,15 @@ export const useFactStore = create<FactState>()(
         const dayPayments = paymentSchedule.filter(
           (payment) => payment.dayIndex === day
         );
-
+        /*
         if (dayPayments.length === 0) {
           // Проверяем, нужно ли продолжать обработку
           if (get().shouldContinueProcessing(day)) {
+            console.log(`День ${day}: вылет здесь`);
             return;
           }
           return;
-        }
+        }*/
 
         // Обрабатываем каждую запись для этого дня
         const currentPiggyBank = get().piggyBank;
@@ -728,7 +729,7 @@ export const useFactStore = create<FactState>()(
           const currentPeriod = periods[periods.length - 1];
           if (currentPeriod) {
             const startDay = currentPeriod.endDay + 1;
-            for (let day = startDay; day <= maxDayInSchedule; day++) {
+            for (let day = startDay; day <= paymentSchedule.length; day++) {
               get().processDay(day);
             }
           }
@@ -1316,7 +1317,7 @@ export const useFactStore = create<FactState>()(
           const lastPeriod = periods[periods.length - 1];
           if (lastPeriod && day >= lastPeriod.endDay) {
             // Продолжаем обработку до конца paymentSchedule
-            return day <= maxDayInSchedule;
+            return true;
           }
         }
 
