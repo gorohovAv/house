@@ -29,6 +29,16 @@ export interface FundingPlanItem {
   amount: number;
 }
 
+// Добавляем константу с правильным порядком строительства
+const CONSTRUCTION_ORDER = [
+  "Фундамент",
+  "Стены",
+  "Перекрытие",
+  "Крыша",
+  "Двери и Окна",
+  "Благоустройство",
+];
+
 export interface FactState {
   selectedOptions: Record<string, ConstructionOption | null>;
   budget: number;
@@ -367,164 +377,165 @@ export const useFactStore = create<FactState>()(
 
         // Создаем план выплат - распределяем стоимость по всем дням строительства
         let currentDay = 1;
-        Object.entries(selectedOptions).forEach(
-          ([constructionType, option]) => {
-            if (option) {
-              // Используем модифицированную длительность
-              const modifiedDuration = getModifiedDuration(constructionType);
 
-              // Находим риски, которые влияют на эту конструкцию
-              const constructionRisks = periods.filter(
-                (period) =>
-                  period.risk &&
-                  period.selectedSolution === "solution" &&
-                  period.risk.affectedElement === constructionType
+        // Используем правильный порядок вместо Object.entries
+        CONSTRUCTION_ORDER.forEach((constructionType) => {
+          const option = selectedOptions[constructionType];
+          if (option) {
+            // Используем модифицированную длительность
+            const modifiedDuration = getModifiedDuration(constructionType);
+
+            // Находим риски, которые влияют на эту конструкцию
+            const constructionRisks = periods.filter(
+              (period) =>
+                period.risk &&
+                period.selectedSolution === "solution" &&
+                period.risk.affectedElement === constructionType
+            );
+
+            // Рассчитываем общую длительность с учетом рисков
+            const totalRiskDuration = constructionRisks.reduce(
+              (sum, period) => sum + (period.risk?.duration || 0),
+              0
+            );
+            const overallDuration = modifiedDuration + totalRiskDuration;
+
+            // Рассчитываем общую стоимость с учетом рисков
+            const totalRiskCost = constructionRisks.reduce(
+              (sum, period) => sum + (period.risk?.cost || 0),
+              0
+            );
+            const overallPrice = option.cost + totalRiskCost;
+
+            const dailyAmount = overallPrice / overallDuration;
+
+            // Специальная логика для стен - разбиваем на два периода
+            if (constructionType === "Стены") {
+              const firstHalfDuration = Math.floor(overallDuration / 2);
+              const secondHalfDuration = overallDuration - firstHalfDuration;
+              const firstHalfPrice = Math.floor(overallPrice / 2);
+              const secondHalfPrice = overallPrice - firstHalfPrice;
+
+              // Первая половина стен - с остатком на первый день
+              const firstHalfDailyAmount = Math.floor(
+                firstHalfPrice / firstHalfDuration
               );
+              const firstHalfRemainder =
+                firstHalfPrice - firstHalfDailyAmount * firstHalfDuration;
 
-              // Рассчитываем общую длительность с учетом рисков
-              const totalRiskDuration = constructionRisks.reduce(
-                (sum, period) => sum + (period.risk?.duration || 0),
-                0
-              );
-              const overallDuration = modifiedDuration + totalRiskDuration;
-
-              // Рассчитываем общую стоимость с учетом рисков
-              const totalRiskCost = constructionRisks.reduce(
-                (sum, period) => sum + (period.risk?.cost || 0),
-                0
-              );
-              const overallPrice = option.cost + totalRiskCost;
-
-              const dailyAmount = overallPrice / overallDuration;
-
-              // Специальная логика для стен - разбиваем на два периода
-              if (constructionType === "Стены") {
-                const firstHalfDuration = Math.floor(overallDuration / 2);
-                const secondHalfDuration = overallDuration - firstHalfDuration;
-                const firstHalfPrice = Math.floor(overallPrice / 2);
-                const secondHalfPrice = overallPrice - firstHalfPrice;
-
-                // Первая половина стен - с остатком на первый день
-                const firstHalfDailyAmount = Math.floor(
-                  firstHalfPrice / firstHalfDuration
-                );
-                const firstHalfRemainder =
-                  firstHalfPrice - firstHalfDailyAmount * firstHalfDuration;
-
-                for (let i = 0; i < firstHalfDuration; i++) {
-                  paymentSchedule.push({
-                    dayIndex: currentDay + i,
-                    amount:
-                      i === 0
-                        ? firstHalfDailyAmount + firstHalfRemainder
-                        : firstHalfDailyAmount,
-                    issued: null,
-                    construction: constructionType,
-                    daysRequired: overallDuration,
-                    daysPayed: 0,
-                    overallPrice: overallPrice,
-                    overallDuration: overallDuration,
-                  });
-                }
-                currentDay += firstHalfDuration;
-
-                // Добавляем перекрытия между частями стен
-                const ceilingOption = selectedOptions["Перекрытие"];
-                if (ceilingOption) {
-                  const ceilingDuration = getModifiedDuration("Перекрытие");
-                  const ceilingRisks = periods.filter(
-                    (period) =>
-                      period.risk &&
-                      period.selectedSolution === "solution" &&
-                      period.risk.affectedElement === "Перекрытие"
-                  );
-                  const totalCeilingRiskDuration = ceilingRisks.reduce(
-                    (sum, period) => sum + (period.risk?.duration || 0),
-                    0
-                  );
-                  const totalCeilingRiskCost = ceilingRisks.reduce(
-                    (sum, period) => sum + (period.risk?.cost || 0),
-                    0
-                  );
-                  const overallCeilingDuration =
-                    ceilingDuration + totalCeilingRiskDuration;
-                  const overallCeilingPrice =
-                    ceilingOption.cost + totalCeilingRiskCost;
-                  const dailyCeilingAmount =
-                    overallCeilingPrice / overallCeilingDuration;
-
-                  // Перекрытия с остатком на первый день
-                  const ceilingDailyAmount = Math.floor(dailyCeilingAmount);
-                  const ceilingRemainder =
-                    overallCeilingPrice -
-                    ceilingDailyAmount * overallCeilingDuration;
-
-                  for (let i = 0; i < overallCeilingDuration; i++) {
-                    paymentSchedule.push({
-                      dayIndex: currentDay + i,
-                      amount:
-                        i === 0
-                          ? ceilingDailyAmount + ceilingRemainder
-                          : ceilingDailyAmount,
-                      issued: null,
-                      construction: "Перекрытие",
-                      daysRequired: overallCeilingDuration,
-                      daysPayed: 0,
-                      overallPrice: overallCeilingPrice,
-                      overallDuration: overallCeilingDuration,
-                    });
-                  }
-                  currentDay += overallCeilingDuration;
-                }
-
-                // Вторая половина стен - с остатком на первый день
-                const secondHalfDailyAmount = Math.floor(
-                  secondHalfPrice / secondHalfDuration
-                );
-                const secondHalfRemainder =
-                  secondHalfPrice - secondHalfDailyAmount * secondHalfDuration;
-
-                for (let i = 0; i < secondHalfDuration; i++) {
-                  paymentSchedule.push({
-                    dayIndex: currentDay + i,
-                    amount:
-                      i === 0
-                        ? secondHalfDailyAmount + secondHalfRemainder
-                        : secondHalfDailyAmount,
-                    issued: null,
-                    construction: constructionType,
-                    daysRequired: overallDuration,
-                    daysPayed: 0,
-                    overallPrice: overallPrice,
-                    overallDuration: overallDuration,
-                  });
-                }
-                currentDay += secondHalfDuration;
-              } else if (constructionType !== "Перекрытие") {
-                // Обычная логика для всех остальных конструкций (кроме перекрытий, которые уже обработаны в логике стен)
-                // С остатком на первый день
-                const dailyAmountFloor = Math.floor(dailyAmount);
-                const remainder =
-                  overallPrice - dailyAmountFloor * overallDuration;
-
-                for (let i = 0; i < overallDuration; i++) {
-                  paymentSchedule.push({
-                    dayIndex: currentDay + i,
-                    amount:
-                      i === 0 ? dailyAmountFloor + remainder : dailyAmountFloor,
-                    issued: null,
-                    construction: constructionType,
-                    daysRequired: overallDuration,
-                    daysPayed: 0, // issued = null, значит дней оплачено 0
-                    overallPrice: overallPrice,
-                    overallDuration: overallDuration,
-                  });
-                }
-                currentDay += overallDuration;
+              for (let i = 0; i < firstHalfDuration; i++) {
+                paymentSchedule.push({
+                  dayIndex: currentDay + i,
+                  amount:
+                    i === 0
+                      ? firstHalfDailyAmount + firstHalfRemainder
+                      : firstHalfDailyAmount,
+                  issued: null,
+                  construction: constructionType,
+                  daysRequired: overallDuration,
+                  daysPayed: 0,
+                  overallPrice: overallPrice,
+                  overallDuration: overallDuration,
+                });
               }
+              currentDay += firstHalfDuration;
+
+              // Добавляем перекрытия между частями стен
+              const ceilingOption = selectedOptions["Перекрытие"];
+              if (ceilingOption) {
+                const ceilingDuration = getModifiedDuration("Перекрытие");
+                const ceilingRisks = periods.filter(
+                  (period) =>
+                    period.risk &&
+                    period.selectedSolution === "solution" &&
+                    period.risk.affectedElement === "Перекрытие"
+                );
+                const totalCeilingRiskDuration = ceilingRisks.reduce(
+                  (sum, period) => sum + (period.risk?.duration || 0),
+                  0
+                );
+                const totalCeilingRiskCost = ceilingRisks.reduce(
+                  (sum, period) => sum + (period.risk?.cost || 0),
+                  0
+                );
+                const overallCeilingDuration =
+                  ceilingDuration + totalCeilingRiskDuration;
+                const overallCeilingPrice =
+                  ceilingOption.cost + totalCeilingRiskCost;
+                const dailyCeilingAmount =
+                  overallCeilingPrice / overallCeilingDuration;
+
+                // Перекрытия с остатком на первый день
+                const ceilingDailyAmount = Math.floor(dailyCeilingAmount);
+                const ceilingRemainder =
+                  overallCeilingPrice -
+                  ceilingDailyAmount * overallCeilingDuration;
+
+                for (let i = 0; i < overallCeilingDuration; i++) {
+                  paymentSchedule.push({
+                    dayIndex: currentDay + i,
+                    amount:
+                      i === 0
+                        ? ceilingDailyAmount + ceilingRemainder
+                        : ceilingDailyAmount,
+                    issued: null,
+                    construction: "Перекрытие",
+                    daysRequired: overallCeilingDuration,
+                    daysPayed: 0,
+                    overallPrice: overallCeilingPrice,
+                    overallDuration: overallCeilingDuration,
+                  });
+                }
+                currentDay += overallCeilingDuration;
+              }
+
+              // Вторая половина стен - с остатком на первый день
+              const secondHalfDailyAmount = Math.floor(
+                secondHalfPrice / secondHalfDuration
+              );
+              const secondHalfRemainder =
+                secondHalfPrice - secondHalfDailyAmount * secondHalfDuration;
+
+              for (let i = 0; i < secondHalfDuration; i++) {
+                paymentSchedule.push({
+                  dayIndex: currentDay + i,
+                  amount:
+                    i === 0
+                      ? secondHalfDailyAmount + secondHalfRemainder
+                      : secondHalfDailyAmount,
+                  issued: null,
+                  construction: constructionType,
+                  daysRequired: overallDuration,
+                  daysPayed: 0,
+                  overallPrice: overallPrice,
+                  overallDuration: overallDuration,
+                });
+              }
+              currentDay += secondHalfDuration;
+            } else if (constructionType !== "Перекрытие") {
+              // Обычная логика для всех остальных конструкций (кроме перекрытий, которые уже обработаны в логике стен)
+              // С остатком на первый день
+              const dailyAmountFloor = Math.floor(dailyAmount);
+              const remainder =
+                overallPrice - dailyAmountFloor * overallDuration;
+
+              for (let i = 0; i < overallDuration; i++) {
+                paymentSchedule.push({
+                  dayIndex: currentDay + i,
+                  amount:
+                    i === 0 ? dailyAmountFloor + remainder : dailyAmountFloor,
+                  issued: null,
+                  construction: constructionType,
+                  daysRequired: overallDuration,
+                  daysPayed: 0, // issued = null, значит дней оплачено 0
+                  overallPrice: overallPrice,
+                  overallDuration: overallDuration,
+                });
+              }
+              currentDay += overallDuration;
             }
           }
-        );
+        });
 
         set({ paymentSchedule });
 
@@ -538,50 +549,51 @@ export const useFactStore = create<FactState>()(
 
         // Создаем план финансирования - начисления в первый день строительства каждого элемента
         let currentDay = 1;
-        Object.entries(selectedOptions).forEach(
-          ([constructionType, option]) => {
-            if (option) {
-              const modifiedDuration = getModifiedDuration(constructionType);
 
-              // Специальная логика для стен - разбиваем на два периода
-              if (constructionType === "Стены") {
-                const firstHalfDuration = Math.floor(modifiedDuration / 2);
-                const secondHalfDuration = modifiedDuration - firstHalfDuration;
+        // Используем правильный порядок вместо Object.entries
+        CONSTRUCTION_ORDER.forEach((constructionType) => {
+          const option = selectedOptions[constructionType];
+          if (option) {
+            const modifiedDuration = getModifiedDuration(constructionType);
 
-                // Первая половина стен
+            // Специальная логика для стен - разбиваем на два периода
+            if (constructionType === "Стены") {
+              const firstHalfDuration = Math.floor(modifiedDuration / 2);
+              const secondHalfDuration = modifiedDuration - firstHalfDuration;
+
+              // Первая половина стен
+              fundingPlan.push({
+                dayIndex: currentDay,
+                amount: Math.floor(option.cost / 2),
+              });
+              currentDay += firstHalfDuration;
+
+              // Добавляем перекрытия между частями стен
+              const ceilingOption = selectedOptions["Перекрытие"];
+              if (ceilingOption) {
                 fundingPlan.push({
                   dayIndex: currentDay,
-                  amount: Math.floor(option.cost / 2),
+                  amount: ceilingOption.cost,
                 });
-                currentDay += firstHalfDuration;
-
-                // Добавляем перекрытия между частями стен
-                const ceilingOption = selectedOptions["Перекрытие"];
-                if (ceilingOption) {
-                  fundingPlan.push({
-                    dayIndex: currentDay,
-                    amount: ceilingOption.cost,
-                  });
-                  currentDay += getModifiedDuration("Перекрытие");
-                }
-
-                // Вторая половина стен
-                fundingPlan.push({
-                  dayIndex: currentDay,
-                  amount: option.cost - Math.floor(option.cost / 2),
-                });
-                currentDay += secondHalfDuration;
-              } else if (constructionType !== "Перекрытие") {
-                // Обычная логика для всех остальных конструкций (кроме перекрытий, которые уже обработаны в логике стен)
-                fundingPlan.push({
-                  dayIndex: currentDay,
-                  amount: option.cost,
-                });
-                currentDay += modifiedDuration;
+                currentDay += getModifiedDuration("Перекрытие");
               }
+
+              // Вторая половина стен
+              fundingPlan.push({
+                dayIndex: currentDay,
+                amount: option.cost - Math.floor(option.cost / 2),
+              });
+              currentDay += secondHalfDuration;
+            } else if (constructionType !== "Перекрытие") {
+              // Обычная логика для всех остальных конструкций (кроме перекрытий, которые уже обработаны в логике стен)
+              fundingPlan.push({
+                dayIndex: currentDay,
+                amount: option.cost,
+              });
+              currentDay += modifiedDuration;
             }
           }
-        );
+        });
 
         set({ fundingPlan });
       },
@@ -811,155 +823,155 @@ export const useFactStore = create<FactState>()(
         const newPayments: PaymentScheduleItem[] = [];
         let currentDay = startDay;
 
-        Object.entries(selectedOptions).forEach(
-          ([constructionType, option]) => {
-            if (option) {
-              // Находим риски, которые влияют на эту конструкцию
-              const constructionRisks = periods.filter(
-                (period) =>
-                  period.risk &&
-                  period.selectedSolution === "solution" &&
-                  period.risk.affectedElement === constructionType
+        // Используем правильный порядок вместо Object.entries
+        CONSTRUCTION_ORDER.forEach((constructionType) => {
+          const option = selectedOptions[constructionType];
+          if (option) {
+            // Находим риски, которые влияют на эту конструкцию
+            const constructionRisks = periods.filter(
+              (period) =>
+                period.risk &&
+                period.selectedSolution === "solution" &&
+                period.risk.affectedElement === constructionType
+            );
+
+            const overallDuration = option.duration; // пользователь деньгами порешал, ебаный его рот, никаких добавочных дней
+
+            // Рассчитываем общую стоимость с учетом рисков
+            const totalRiskCost = constructionRisks.reduce(
+              (sum, period) => sum + (period.risk?.cost || 0),
+              0
+            );
+            const overallPrice = option.cost + totalRiskCost;
+
+            // Специальная логика для стен - разбиваем на два периода
+            if (constructionType === "Стены") {
+              const firstHalfDuration = Math.floor(overallDuration / 2);
+              const secondHalfDuration = overallDuration - firstHalfDuration;
+              const firstHalfPrice = Math.floor(overallPrice / 2);
+              const secondHalfPrice = overallPrice - firstHalfPrice;
+
+              // Первая половина стен - с остатком на первый день
+              const firstHalfDailyAmount = Math.floor(
+                firstHalfPrice / firstHalfDuration
               );
+              const firstHalfRemainder =
+                firstHalfPrice - firstHalfDailyAmount * firstHalfDuration;
 
-              const overallDuration = option.duration; // пользователь деньгами порешал, ебаный его рот, никаких добавочных дней
-
-              // Рассчитываем общую стоимость с учетом рисков
-              const totalRiskCost = constructionRisks.reduce(
-                (sum, period) => sum + (period.risk?.cost || 0),
-                0
-              );
-              const overallPrice = option.cost + totalRiskCost;
-
-              // Специальная логика для стен - разбиваем на два периода
-              if (constructionType === "Стены") {
-                const firstHalfDuration = Math.floor(overallDuration / 2);
-                const secondHalfDuration = overallDuration - firstHalfDuration;
-                const firstHalfPrice = Math.floor(overallPrice / 2);
-                const secondHalfPrice = overallPrice - firstHalfPrice;
-
-                // Первая половина стен - с остатком на первый день
-                const firstHalfDailyAmount = Math.floor(
-                  firstHalfPrice / firstHalfDuration
-                );
-                const firstHalfRemainder =
-                  firstHalfPrice - firstHalfDailyAmount * firstHalfDuration;
-
-                for (let i = 0; i < firstHalfDuration; i++) {
-                  newPayments.push({
-                    dayIndex: currentDay + i,
-                    amount:
-                      i === 0
-                        ? firstHalfDailyAmount + firstHalfRemainder
-                        : firstHalfDailyAmount,
-                    issued: null,
-                    construction: constructionType,
-                    daysRequired: overallDuration,
-                    daysPayed: 0,
-                    overallPrice: overallPrice,
-                    overallDuration: overallDuration,
-                  });
-                }
-                currentDay += firstHalfDuration;
-
-                // Добавляем перекрытия между частями стен
-                const ceilingOption = selectedOptions["Перекрытие"];
-                if (ceilingOption) {
-                  const ceilingDuration = ceilingOption.duration;
-                  const ceilingRisks = periods.filter(
-                    (period) =>
-                      period.risk &&
-                      period.selectedSolution === "solution" &&
-                      period.risk.affectedElement === "Перекрытие"
-                  );
-                  const totalCeilingRiskDuration = ceilingRisks.reduce(
-                    (sum, period) => sum + (period.risk?.duration || 0),
-                    0
-                  );
-                  const totalCeilingRiskCost = ceilingRisks.reduce(
-                    (sum, period) => sum + (period.risk?.cost || 0),
-                    0
-                  );
-                  const overallCeilingDuration =
-                    ceilingDuration + totalCeilingRiskDuration;
-                  const overallCeilingPrice =
-                    ceilingOption.cost + totalCeilingRiskCost;
-                  const dailyCeilingAmount =
-                    overallCeilingPrice / overallCeilingDuration;
-
-                  // Перекрытия с остатком на первый день
-                  const ceilingDailyAmount = Math.floor(dailyCeilingAmount);
-                  const ceilingRemainder =
-                    overallCeilingPrice -
-                    ceilingDailyAmount * overallCeilingDuration;
-
-                  for (let i = 0; i < overallCeilingDuration; i++) {
-                    newPayments.push({
-                      dayIndex: currentDay + i,
-                      amount:
-                        i === 0
-                          ? ceilingDailyAmount + ceilingRemainder
-                          : ceilingDailyAmount,
-                      issued: null,
-                      construction: "Перекрытие",
-                      daysRequired: overallCeilingDuration,
-                      daysPayed: 0,
-                      overallPrice: overallCeilingPrice,
-                      overallDuration: overallCeilingDuration,
-                    });
-                  }
-                  currentDay += overallCeilingDuration;
-                }
-
-                // Вторая половина стен - с остатком на первый день
-                const secondHalfDailyAmount = Math.floor(
-                  secondHalfPrice / secondHalfDuration
-                );
-                const secondHalfRemainder =
-                  secondHalfPrice - secondHalfDailyAmount * secondHalfDuration;
-
-                for (let i = 0; i < secondHalfDuration; i++) {
-                  newPayments.push({
-                    dayIndex: currentDay + i,
-                    amount:
-                      i === 0
-                        ? secondHalfDailyAmount + secondHalfRemainder
-                        : secondHalfDailyAmount,
-                    issued: null,
-                    construction: constructionType,
-                    daysRequired: overallDuration,
-                    daysPayed: 0,
-                    overallPrice: overallPrice,
-                    overallDuration: overallDuration,
-                  });
-                }
-                currentDay += secondHalfDuration;
-              } else if (constructionType !== "Перекрытие") {
-                // Обычная логика для всех остальных конструкций (кроме перекрытий)
-                // С остатком на первый день
-                const dailyAmount = overallPrice / overallDuration;
-                const dailyAmountFloor = Math.floor(dailyAmount);
-                const remainder =
-                  overallPrice - dailyAmountFloor * overallDuration;
-
-                for (let i = 0; i < overallDuration; i++) {
-                  newPayments.push({
-                    dayIndex: currentDay + i,
-                    amount:
-                      i === 0 ? dailyAmountFloor + remainder : dailyAmountFloor,
-                    issued: null,
-                    construction: constructionType,
-                    daysRequired: overallDuration,
-                    daysPayed: 0,
-                    overallPrice: overallPrice,
-                    overallDuration: overallDuration,
-                  });
-                }
-                currentDay += overallDuration;
+              for (let i = 0; i < firstHalfDuration; i++) {
+                newPayments.push({
+                  dayIndex: currentDay + i,
+                  amount:
+                    i === 0
+                      ? firstHalfDailyAmount + firstHalfRemainder
+                      : firstHalfDailyAmount,
+                  issued: null,
+                  construction: constructionType,
+                  daysRequired: overallDuration,
+                  daysPayed: 0,
+                  overallPrice: overallPrice,
+                  overallDuration: overallDuration,
+                });
               }
+              currentDay += firstHalfDuration;
+
+              // Добавляем перекрытия между частями стен
+              const ceilingOption = selectedOptions["Перекрытие"];
+              if (ceilingOption) {
+                const ceilingDuration = ceilingOption.duration;
+                const ceilingRisks = periods.filter(
+                  (period) =>
+                    period.risk &&
+                    period.selectedSolution === "solution" &&
+                    period.risk.affectedElement === "Перекрытие"
+                );
+                const totalCeilingRiskDuration = ceilingRisks.reduce(
+                  (sum, period) => sum + (period.risk?.duration || 0),
+                  0
+                );
+                const totalCeilingRiskCost = ceilingRisks.reduce(
+                  (sum, period) => sum + (period.risk?.cost || 0),
+                  0
+                );
+                const overallCeilingDuration =
+                  ceilingDuration + totalCeilingRiskDuration;
+                const overallCeilingPrice =
+                  ceilingOption.cost + totalCeilingRiskCost;
+                const dailyCeilingAmount =
+                  overallCeilingPrice / overallCeilingDuration;
+
+                // Перекрытия с остатком на первый день
+                const ceilingDailyAmount = Math.floor(dailyCeilingAmount);
+                const ceilingRemainder =
+                  overallCeilingPrice -
+                  ceilingDailyAmount * overallCeilingDuration;
+
+                for (let i = 0; i < overallCeilingDuration; i++) {
+                  newPayments.push({
+                    dayIndex: currentDay + i,
+                    amount:
+                      i === 0
+                        ? ceilingDailyAmount + ceilingRemainder
+                        : ceilingDailyAmount,
+                    issued: null,
+                    construction: "Перекрытие",
+                    daysRequired: overallCeilingDuration,
+                    daysPayed: 0,
+                    overallPrice: overallCeilingPrice,
+                    overallDuration: overallCeilingDuration,
+                  });
+                }
+                currentDay += overallCeilingDuration;
+              }
+
+              // Вторая половина стен - с остатком на первый день
+              const secondHalfDailyAmount = Math.floor(
+                secondHalfPrice / secondHalfDuration
+              );
+              const secondHalfRemainder =
+                secondHalfPrice - secondHalfDailyAmount * secondHalfDuration;
+
+              for (let i = 0; i < secondHalfDuration; i++) {
+                newPayments.push({
+                  dayIndex: currentDay + i,
+                  amount:
+                    i === 0
+                      ? secondHalfDailyAmount + secondHalfRemainder
+                      : secondHalfDailyAmount,
+                  issued: null,
+                  construction: constructionType,
+                  daysRequired: overallDuration,
+                  daysPayed: 0,
+                  overallPrice: overallPrice,
+                  overallDuration: overallDuration,
+                });
+              }
+              currentDay += secondHalfDuration;
+            } else if (constructionType !== "Перекрытие") {
+              // Обычная логика для всех остальных конструкций (кроме перекрытий)
+              // С остатком на первый день
+              const dailyAmount = overallPrice / overallDuration;
+              const dailyAmountFloor = Math.floor(dailyAmount);
+              const remainder =
+                overallPrice - dailyAmountFloor * overallDuration;
+
+              for (let i = 0; i < overallDuration; i++) {
+                newPayments.push({
+                  dayIndex: currentDay + i,
+                  amount:
+                    i === 0 ? dailyAmountFloor + remainder : dailyAmountFloor,
+                  issued: null,
+                  construction: constructionType,
+                  daysRequired: overallDuration,
+                  daysPayed: 0,
+                  overallPrice: overallPrice,
+                  overallDuration: overallDuration,
+                });
+              }
+              currentDay += overallDuration;
             }
           }
-        );
+        });
 
         // Объединяем сохраненные и новые записи
         let updatedPaymentSchedule = [...preservedPayments, ...newPayments];
@@ -985,50 +997,51 @@ export const useFactStore = create<FactState>()(
 
         // Создаем новый план финансирования БЕЗ учета рисков
         let currentDay = 1;
-        Object.entries(selectedOptions).forEach(
-          ([constructionType, option]) => {
-            if (option) {
-              const modifiedDuration = getModifiedDuration(constructionType);
 
-              // Специальная логика для стен - разбиваем на два периода
-              if (constructionType === "Стены") {
-                const firstHalfDuration = Math.floor(modifiedDuration / 2);
-                const secondHalfDuration = modifiedDuration - firstHalfDuration;
+        // Используем правильный порядок вместо Object.entries
+        CONSTRUCTION_ORDER.forEach((constructionType) => {
+          const option = selectedOptions[constructionType];
+          if (option) {
+            const modifiedDuration = getModifiedDuration(constructionType);
 
-                // Первая половина стен
+            // Специальная логика для стен - разбиваем на два периода
+            if (constructionType === "Стены") {
+              const firstHalfDuration = Math.floor(modifiedDuration / 2);
+              const secondHalfDuration = modifiedDuration - firstHalfDuration;
+
+              // Первая половина стен
+              fundingPlan.push({
+                dayIndex: currentDay,
+                amount: Math.floor(option.cost / 2),
+              });
+              currentDay += firstHalfDuration;
+
+              // Добавляем перекрытия между частями стен
+              const ceilingOption = selectedOptions["Перекрытие"];
+              if (ceilingOption) {
                 fundingPlan.push({
                   dayIndex: currentDay,
-                  amount: Math.floor(option.cost / 2),
+                  amount: ceilingOption.cost,
                 });
-                currentDay += firstHalfDuration;
-
-                // Добавляем перекрытия между частями стен
-                const ceilingOption = selectedOptions["Перекрытие"];
-                if (ceilingOption) {
-                  fundingPlan.push({
-                    dayIndex: currentDay,
-                    amount: ceilingOption.cost,
-                  });
-                  currentDay += getModifiedDuration("Перекрытие");
-                }
-
-                // Вторая половина стен
-                fundingPlan.push({
-                  dayIndex: currentDay,
-                  amount: option.cost - Math.floor(option.cost / 2),
-                });
-                currentDay += secondHalfDuration;
-              } else if (constructionType !== "Перекрытие") {
-                // Обычная логика для всех остальных конструкций (кроме перекрытий, которые уже обработаны в логике стен)
-                fundingPlan.push({
-                  dayIndex: currentDay,
-                  amount: option.cost,
-                });
-                currentDay += modifiedDuration;
+                currentDay += getModifiedDuration("Перекрытие");
               }
+
+              // Вторая половина стен
+              fundingPlan.push({
+                dayIndex: currentDay,
+                amount: option.cost - Math.floor(option.cost / 2),
+              });
+              currentDay += secondHalfDuration;
+            } else if (constructionType !== "Перекрытие") {
+              // Обычная логика для всех остальных конструкций (кроме перекрытий, которые уже обработаны в логике стен)
+              fundingPlan.push({
+                dayIndex: currentDay,
+                amount: option.cost,
+              });
+              currentDay += modifiedDuration;
             }
           }
-        );
+        });
 
         set({ fundingPlan });
       },
@@ -1050,7 +1063,9 @@ export const useFactStore = create<FactState>()(
         const newPaymentSchedule: PaymentScheduleItem[] = [];
         let newCurrentDay = 1;
 
-        for (const [type, option] of Object.entries(selectedOptions)) {
+        // Используем правильный порядок вместо Object.entries
+        CONSTRUCTION_ORDER.forEach((type) => {
+          const option = selectedOptions[type];
           if (option) {
             const constructionDuration = getModifiedDuration(type);
             const constructionCost = option.cost;
@@ -1163,7 +1178,7 @@ export const useFactStore = create<FactState>()(
               newCurrentDay += constructionDuration;
             }
           }
-        }
+        });
 
         // Сохраняем историю issued значений
         const updatedPaymentSchedule =
@@ -1191,7 +1206,9 @@ export const useFactStore = create<FactState>()(
         const newFundingPlan: FundingPlanItem[] = [];
         let newCurrentDay = 1;
 
-        for (const [type, option] of Object.entries(selectedOptions)) {
+        // Используем правильный порядок вместо Object.entries
+        CONSTRUCTION_ORDER.forEach((type) => {
+          const option = selectedOptions[type];
           if (option) {
             const constructionDuration = getModifiedDuration(type);
 
@@ -1233,7 +1250,7 @@ export const useFactStore = create<FactState>()(
               newCurrentDay += constructionDuration;
             }
           }
-        }
+        });
 
         set({ fundingPlan: newFundingPlan });
       },
