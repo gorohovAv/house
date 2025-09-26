@@ -47,84 +47,109 @@ const ComparisonPage: React.FC = () => {
     (payment) => payment.issued !== null && payment.issued > 0
   ).length;
 
-  // Конфигурация для планируемого дома (базовый дом)
-  const plannedHouseConfig: LayeredImageConfig = {
-    width: 288,
-    height: 196,
-    layers: [
-      {
-        id: "house",
-        assetPath: "/house.png",
-        zIndex: 1,
-        opacity: 1,
-        visible: true,
-      },
-    ],
+  // Функция проверки завершенности конструкции
+  const isConstructionCompleted = (constructionType: string) => {
+    const constructionPayments = factStore.paymentSchedule.filter(
+      (payment) => payment.construction === constructionType
+    );
+
+    if (constructionPayments.length === 0) return false;
+
+    const totalDaysRequired = constructionPayments[0].daysRequired;
+    const totalDaysPayed = constructionPayments.reduce(
+      (sum, payment) => sum + (payment.daysPayed || 0),
+      0
+    );
+
+    return totalDaysPayed >= totalDaysRequired;
   };
 
-  // Конфигурация для фактического дома (с выбранной крышей)
-  const actualHouseConfig: LayeredImageConfig = {
-    width: 288,
-    height: 196,
-    layers: [
-      {
-        id: "house",
-        assetPath: "/house.png",
-        zIndex: 1,
-        opacity: 1,
-        visible: true,
-      },
-      {
-        id: "roof-red",
-        assetPath: "/redRoof.png",
-        zIndex: 2,
-        opacity: 1,
-        visible: false,
-      },
-      {
-        id: "roof-blue",
-        assetPath: "/blueRoof.png",
-        zIndex: 2,
-        opacity: 1,
-        visible: false,
-      },
-      {
-        id: "roof-green",
-        assetPath: "/greenRoof.png",
-        zIndex: 2,
-        opacity: 1,
-        visible: false,
-      },
-      {
-        id: "roof-pink",
-        assetPath: "/pinkRoof.png",
-        zIndex: 2,
-        opacity: 1,
-        visible: false,
-      },
-    ],
-  };
+  // Конфигурация для планируемого дома (по выборам из planStore)
+  const getPlannedHouseConfig = (): LayeredImageConfig => {
+    const baseConfig: LayeredImageConfig = {
+      width: 288,
+      height: 196,
+      layers: [
+        {
+          id: "house",
+          assetPath: "/house.png",
+          zIndex: 1,
+          opacity: 1,
+          visible: true,
+        },
+      ],
+    };
 
-  // Определяем тип крыши для фактического дома
-  const getActualHouseConfig = () => {
-    const roofOption = factStore.selectedOptions["Крыша"];
-    if (roofOption) {
-      const roofTypeMap: Record<string, string> = {
-        "4 Гибкая/битумная черепица": "red",
-        "4 Керамическая черепица": "blue",
-        "4 Металлочерепица": "green",
-      };
-      const roofType = roofTypeMap[roofOption.type] || "pink";
+    // Добавляем слои для выбранных конструкций
+    Object.entries(planStore.selectedOptions).forEach(
+      ([constructionType, option]) => {
+        if (option) {
+          // Пока что только крыша имеет визуальные слои
+          if (constructionType === "Крыша") {
+            const roofTypeMap: Record<string, string> = {
+              "4 Гибкая/битумная черепица": "red",
+              "4 Керамическая черепица": "blue",
+              "4 Металлочерепица": "green",
+            };
+            const roofType = roofTypeMap[option.type] || "pink";
 
-      const updatedConfig = { ...actualHouseConfig };
-      updatedConfig.layers.forEach((layer) => {
-        if (layer.id.startsWith("roof-")) {
-          layer.visible = layer.id === `roof-${roofType}`;
+            baseConfig.layers.push({
+              id: `roof-${roofType}`,
+              assetPath: `/${roofType}Roof.png`,
+              zIndex: 2,
+              opacity: 1,
+              visible: true,
+            });
+          }
         }
-      });
-      return updatedConfig;
-    }
-    return actualHouseConfig;
+      }
+    );
+
+    return baseConfig;
+  };
+
+  // Конфигурация для фактического дома (по выборам из factStore и завершенности)
+  const getActualHouseConfig = (): LayeredImageConfig => {
+    const baseConfig: LayeredImageConfig = {
+      width: 288,
+      height: 196,
+      layers: [
+        {
+          id: "house",
+          assetPath: "/house.png",
+          zIndex: 1,
+          opacity: 1,
+          visible: true,
+        },
+      ],
+    };
+
+    // Добавляем слои только для завершенных конструкций
+    Object.entries(factStore.selectedOptions).forEach(
+      ([constructionType, option]) => {
+        if (option && isConstructionCompleted(constructionType)) {
+          // Пока что только крыша имеет визуальные слои
+          if (constructionType === "Крыша") {
+            const roofTypeMap: Record<string, string> = {
+              "4 Гибкая/битумная черепица": "red",
+              "4 Керамическая черепица": "blue",
+              "4 Металлочерепица": "green",
+            };
+            const roofType = roofTypeMap[option.type] || "pink";
+
+            baseConfig.layers.push({
+              id: `roof-${roofType}`,
+              assetPath: `/${roofType}Roof.png`,
+              zIndex: 2,
+              opacity: 1,
+              visible: true,
+            });
+          }
+        }
+      }
+    );
+
+    return baseConfig;
   };
 
   const handleContinue = () => {
@@ -144,7 +169,7 @@ const ComparisonPage: React.FC = () => {
               <h2 className="section-title">Проект дома</h2>
             </div>
             <div className="house-display-comparison">
-              <LayeredCanvas config={plannedHouseConfig} />
+              <LayeredCanvas config={getPlannedHouseConfig()} />
             </div>
             <div className="indicators-block">
               <div className="indicator-item">
