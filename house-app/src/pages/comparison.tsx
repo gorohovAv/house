@@ -44,7 +44,7 @@ const ComparisonPage: React.FC = () => {
 
   // Фактическая длительность - количество дней, когда были выданы деньги
   const actualDuration = factStore.paymentSchedule.filter(
-    (payment) => payment.issued !== null && payment.issued > 0
+    (payment) => payment.issued !== null
   ).length;
 
   // Функция проверки завершенности конструкции
