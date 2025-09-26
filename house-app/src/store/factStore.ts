@@ -404,11 +404,20 @@ export const useFactStore = create<FactState>()(
                 const firstHalfPrice = Math.floor(overallPrice / 2);
                 const secondHalfPrice = overallPrice - firstHalfPrice;
 
-                // Первая половина стен
+                // Первая половина стен - с остатком на первый день
+                const firstHalfDailyAmount = Math.floor(
+                  firstHalfPrice / firstHalfDuration
+                );
+                const firstHalfRemainder =
+                  firstHalfPrice - firstHalfDailyAmount * firstHalfDuration;
+
                 for (let i = 0; i < firstHalfDuration; i++) {
                   paymentSchedule.push({
                     dayIndex: currentDay + i,
-                    amount: Math.floor(firstHalfPrice / firstHalfDuration),
+                    amount:
+                      i === 0
+                        ? firstHalfDailyAmount + firstHalfRemainder
+                        : firstHalfDailyAmount,
                     issued: null,
                     construction: constructionType,
                     daysRequired: overallDuration,
@@ -444,10 +453,19 @@ export const useFactStore = create<FactState>()(
                   const dailyCeilingAmount =
                     overallCeilingPrice / overallCeilingDuration;
 
+                  // Перекрытия с остатком на первый день
+                  const ceilingDailyAmount = Math.floor(dailyCeilingAmount);
+                  const ceilingRemainder =
+                    overallCeilingPrice -
+                    ceilingDailyAmount * overallCeilingDuration;
+
                   for (let i = 0; i < overallCeilingDuration; i++) {
                     paymentSchedule.push({
                       dayIndex: currentDay + i,
-                      amount: Math.floor(dailyCeilingAmount),
+                      amount:
+                        i === 0
+                          ? ceilingDailyAmount + ceilingRemainder
+                          : ceilingDailyAmount,
                       issued: null,
                       construction: "Перекрытие",
                       daysRequired: overallCeilingDuration,
@@ -459,11 +477,20 @@ export const useFactStore = create<FactState>()(
                   currentDay += overallCeilingDuration;
                 }
 
-                // Вторая половина стен
+                // Вторая половина стен - с остатком на первый день
+                const secondHalfDailyAmount = Math.floor(
+                  secondHalfPrice / secondHalfDuration
+                );
+                const secondHalfRemainder =
+                  secondHalfPrice - secondHalfDailyAmount * secondHalfDuration;
+
                 for (let i = 0; i < secondHalfDuration; i++) {
                   paymentSchedule.push({
                     dayIndex: currentDay + i,
-                    amount: Math.floor(secondHalfPrice / secondHalfDuration),
+                    amount:
+                      i === 0
+                        ? secondHalfDailyAmount + secondHalfRemainder
+                        : secondHalfDailyAmount,
                     issued: null,
                     construction: constructionType,
                     daysRequired: overallDuration,
@@ -475,10 +502,16 @@ export const useFactStore = create<FactState>()(
                 currentDay += secondHalfDuration;
               } else if (constructionType !== "Перекрытие") {
                 // Обычная логика для всех остальных конструкций (кроме перекрытий, которые уже обработаны в логике стен)
+                // С остатком на первый день
+                const dailyAmountFloor = Math.floor(dailyAmount);
+                const remainder =
+                  overallPrice - dailyAmountFloor * overallDuration;
+
                 for (let i = 0; i < overallDuration; i++) {
                   paymentSchedule.push({
                     dayIndex: currentDay + i,
-                    amount: Math.floor(dailyAmount),
+                    amount:
+                      i === 0 ? dailyAmountFloor + remainder : dailyAmountFloor,
                     issued: null,
                     construction: constructionType,
                     daysRequired: overallDuration,
@@ -805,11 +838,20 @@ export const useFactStore = create<FactState>()(
                 const firstHalfPrice = Math.floor(overallPrice / 2);
                 const secondHalfPrice = overallPrice - firstHalfPrice;
 
-                // Первая половина стен
+                // Первая половина стен - с остатком на первый день
+                const firstHalfDailyAmount = Math.floor(
+                  firstHalfPrice / firstHalfDuration
+                );
+                const firstHalfRemainder =
+                  firstHalfPrice - firstHalfDailyAmount * firstHalfDuration;
+
                 for (let i = 0; i < firstHalfDuration; i++) {
                   newPayments.push({
                     dayIndex: currentDay + i,
-                    amount: Math.floor(firstHalfPrice / firstHalfDuration),
+                    amount:
+                      i === 0
+                        ? firstHalfDailyAmount + firstHalfRemainder
+                        : firstHalfDailyAmount,
                     issued: null,
                     construction: constructionType,
                     daysRequired: overallDuration,
@@ -845,10 +887,19 @@ export const useFactStore = create<FactState>()(
                   const dailyCeilingAmount =
                     overallCeilingPrice / overallCeilingDuration;
 
+                  // Перекрытия с остатком на первый день
+                  const ceilingDailyAmount = Math.floor(dailyCeilingAmount);
+                  const ceilingRemainder =
+                    overallCeilingPrice -
+                    ceilingDailyAmount * overallCeilingDuration;
+
                   for (let i = 0; i < overallCeilingDuration; i++) {
                     newPayments.push({
                       dayIndex: currentDay + i,
-                      amount: Math.floor(dailyCeilingAmount),
+                      amount:
+                        i === 0
+                          ? ceilingDailyAmount + ceilingRemainder
+                          : ceilingDailyAmount,
                       issued: null,
                       construction: "Перекрытие",
                       daysRequired: overallCeilingDuration,
@@ -860,11 +911,20 @@ export const useFactStore = create<FactState>()(
                   currentDay += overallCeilingDuration;
                 }
 
-                // Вторая половина стен
+                // Вторая половина стен - с остатком на первый день
+                const secondHalfDailyAmount = Math.floor(
+                  secondHalfPrice / secondHalfDuration
+                );
+                const secondHalfRemainder =
+                  secondHalfPrice - secondHalfDailyAmount * secondHalfDuration;
+
                 for (let i = 0; i < secondHalfDuration; i++) {
                   newPayments.push({
                     dayIndex: currentDay + i,
-                    amount: Math.floor(secondHalfPrice / secondHalfDuration),
+                    amount:
+                      i === 0
+                        ? secondHalfDailyAmount + secondHalfRemainder
+                        : secondHalfDailyAmount,
                     issued: null,
                     construction: constructionType,
                     daysRequired: overallDuration,
@@ -876,11 +936,17 @@ export const useFactStore = create<FactState>()(
                 currentDay += secondHalfDuration;
               } else if (constructionType !== "Перекрытие") {
                 // Обычная логика для всех остальных конструкций (кроме перекрытий)
+                // С остатком на первый день
                 const dailyAmount = overallPrice / overallDuration;
+                const dailyAmountFloor = Math.floor(dailyAmount);
+                const remainder =
+                  overallPrice - dailyAmountFloor * overallDuration;
+
                 for (let i = 0; i < overallDuration; i++) {
                   newPayments.push({
                     dayIndex: currentDay + i,
-                    amount: Math.floor(dailyAmount),
+                    amount:
+                      i === 0 ? dailyAmountFloor + remainder : dailyAmountFloor,
                     issued: null,
                     construction: constructionType,
                     daysRequired: overallDuration,
@@ -997,11 +1063,20 @@ export const useFactStore = create<FactState>()(
               const firstHalfPrice = Math.floor(constructionCost / 2);
               const secondHalfPrice = constructionCost - firstHalfPrice;
 
-              // Первая половина стен
+              // Первая половина стен - с остатком на первый день
+              const firstHalfDailyAmount = Math.floor(
+                firstHalfPrice / firstHalfDuration
+              );
+              const firstHalfRemainder =
+                firstHalfPrice - firstHalfDailyAmount * firstHalfDuration;
+
               for (let i = 0; i < firstHalfDuration; i++) {
                 newPaymentSchedule.push({
                   dayIndex: newCurrentDay + i,
-                  amount: Math.floor(firstHalfPrice / firstHalfDuration),
+                  amount:
+                    i === 0
+                      ? firstHalfDailyAmount + firstHalfRemainder
+                      : firstHalfDailyAmount,
                   issued: null,
                   construction: type,
                   daysRequired: constructionDuration,
@@ -1018,10 +1093,18 @@ export const useFactStore = create<FactState>()(
                 const ceilingDuration = getModifiedDuration("Перекрытие");
                 const dailyCeilingAmount = ceilingOption.cost / ceilingDuration;
 
+                // Перекрытия с остатком на первый день
+                const ceilingDailyAmount = Math.floor(dailyCeilingAmount);
+                const ceilingRemainder =
+                  ceilingOption.cost - ceilingDailyAmount * ceilingDuration;
+
                 for (let i = 0; i < ceilingDuration; i++) {
                   newPaymentSchedule.push({
                     dayIndex: newCurrentDay + i,
-                    amount: Math.floor(dailyCeilingAmount),
+                    amount:
+                      i === 0
+                        ? ceilingDailyAmount + ceilingRemainder
+                        : ceilingDailyAmount,
                     issued: null,
                     construction: "Перекрытие",
                     daysRequired: ceilingDuration,
@@ -1033,11 +1116,20 @@ export const useFactStore = create<FactState>()(
                 newCurrentDay += ceilingDuration;
               }
 
-              // Вторая половина стен
+              // Вторая половина стен - с остатком на первый день
+              const secondHalfDailyAmount = Math.floor(
+                secondHalfPrice / secondHalfDuration
+              );
+              const secondHalfRemainder =
+                secondHalfPrice - secondHalfDailyAmount * secondHalfDuration;
+
               for (let i = 0; i < secondHalfDuration; i++) {
                 newPaymentSchedule.push({
                   dayIndex: newCurrentDay + i,
-                  amount: Math.floor(secondHalfPrice / secondHalfDuration),
+                  amount:
+                    i === 0
+                      ? secondHalfDailyAmount + secondHalfRemainder
+                      : secondHalfDailyAmount,
                   issued: null,
                   construction: type,
                   daysRequired: constructionDuration,
@@ -1049,11 +1141,17 @@ export const useFactStore = create<FactState>()(
               newCurrentDay += secondHalfDuration;
             } else if (type !== "Перекрытие") {
               // Обычная логика для всех остальных конструкций (кроме перекрытий)
+              // С остатком на первый день
               const dailyAmount = constructionCost / constructionDuration;
+              const dailyAmountFloor = Math.floor(dailyAmount);
+              const remainder =
+                constructionCost - dailyAmountFloor * constructionDuration;
+
               for (let i = 0; i < constructionDuration; i++) {
                 newPaymentSchedule.push({
                   dayIndex: newCurrentDay + i,
-                  amount: Math.floor(dailyAmount),
+                  amount:
+                    i === 0 ? dailyAmountFloor + remainder : dailyAmountFloor,
                   issued: null,
                   construction: type,
                   daysRequired: constructionDuration,
@@ -1279,23 +1377,39 @@ export const useFactStore = create<FactState>()(
       ) => {
         const { paymentSchedule } = get();
 
-        set((state) => ({
-          paymentSchedule: state.paymentSchedule.map((payment) => {
-            if (payment.construction === constructionType) {
-              const newOverallPrice = payment.overallPrice + additionalCost;
-              const newDailyAmount = Math.floor(
-                newOverallPrice / payment.overallDuration
-              );
+        set((state) => {
+          // Группируем платежи по конструкциям для правильного распределения остатка
+          const constructionPayments = state.paymentSchedule
+            .filter((p) => p.construction === constructionType)
+            .sort((a, b) => a.dayIndex - b.dayIndex);
 
-              return {
-                ...payment,
-                amount: newDailyAmount,
-                overallPrice: newOverallPrice,
-              };
-            }
-            return payment;
-          }),
-        }));
+          if (constructionPayments.length === 0) return state;
+
+          const firstPayment = constructionPayments[0];
+          const newOverallPrice = firstPayment.overallPrice + additionalCost;
+          const dailyAmountFloor = Math.floor(
+            newOverallPrice / firstPayment.overallDuration
+          );
+          const remainder =
+            newOverallPrice - dailyAmountFloor * firstPayment.overallDuration;
+
+          return {
+            ...state,
+            paymentSchedule: state.paymentSchedule.map((payment) => {
+              if (payment.construction === constructionType) {
+                const isFirstDay = payment.dayIndex === firstPayment.dayIndex;
+                return {
+                  ...payment,
+                  amount: isFirstDay
+                    ? dailyAmountFloor + remainder
+                    : dailyAmountFloor,
+                  overallPrice: newOverallPrice,
+                };
+              }
+              return payment;
+            }),
+          };
+        });
       },
 
       shouldContinueProcessing: (day: number) => {
