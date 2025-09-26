@@ -125,9 +125,12 @@ func getResults(c *gin.Context) {
 		return
 	}
 
-	// Сортировка по разности стоимости (по возрастанию), затем по длительности
+	// Сортировка по разности стоимости (по возрастанию), затем по длительности, затем по времени создания
 	sort.Slice(results, func(i, j int) bool {
 		if results[i].CostDifference == results[j].CostDifference {
+			if results[i].DurationDifference == results[j].DurationDifference {
+				return results[i].CreatedAt.Before(results[j].CreatedAt)
+			}
 			return results[i].DurationDifference < results[j].DurationDifference
 		}
 		return results[i].CostDifference < results[j].CostDifference
@@ -146,9 +149,12 @@ func getResultsPage(c *gin.Context) {
 		return
 	}
 
-	// Сортировка по разности стоимости (по возрастанию), затем по длительности
+	// Сортировка по разности стоимости (по возрастанию), затем по длительности, затем по времени создания
 	sort.Slice(results, func(i, j int) bool {
 		if results[i].CostDifference == results[j].CostDifference {
+			if results[i].DurationDifference == results[j].DurationDifference {
+				return results[i].CreatedAt.Before(results[j].CreatedAt)
+			}
 			return results[i].DurationDifference < results[j].DurationDifference
 		}
 		return results[i].CostDifference < results[j].CostDifference
