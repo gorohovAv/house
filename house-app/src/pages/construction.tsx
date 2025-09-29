@@ -127,6 +127,7 @@ const mockCards = getCardsFromConstants();
 export default function ConstructionPage() {
   const [roofType, setRoofType] = useState<string>("");
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [requestAmount, setRequestAmount] = useState<string>("10000");
   const navigate = useNavigate();
 
   const {
@@ -496,12 +497,22 @@ export default function ConstructionPage() {
           />
 
           <div className="request-money-card">
-            <div className="request-amount">10 000</div>
+            <input
+              type="number"
+              className="request-amount-input"
+              value={requestAmount}
+              onChange={(e) => setRequestAmount(e.target.value)}
+              placeholder="Сумма"
+              min="1"
+            />
             <button
               className="btn-request"
               onClick={() => {
-                console.log(`🏦 КУБЫШКА ПЕРЕД ЗАПРОСОМ: ${piggyBank} руб.`);
-                requestMoney(10000);
+                const amount = parseInt(requestAmount) || 0;
+                if (amount > 0) {
+                  console.log(`🏦 КУБЫШКА ПЕРЕД ЗАПРОСОМ: ${piggyBank} руб.`);
+                  requestMoney(amount);
+                }
               }}
             >
               Запросить еще

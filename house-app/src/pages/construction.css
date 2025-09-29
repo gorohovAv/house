@@ -335,6 +335,18 @@
   color: var(--color-text);
 }
 
+.request-amount-input {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 5px;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  text-align: left;
+  width: 100px;
+}
+
 .btn-request {
   background: var(--color-button2-secondary);
   color: var(--color-text);
