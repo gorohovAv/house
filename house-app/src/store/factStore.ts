@@ -100,6 +100,7 @@ export interface FactState {
     constructionType: string,
     additionalCost: number
   ) => void;
+  getPaidAmountForConstruction: (constructionType: string) => number;
   shouldContinueProcessing: (day: number) => boolean;
 }
 
@@ -640,7 +641,7 @@ export const useFactStore = create<FactState>()(
         // Обрабатываем каждую запись для этого дня
         const currentPiggyBank = get().piggyBank;
 
-        let constructionsNeedingIdleDay: string[] = [];
+        const constructionsNeedingIdleDay: string[] = [];
 
         set((state) => {
           const newPaymentSchedule = state.paymentSchedule.map((payment) => {
@@ -685,6 +686,7 @@ export const useFactStore = create<FactState>()(
 
                 // Помечаем конструкцию для добавления дня достройки
                 if (
+                  payment.construction &&
                   !constructionsNeedingIdleDay.includes(payment.construction)
                 ) {
                   constructionsNeedingIdleDay.push(payment.construction);
@@ -1054,6 +1056,7 @@ export const useFactStore = create<FactState>()(
           selectedOptions,
           addDurationModification,
           getModifiedDuration,
+          getPaidAmountForConstruction,
         } = get();
 
         // Сохраняем модификацию длительности
@@ -1068,7 +1071,9 @@ export const useFactStore = create<FactState>()(
           const option = selectedOptions[type];
           if (option) {
             const constructionDuration = getModifiedDuration(type);
-            const constructionCost = option.cost;
+            // Вычисляем остаточную стоимость (номинальная минус уже выплаченная)
+            const paidAmount = getPaidAmountForConstruction(type);
+            const constructionCost = Math.max(0, option.cost - paidAmount);
 
             // Специальная логика для стен - разбиваем на два периода
             if (type === "Стены") {
@@ -1106,12 +1111,19 @@ export const useFactStore = create<FactState>()(
               const ceilingOption = selectedOptions["Перекрытие"];
               if (ceilingOption) {
                 const ceilingDuration = getModifiedDuration("Перекрытие");
-                const dailyCeilingAmount = ceilingOption.cost / ceilingDuration;
+                // Вычисляем остаточную стоимость для перекрытий
+                const ceilingPaidAmount =
+                  getPaidAmountForConstruction("Перекрытие");
+                const ceilingCost = Math.max(
+                  0,
+                  ceilingOption.cost - ceilingPaidAmount
+                );
+                const dailyCeilingAmount = ceilingCost / ceilingDuration;
 
                 // Перекрытия с остатком на первый день
                 const ceilingDailyAmount = Math.floor(dailyCeilingAmount);
                 const ceilingRemainder =
-                  ceilingOption.cost - ceilingDailyAmount * ceilingDuration;
+                  ceilingCost - ceilingDailyAmount * ceilingDuration;
 
                 for (let i = 0; i < ceilingDuration; i++) {
                   newPaymentSchedule.push({
@@ -1124,7 +1136,7 @@ export const useFactStore = create<FactState>()(
                     construction: "Перекрытие",
                     daysRequired: ceilingDuration,
                     daysPayed: 0,
-                    overallPrice: ceilingOption.cost,
+                    overallPrice: ceilingCost,
                     overallDuration: ceilingDuration,
                   });
                 }
@@ -1197,6 +1209,7 @@ export const useFactStore = create<FactState>()(
           selectedOptions,
           addDurationModification,
           getModifiedDuration,
+          getPaidAmountForConstruction,
         } = get();
 
         // Сохраняем модификацию длительности
@@ -1211,6 +1224,9 @@ export const useFactStore = create<FactState>()(
           const option = selectedOptions[type];
           if (option) {
             const constructionDuration = getModifiedDuration(type);
+            // Вычисляем остаточную стоимость (номинальная минус уже выплаченная)
+            const paidAmount = getPaidAmountForConstruction(type);
+            const constructionCost = Math.max(0, option.cost - paidAmount);
 
             // Специальная логика для стен - разбиваем на два периода
             if (type === "Стены") {
@@ -1221,16 +1237,22 @@ export const useFactStore = create<FactState>()(
               // Первая половина стен
               newFundingPlan.push({
                 dayIndex: newCurrentDay,
-                amount: Math.floor(option.cost / 2),
+                amount: Math.floor(constructionCost / 2),
               });
               newCurrentDay += firstHalfDuration;
 
               // Добавляем перекрытия между частями стен
               const ceilingOption = selectedOptions["Перекрытие"];
               if (ceilingOption) {
+                const ceilingPaidAmount =
+                  getPaidAmountForConstruction("Перекрытие");
+                const ceilingCost = Math.max(
+                  0,
+                  ceilingOption.cost - ceilingPaidAmount
+                );
                 newFundingPlan.push({
                   dayIndex: newCurrentDay,
-                  amount: ceilingOption.cost,
+                  amount: ceilingCost,
                 });
                 newCurrentDay += getModifiedDuration("Перекрытие");
               }
@@ -1238,14 +1260,14 @@ export const useFactStore = create<FactState>()(
               // Вторая половина стен
               newFundingPlan.push({
                 dayIndex: newCurrentDay,
-                amount: option.cost - Math.floor(option.cost / 2),
+                amount: constructionCost - Math.floor(constructionCost / 2),
               });
               newCurrentDay += secondHalfDuration;
             } else if (type !== "Перекрытие") {
               // Обычная логика для всех остальных конструкций (кроме перекрытий, которые уже обработаны в логике стен)
               newFundingPlan.push({
                 dayIndex: newCurrentDay,
-                amount: option.cost,
+                amount: constructionCost,
               });
               newCurrentDay += constructionDuration;
             }
@@ -1386,6 +1408,19 @@ export const useFactStore = create<FactState>()(
         });
 
         set({ paymentSchedule: restoredPaymentSchedule });
+      },
+
+      getPaidAmountForConstruction: (constructionType: string) => {
+        const { paymentSchedule } = get();
+
+        // Суммируем все выплаченные суммы для данной конструкции
+        return paymentSchedule
+          .filter(
+            (payment) =>
+              payment.construction === constructionType &&
+              payment.issued !== null
+          )
+          .reduce((total, payment) => total + (payment.issued || 0), 0);
       },
 
       updateConstructionCost: (
