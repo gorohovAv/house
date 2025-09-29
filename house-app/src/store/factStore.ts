@@ -1090,12 +1090,20 @@ export const useFactStore = create<FactState>()(
               const firstHalfRemainder =
                 firstHalfPrice - firstHalfDailyAmount * firstHalfDuration;
 
+              // Доназначаем разницу в первый день для первой половины стен
+              const firstHalfTotalAssigned =
+                firstHalfDailyAmount * firstHalfDuration + firstHalfRemainder;
+              const firstHalfDifference =
+                firstHalfPrice - firstHalfTotalAssigned;
+
               for (let i = 0; i < firstHalfDuration; i++) {
                 newPaymentSchedule.push({
                   dayIndex: newCurrentDay + i,
                   amount:
                     i === 0
-                      ? firstHalfDailyAmount + firstHalfRemainder
+                      ? firstHalfDailyAmount +
+                        firstHalfRemainder +
+                        firstHalfDifference
                       : firstHalfDailyAmount,
                   issued: null,
                   construction: type,
@@ -1125,12 +1133,19 @@ export const useFactStore = create<FactState>()(
                 const ceilingRemainder =
                   ceilingCost - ceilingDailyAmount * ceilingDuration;
 
+                // Доназначаем разницу в первый день для перекрытий
+                const ceilingTotalAssigned =
+                  ceilingDailyAmount * ceilingDuration + ceilingRemainder;
+                const ceilingDifference = ceilingCost - ceilingTotalAssigned;
+
                 for (let i = 0; i < ceilingDuration; i++) {
                   newPaymentSchedule.push({
                     dayIndex: newCurrentDay + i,
                     amount:
                       i === 0
-                        ? ceilingDailyAmount + ceilingRemainder
+                        ? ceilingDailyAmount +
+                          ceilingRemainder +
+                          ceilingDifference
                         : ceilingDailyAmount,
                     issued: null,
                     construction: "Перекрытие",
@@ -1150,12 +1165,21 @@ export const useFactStore = create<FactState>()(
               const secondHalfRemainder =
                 secondHalfPrice - secondHalfDailyAmount * secondHalfDuration;
 
+              // Доназначаем разницу в первый день для второй половины стен
+              const secondHalfTotalAssigned =
+                secondHalfDailyAmount * secondHalfDuration +
+                secondHalfRemainder;
+              const secondHalfDifference =
+                secondHalfPrice - secondHalfTotalAssigned;
+
               for (let i = 0; i < secondHalfDuration; i++) {
                 newPaymentSchedule.push({
                   dayIndex: newCurrentDay + i,
                   amount:
                     i === 0
-                      ? secondHalfDailyAmount + secondHalfRemainder
+                      ? secondHalfDailyAmount +
+                        secondHalfRemainder +
+                        secondHalfDifference
                       : secondHalfDailyAmount,
                   issued: null,
                   construction: type,
@@ -1174,11 +1198,18 @@ export const useFactStore = create<FactState>()(
               const remainder =
                 constructionCost - dailyAmountFloor * constructionDuration;
 
+              // Доназначаем разницу в первый день
+              const totalAssigned =
+                dailyAmountFloor * constructionDuration + remainder;
+              const difference = constructionCost - totalAssigned;
+
               for (let i = 0; i < constructionDuration; i++) {
                 newPaymentSchedule.push({
                   dayIndex: newCurrentDay + i,
                   amount:
-                    i === 0 ? dailyAmountFloor + remainder : dailyAmountFloor,
+                    i === 0
+                      ? dailyAmountFloor + remainder + difference
+                      : dailyAmountFloor,
                   issued: null,
                   construction: type,
                   daysRequired: constructionDuration,
@@ -1234,10 +1265,16 @@ export const useFactStore = create<FactState>()(
               const secondHalfDuration =
                 constructionDuration - firstHalfDuration;
 
-              // Первая половина стен
+              const firstHalfPrice = Math.floor(constructionCost / 2);
+              const secondHalfPrice = constructionCost - firstHalfPrice;
+
+              // Первая половина стен - доназначаем разницу в первый день
+              const firstHalfAssigned = firstHalfPrice;
+              const firstHalfDifference = firstHalfPrice - firstHalfAssigned;
+
               newFundingPlan.push({
                 dayIndex: newCurrentDay,
-                amount: Math.floor(constructionCost / 2),
+                amount: firstHalfPrice + firstHalfDifference,
               });
               newCurrentDay += firstHalfDuration;
 
@@ -1250,24 +1287,36 @@ export const useFactStore = create<FactState>()(
                   0,
                   ceilingOption.cost - ceilingPaidAmount
                 );
+
+                // Доназначаем разницу в первый день для перекрытий
+                const ceilingAssigned = ceilingCost;
+                const ceilingDifference = ceilingCost - ceilingAssigned;
+
                 newFundingPlan.push({
                   dayIndex: newCurrentDay,
-                  amount: ceilingCost,
+                  amount: ceilingCost + ceilingDifference,
                 });
                 newCurrentDay += getModifiedDuration("Перекрытие");
               }
 
-              // Вторая половина стен
+              // Вторая половина стен - доназначаем разницу в первый день
+              const secondHalfAssigned = secondHalfPrice;
+              const secondHalfDifference = secondHalfPrice - secondHalfAssigned;
+
               newFundingPlan.push({
                 dayIndex: newCurrentDay,
-                amount: constructionCost - Math.floor(constructionCost / 2),
+                amount: secondHalfPrice + secondHalfDifference,
               });
               newCurrentDay += secondHalfDuration;
             } else if (type !== "Перекрытие") {
               // Обычная логика для всех остальных конструкций (кроме перекрытий, которые уже обработаны в логике стен)
+              // Доназначаем разницу в первый день
+              const assigned = constructionCost;
+              const difference = constructionCost - assigned;
+
               newFundingPlan.push({
                 dayIndex: newCurrentDay,
-                amount: constructionCost,
+                amount: constructionCost + difference,
               });
               newCurrentDay += constructionDuration;
             }
