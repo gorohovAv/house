@@ -1504,7 +1504,7 @@ export const useFactStore = create<FactState>()(
                   amount: isFirstDay
                     ? dailyAmountFloor + remainder
                     : dailyAmountFloor,
-                  overallPrice: newOverallPrice,
+                  overallPrice: payment.overallPrice + additionalCost,
                 };
               }
               return payment;
