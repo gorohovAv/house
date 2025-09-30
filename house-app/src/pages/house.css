@@ -299,7 +299,7 @@
 
   .controls-panel {
     width: 100%;
-    max-width: 100%;
+    max-width: 360px;
   }
 
   .header {

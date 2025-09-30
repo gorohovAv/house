@@ -8,6 +8,7 @@ import { CONSTRUCTION_OPTIONS } from "../constants";
 import LayeredCanvas from "../components/LayeredCanvas";
 import Indicators from "../components/Indicators";
 import ConstructionCard from "../components/ConstructionCard";
+import CostChart from "../components/CostChart";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -168,11 +169,11 @@ export default function ConstructionPage() {
 
   // Находим ближайший транш
   const nextFunding = fundingPlan.find(
-    (funding) => funding.day > paymentSchedule.length
+    (funding) => funding.dayIndex > paymentSchedule.length
   );
   const nextFundingText = nextFunding
     ? `Финансирование через ${
-        nextFunding.day - paymentSchedule.length
+        nextFunding.dayIndex - paymentSchedule.length
       } дней + ${nextFunding.amount}`
     : "Финансирование завершено";
 
@@ -723,17 +724,11 @@ export default function ConstructionPage() {
               </div>
             </div>
 
-            <div className="cost-chart">
-              <div className="chart-title">План/ Прогноз стоимости</div>
-              <div className="chart-bars">
-                <div className="chart-bar planned">
-                  <div className="bar-value">{constructionData.planned}</div>
-                </div>
-                <div className="chart-bar actual">
-                  <div className="bar-value">{constructionData.actual}</div>
-                </div>
-              </div>
-            </div>
+            <CostChart
+              planned={constructionData.planned}
+              actual={constructionData.actual}
+              title="План/ Прогноз стоимости"
+            />
 
             {currentCard && (
               <ConstructionCard
