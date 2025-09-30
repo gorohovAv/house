@@ -128,6 +128,8 @@ export default function ConstructionPage() {
   const [roofType, setRoofType] = useState<string>("");
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [requestAmount, setRequestAmount] = useState<string>("10000");
+  const [showExceededPopup, setShowExceededPopup] = useState(false);
+  const [showLimitsPopup, setShowLimitsPopup] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -163,6 +165,72 @@ export default function ConstructionPage() {
   const currentRisk = currentPeriod?.risk;
   const currentCard = mockCards[currentCardIndex];
   const currentSelection = selectedOptions[currentCard?.title] || undefined;
+
+  // Находим ближайший транш
+  const nextFunding = fundingPlan.find(
+    (funding) => funding.day > paymentSchedule.length
+  );
+  const nextFundingText = nextFunding
+    ? `Финансирование через ${
+        nextFunding.day - paymentSchedule.length
+      } дней + ${nextFunding.amount}`
+    : "Финансирование завершено";
+
+  // Расчеты для карточки выбора
+  const plannedDuration = planStore.getTotalDuration();
+  const forecastDuration = paymentSchedule.length;
+  const forecastRemainder =
+    piggyBank +
+    fundingPlan.reduce((total, funding) => total + funding.amount, 0) -
+    paymentSchedule.reduce(
+      (total, payment) => total + (payment.amount || 0),
+      0
+    );
+
+  // Расчет данных для графика по текущей конструкции
+  const getConstructionData = () => {
+    if (!currentCard) return { planned: 0, actual: 0 };
+
+    const plannedCost = currentSelection?.cost || 0;
+    const actualCost = paymentSchedule
+      .filter((payment) => payment.construction === currentCard.title)
+      .reduce((total, payment) => {
+        return (
+          total +
+          (payment.issued !== null && payment.issued !== 0
+            ? payment.issued
+            : payment.amount || 0)
+        );
+      }, 0);
+
+    return { planned: plannedCost, actual: actualCost };
+  };
+
+  const constructionData = getConstructionData();
+
+  // Проверяем превышение лимитов
+  const hasExceededPlan = constructionData.actual > constructionData.planned;
+  const hasExceededLimits =
+    forecastDuration > plannedDuration ||
+    paymentSchedule.reduce(
+      (total, payment) => total + (payment.amount || 0),
+      0
+    ) > planStore.getTotalCost();
+
+  // Показываем попапы при превышении
+  useEffect(() => {
+    if (hasExceededPlan) {
+      setShowExceededPopup(true);
+      setTimeout(() => setShowExceededPopup(false), 3000);
+    }
+  }, [hasExceededPlan]);
+
+  useEffect(() => {
+    if (hasExceededLimits) {
+      setShowLimitsPopup(true);
+      setTimeout(() => setShowLimitsPopup(false), 3000);
+    }
+  }, [hasExceededLimits]);
 
   // Проверяем, завершены ли все периоды
   const isAllPeriodsCompleted = currentPeriodIndex >= periods.length;
@@ -288,8 +356,13 @@ export default function ConstructionPage() {
 
   const handleRiskSolutionSelect = (solution: "solution" | "alternative") => {
     if (currentPeriod) {
-      console.log(`🏦 КУБЫШКА ПЕРЕД ВЫБОРОМ РЕШЕНИЯ: ${piggyBank} руб.`);
       selectRiskSolution(currentPeriod.id, solution);
+    }
+  };
+
+  const handleConfirmRiskSolution = () => {
+    if (currentPeriod) {
+      console.log(`🏦 КУБЫШКА ПЕРЕД ВЫБОРОМ РЕШЕНИЯ: ${piggyBank} руб.`);
 
       // Обрабатываем дни текущего периода перед переходом
       const currentPeriodDays =
@@ -343,11 +416,6 @@ export default function ConstructionPage() {
       <div className="construction-scroll-container">
         <div className="header">
           <h1 className="title">Строительство</h1>
-          <div className="period-badge">
-            {isAllPeriodsCompleted
-              ? "Завершено"
-              : `Период ${currentPeriodIndex + 1}`}
-          </div>
         </div>
 
         <div className="construction-container">
@@ -476,6 +544,20 @@ export default function ConstructionPage() {
                     </div>
                   </div>
                 </div>
+
+                {currentPeriod?.selectedSolution && (
+                  <div className="risk-confirm-section">
+                    <div className="risk-confirm-text">
+                      Подтвердите выбор риска
+                    </div>
+                    <button
+                      className="btn-primary risk-confirm-button"
+                      onClick={handleConfirmRiskSolution}
+                    >
+                      Подтвердить
+                    </button>
+                  </div>
+                )}
               </div>
             )
           ) : (
@@ -488,13 +570,77 @@ export default function ConstructionPage() {
           )}
 
           <div className="house-display">
-            <LayeredCanvas config={updateLayeredConfig()} />
+            <div className="house-container">
+              <div className="house-header">
+                <h2 className="house-title">Строительство</h2>
+                <div className="period-badge">
+                  {isAllPeriodsCompleted
+                    ? "Завершено"
+                    : `Период ${currentPeriodIndex + 1}`}
+                </div>
+              </div>
+              <LayeredCanvas config={updateLayeredConfig()} />
+            </div>
           </div>
 
-          <Indicators
-            remainingBudget={planningRemainder}
-            remainingDuration={duration - paymentSchedule.length}
-          />
+          <div className="plan-forecast-cards">
+            <div className="plan-card">
+              <div className="card-title">План</div>
+              <div className="card-content">
+                <div className="card-item">
+                  <MoneyIcon />
+                  <span>{planStore.getTotalCost()}</span>
+                </div>
+                <div className="card-item">
+                  <TimeIcon />
+                  <span>{planStore.getTotalDuration()} дней</span>
+                </div>
+              </div>
+            </div>
+            <div className="forecast-card">
+              <div className="card-title">Прогноз</div>
+              <div className="card-content">
+                <div className="card-item">
+                  <MoneyIcon />
+                  <span>
+                    {paymentSchedule.reduce(
+                      (total, payment) => total + (payment.amount || 0),
+                      0
+                    )}
+                  </span>
+                </div>
+                <div className="card-item">
+                  <TimeIcon />
+                  <span>{paymentSchedule.length} дней</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="balance-simple-badges">
+            <div className="balance-badge">
+              <div className="badge-title">Баланс</div>
+              <div className="badge-content">
+                <MoneyIcon />
+                <span>{piggyBank}</span>
+              </div>
+            </div>
+            <div className="simple-badge">
+              <div className="badge-title">Простой</div>
+              <div className="badge-content">
+                <TimeIcon />
+                <span>
+                  {
+                    paymentSchedule.filter((payment) => payment.issued === 0)
+                      .length
+                  }{" "}
+                  дней
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="next-funding-text">{nextFundingText}</div>
 
           <div className="request-money-card">
             <input
@@ -558,6 +704,37 @@ export default function ConstructionPage() {
               </div>
             </div>
 
+            <div className="plan-forecast-badges">
+              <div className="plan-forecast-badge">
+                <div className="badge-title">План / Прогноз</div>
+                <div className="badge-content">
+                  <TimeIcon />
+                  <span>
+                    {plannedDuration} / {forecastDuration} дней
+                  </span>
+                </div>
+              </div>
+              <div className="forecast-remainder-badge">
+                <div className="badge-title">Прогнозный остаток</div>
+                <div className="badge-content">
+                  <MoneyIcon />
+                  <span>{forecastRemainder}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="cost-chart">
+              <div className="chart-title">План/ Прогноз стоимости</div>
+              <div className="chart-bars">
+                <div className="chart-bar planned">
+                  <div className="bar-value">{constructionData.planned}</div>
+                </div>
+                <div className="chart-bar actual">
+                  <div className="bar-value">{constructionData.actual}</div>
+                </div>
+              </div>
+            </div>
+
             {currentCard && (
               <ConstructionCard
                 title={currentCard.title}
@@ -583,6 +760,25 @@ export default function ConstructionPage() {
             </div>
           </div>
         </div>
+
+        {/* Попапы */}
+        {showExceededPopup && (
+          <div className="exceeded-popup">
+            <div className="popup-content">
+              <RiskIcon />
+              <span>Вы превысили плановую стоимость</span>
+            </div>
+          </div>
+        )}
+
+        {showLimitsPopup && (
+          <div className="limits-popup">
+            <div className="popup-content">
+              <RiskIcon />
+              <span>Вы превысили лимиты</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
