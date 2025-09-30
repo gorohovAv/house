@@ -17,8 +17,8 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
     svg.selectAll("*").remove(); // Очищаем предыдущий график
 
     const width = 200;
-    const height = 120;
-    const margin = { top: 10, right: 10, bottom: 30, left: 10 };
+    const height = 140; // Увеличиваем высоту для надписей
+    const margin = { top: 30, right: 20, bottom: 40, left: 20 }; // Увеличиваем отступы
 
     const maxValue = Math.max(planned, actual);
     const scale = d3
@@ -31,15 +31,16 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
       .append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-    // Создаем столбцы
-    const barWidth = 60;
-    const barSpacing = 20;
+    // Создаем столбцы - убираем промежуток между ними
+    const barWidth = 70;
+    const barSpacing = 0; // Убираем промежуток
     const chartWidth = barWidth * 2 + barSpacing;
+    const chartStartX = (width - margin.left - margin.right - chartWidth) / 2; // Центрируем
 
     // Плановый столбец
     const plannedBar = g
       .append("rect")
-      .attr("x", 0)
+      .attr("x", chartStartX)
       .attr("y", height - margin.top - margin.bottom)
       .attr("width", barWidth)
       .attr("height", 0)
@@ -49,7 +50,7 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
     // Фактический столбец
     const actualBar = g
       .append("rect")
-      .attr("x", barWidth + barSpacing)
+      .attr("x", chartStartX + barWidth + barSpacing)
       .attr("y", height - margin.top - margin.bottom)
       .attr("width", barWidth)
       .attr("height", 0)
@@ -72,7 +73,7 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
 
     // Добавляем подписи
     g.append("text")
-      .attr("x", barWidth / 2)
+      .attr("x", chartStartX + barWidth / 2)
       .attr("y", height - margin.top - margin.bottom + 20)
       .attr("font-size", "12px")
       .attr("fill", "white")
@@ -81,7 +82,7 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
       .text("План");
 
     g.append("text")
-      .attr("x", barWidth + barSpacing + barWidth / 2)
+      .attr("x", chartStartX + barWidth + barSpacing + barWidth / 2)
       .attr("y", height - margin.top - margin.bottom + 20)
       .attr("font-size", "12px")
       .attr("fill", "white")
@@ -89,18 +90,18 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
       .attr("text-anchor", "middle")
       .text("Факт");
 
-    // Добавляем значения
+    // Добавляем значения - размещаем их выше столбцов с достаточным отступом
     g.append("text")
-      .attr("x", barWidth / 2)
-      .attr("y", scale(planned) - 5)
+      .attr("x", chartStartX + barWidth / 2)
+      .attr("y", Math.max(scale(planned) - 10, 15)) // Минимум 15px от верха
       .attr("font-size", "11px")
       .attr("fill", "white")
       .attr("text-anchor", "middle")
       .text(planned.toLocaleString());
 
     g.append("text")
-      .attr("x", barWidth + barSpacing + barWidth / 2)
-      .attr("y", scale(actual) - 5)
+      .attr("x", chartStartX + barWidth + barSpacing + barWidth / 2)
+      .attr("y", Math.max(scale(actual) - 10, 15)) // Минимум 15px от верха
       .attr("font-size", "11px")
       .attr("fill", "white")
       .attr("text-anchor", "middle")
@@ -113,7 +114,7 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
       <svg
         ref={svgRef}
         width={200}
-        height={130}
+        height={150}
         style={{ display: "block", margin: "0 auto" }}
       />
     </div>

@@ -168,13 +168,15 @@ export default function ConstructionPage() {
   const currentSelection = selectedOptions[currentCard?.title] || undefined;
 
   // Находим ближайший транш
-  const nextFunding = fundingPlan.find(
-    (funding) => funding.dayIndex > paymentSchedule.length
-  );
+  const nextFunding = fundingPlan.find((funding) => {
+    if (currentPeriodIndex < periods.length) {
+      return funding.dayIndex > periods[currentPeriodIndex].startDay;
+    } else {
+      return funding.dayIndex > periods[currentPeriodIndex - 1].startDay;
+    }
+  });
   const nextFundingText = nextFunding
-    ? `Финансирование через ${
-        nextFunding.dayIndex - paymentSchedule.length
-      } дней + ${nextFunding.amount}`
+    ? `Финансирование через ${nextFunding.dayIndex} дней + ${nextFunding.amount}`
     : "Финансирование завершено";
 
   // Расчеты для карточки выбора
