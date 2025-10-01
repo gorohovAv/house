@@ -54,23 +54,24 @@
 
 .tour-element-copy {
   position: absolute;
-  background: var(--color-text);
+  background: transparent;
   border-radius: 8px;
   pointer-events: none;
   z-index: 9998;
   animation: tourElementCopyAppear 0.3s ease-out;
   transform-origin: center;
   box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(10px);
 }
 
 @keyframes tourElementCopyAppear {
   0% {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.95) translateY(2px);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(2px);
   }
 }
 

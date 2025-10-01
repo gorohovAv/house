@@ -35,50 +35,6 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
   const createElementCopy = (element: Element): HTMLElement => {
     const copy = element.cloneNode(true) as HTMLElement;
 
-    // Копируем все стили
-    const computedStyle = window.getComputedStyle(element);
-    const styleProps = [
-      "background",
-      "background-color",
-      "background-image",
-      "background-size",
-      "border",
-      "border-radius",
-      "color",
-      "font-family",
-      "font-size",
-      "font-weight",
-      "padding",
-      "margin",
-      "display",
-      "flex-direction",
-      "align-items",
-      "justify-content",
-      "width",
-      "height",
-      "min-width",
-      "min-height",
-      "max-width",
-      "max-height",
-      "box-shadow",
-      "text-align",
-      "line-height",
-      "letter-spacing",
-    ];
-
-    styleProps.forEach((prop) => {
-      const value = computedStyle.getPropertyValue(prop);
-      if (value) {
-        copy.style.setProperty(prop, value);
-      }
-    });
-
-    // Полностью отключаем интерактивность
-    copy.style.pointerEvents = "none";
-    copy.style.cursor = "default";
-    copy.style.userSelect = "none";
-    copy.style.touchAction = "none";
-
     // Убираем все обработчики событий и делаем все элементы неинтерактивными
     const allElements = copy.querySelectorAll("*");
     allElements.forEach((el) => {
