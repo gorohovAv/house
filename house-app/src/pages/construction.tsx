@@ -131,6 +131,9 @@ export default function ConstructionPage() {
   const [requestAmount, setRequestAmount] = useState<string>("10000");
   const [showExceededPopup, setShowExceededPopup] = useState(false);
   const [showLimitsPopup, setShowLimitsPopup] = useState(false);
+  const [selectedRiskSolution, setSelectedRiskSolution] = useState<
+    "solution" | "alternative" | null
+  >(null);
   const navigate = useNavigate();
 
   const {
@@ -250,6 +253,11 @@ export default function ConstructionPage() {
     initializeFromPlan();
   }, [initializeFromPlan]);
 
+  // Сбрасываем выбор решения при смене периода
+  useEffect(() => {
+    setSelectedRiskSolution(null);
+  }, [currentPeriodIndex]);
+
   // Функция отправки результатов на бэкенд
   const sendResultsToBackend = async () => {
     try {
@@ -358,14 +366,15 @@ export default function ConstructionPage() {
   };
 
   const handleRiskSolutionSelect = (solution: "solution" | "alternative") => {
-    if (currentPeriod) {
-      selectRiskSolution(currentPeriod.id, solution);
-    }
+    setSelectedRiskSolution(solution);
   };
 
   const handleConfirmRiskSolution = () => {
-    if (currentPeriod) {
+    if (currentPeriod && selectedRiskSolution) {
       console.log(`🏦 КУБЫШКА ПЕРЕД ВЫБОРОМ РЕШЕНИЯ: ${piggyBank} руб.`);
+
+      // Применяем выбранное решение
+      selectRiskSolution(currentPeriod.id, selectedRiskSolution);
 
       // Обрабатываем дни текущего периода перед переходом
       const currentPeriodDays =
@@ -383,6 +392,9 @@ export default function ConstructionPage() {
       ) {
         processDay(day);
       }
+
+      // Сбрасываем локальное состояние
+      setSelectedRiskSolution(null);
 
       // Переходим к следующему периоду после выбора решения
       setTimeout(() => {
@@ -502,9 +514,7 @@ export default function ConstructionPage() {
                 <div className="risk-solutions">
                   <div
                     className={`solution-option ${
-                      currentPeriod?.selectedSolution === "solution"
-                        ? "active"
-                        : ""
+                      selectedRiskSolution === "solution" ? "active" : ""
                     }`}
                     onClick={() => handleRiskSolutionSelect("solution")}
                   >
@@ -523,9 +533,7 @@ export default function ConstructionPage() {
 
                   <div
                     className={`solution-option ${
-                      currentPeriod?.selectedSolution === "alternative"
-                        ? "active"
-                        : ""
+                      selectedRiskSolution === "alternative" ? "active" : ""
                     }`}
                     onClick={() => handleRiskSolutionSelect("alternative")}
                   >
@@ -548,7 +556,7 @@ export default function ConstructionPage() {
                   </div>
                 </div>
 
-                {currentPeriod?.selectedSolution && (
+                {selectedRiskSolution && (
                   <div className="risk-confirm-section">
                     <div className="risk-confirm-text">
                       Подтвердите выбор риска
