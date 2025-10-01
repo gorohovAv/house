@@ -183,15 +183,40 @@ export default function ConstructionPage() {
     : "Финансирование завершено";
 
   // Расчеты для карточки выбора
-  const plannedDuration = planStore.getTotalDuration();
-  const forecastDuration = paymentSchedule.length;
-  const forecastRemainder =
-    piggyBank +
-    fundingPlan.reduce((total, funding) => total + funding.amount, 0) -
-    paymentSchedule.reduce(
-      (total, payment) => total + (payment.amount || 0),
-      0
+  const plannedDuration = currentSelection?.duration || 0;
+  const forecastDuration = paymentSchedule.filter(
+    (payment) => payment.construction === currentCard?.title
+  ).length;
+
+  // Расчет остатка аванса для конструкции в менюшке выбора
+  const getAdvanceRemainder = () => {
+    if (!currentCard) return 0;
+
+    // Находим первый день строительства конструкции из менюшки
+    const constructionPayments = paymentSchedule.filter(
+      (payment) => payment.construction === currentCard.title
     );
+
+    if (constructionPayments.length === 0) return 0;
+
+    const firstConstructionDay = Math.min(
+      ...constructionPayments.map((p) => p.dayIndex)
+    );
+
+    // Суммируем все транши до первого дня строительства конструкции из менюшки
+    const fundingBeforeConstruction = fundingPlan
+      .filter((funding) => funding.dayIndex < firstConstructionDay)
+      .reduce((total, funding) => total + funding.amount, 0);
+
+    // Суммируем все amount до первого дня строительства конструкции из менюшки
+    const paymentsBeforeConstruction = paymentSchedule
+      .filter((payment) => payment.dayIndex < firstConstructionDay)
+      .reduce((total, payment) => total + (payment.amount || 0), 0);
+
+    return piggyBank + fundingBeforeConstruction - paymentsBeforeConstruction;
+  };
+
+  const advanceRemainder = getAdvanceRemainder();
 
   // Расчет данных для графика по текущей конструкции
   const getConstructionData = () => {
@@ -726,10 +751,10 @@ export default function ConstructionPage() {
                 </div>
               </div>
               <div className="forecast-remainder-badge">
-                <div className="badge-title">Прогнозный остаток</div>
+                <div className="badge-title">Остаток аванса</div>
                 <div className="badge-content">
                   <MoneyIcon />
-                  <span>{forecastRemainder}</span>
+                  <span>{advanceRemainder}</span>
                 </div>
               </div>
             </div>
