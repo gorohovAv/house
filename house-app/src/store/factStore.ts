@@ -1487,23 +1487,39 @@ export const useFactStore = create<FactState>()(
           if (constructionPayments.length === 0) return state;
 
           const firstPayment = constructionPayments[0];
-          const newOverallPrice = firstPayment.overallPrice + additionalCost;
-          const dailyAmountFloor = Math.floor(
-            newOverallPrice / firstPayment.overallDuration
+
+          // Находим оставшиеся неоплаченные дни
+          const unpaidPayments = constructionPayments.filter(
+            (p) => p.issued === null
           );
-          const remainder =
-            newOverallPrice - dailyAmountFloor * firstPayment.overallDuration;
+          const remainingDays = unpaidPayments.length;
+
+          if (remainingDays === 0) return state; // Если все дни уже оплачены, ничего не делаем
+
+          // Распределяем дополнительные расходы только по оставшимся дням
+          const additionalDailyAmount = Math.floor(
+            additionalCost / remainingDays
+          );
+          const additionalRemainder =
+            additionalCost - additionalDailyAmount * remainingDays;
 
           return {
             ...state,
             paymentSchedule: state.paymentSchedule.map((payment) => {
               if (payment.construction === constructionType) {
-                const isFirstDay = payment.dayIndex === firstPayment.dayIndex;
+                // Обновляем amount для всех дней (оплаченных и неоплаченных)
+                const isFirstUnpaidDay =
+                  payment.dayIndex === unpaidPayments[0].dayIndex;
+                const isUnpaidDay = payment.issued === null;
+
                 return {
                   ...payment,
-                  amount: isFirstDay
-                    ? dailyAmountFloor + remainder
-                    : dailyAmountFloor,
+                  amount:
+                    payment.amount +
+                    (isUnpaidDay
+                      ? additionalDailyAmount +
+                        (isFirstUnpaidDay ? additionalRemainder : 0)
+                      : 0),
                   overallPrice: payment.overallPrice + additionalCost,
                 };
               }
