@@ -27,9 +27,76 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
   const [targetElement, setTargetElement] = useState<Element | null>(null);
   const [elementPosition, setElementPosition] =
     useState<ElementPosition | null>(null);
+  const [elementCopy, setElementCopy] = useState<HTMLElement | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const currentStepConfig = activeTour?.steps[currentStep];
+
+  const createElementCopy = (element: Element): HTMLElement => {
+    const copy = element.cloneNode(true) as HTMLElement;
+
+    // Копируем все стили
+    const computedStyle = window.getComputedStyle(element);
+    const styleProps = [
+      "background",
+      "background-color",
+      "background-image",
+      "background-size",
+      "border",
+      "border-radius",
+      "color",
+      "font-family",
+      "font-size",
+      "font-weight",
+      "padding",
+      "margin",
+      "display",
+      "flex-direction",
+      "align-items",
+      "justify-content",
+      "width",
+      "height",
+      "min-width",
+      "min-height",
+      "max-width",
+      "max-height",
+      "box-shadow",
+      "text-align",
+      "line-height",
+      "letter-spacing",
+    ];
+
+    styleProps.forEach((prop) => {
+      const value = computedStyle.getPropertyValue(prop);
+      if (value) {
+        copy.style.setProperty(prop, value);
+      }
+    });
+
+    // Полностью отключаем интерактивность
+    copy.style.pointerEvents = "none";
+    copy.style.cursor = "default";
+    copy.style.userSelect = "none";
+    copy.style.touchAction = "none";
+
+    // Убираем все обработчики событий и делаем все элементы неинтерактивными
+    const allElements = copy.querySelectorAll("*");
+    allElements.forEach((el) => {
+      el.removeAttribute("onclick");
+      el.removeAttribute("onmouseover");
+      el.removeAttribute("onmouseout");
+      el.removeAttribute("onmousedown");
+      el.removeAttribute("onmouseup");
+      el.removeAttribute("ontouchstart");
+      el.removeAttribute("ontouchend");
+      (el as HTMLElement).style.pointerEvents = "none";
+      (el as HTMLElement).style.cursor = "default";
+      (el as HTMLElement).style.userSelect = "none";
+      (el as HTMLElement).style.touchAction = "none";
+    });
+
+    return copy;
+  };
 
   const scrollToElement = (element: Element) => {
     // Ищем контейнер скролла (construction-scroll-container)
@@ -58,12 +125,17 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     if (!isActive || !currentStepConfig) {
       setTargetElement(null);
       setElementPosition(null);
+      setElementCopy(null);
       return;
     }
 
     const element = document.querySelector(currentStepConfig.target);
     if (element) {
       setTargetElement(element as Element);
+
+      // Создаем копию элемента
+      const copy = createElementCopy(element);
+      setElementCopy(copy);
 
       // Скроллим к элементу только если указано scrollTo: true
       if (currentStepConfig.scrollTo) {
@@ -243,16 +315,18 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
           {/* Темная пелена */}
           <div className="tour-backdrop" onClick={handleOverlayClick} />
 
-          {/* Подсветка целевого элемента поверх пелены */}
-          {elementPosition && (
+          {/* Копия целевого элемента поверх пелены */}
+          {elementPosition && elementCopy && (
             <div
-              className="tour-highlight"
+              className="tour-element-copy"
               style={{
                 top: elementPosition.top,
                 left: elementPosition.left,
                 width: elementPosition.width,
                 height: elementPosition.height,
+                pointerEvents: "none",
               }}
+              dangerouslySetInnerHTML={{ __html: elementCopy.outerHTML }}
             />
           )}
 
