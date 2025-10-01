@@ -127,7 +127,9 @@ export const useFactStore = create<FactState>()(
         const planningRemainder = planStore.budget - totalCost;
 
         set({
-          selectedOptions: { ...planStore.selectedOptions },
+          selectedOptions: JSON.parse(
+            JSON.stringify(planStore.selectedOptions)
+          ),
           budget: planStore.budget,
           duration: planStore.duration,
           piggyBank: 0,

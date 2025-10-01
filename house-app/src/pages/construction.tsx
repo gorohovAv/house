@@ -183,7 +183,8 @@ export default function ConstructionPage() {
     : "Финансирование завершено";
 
   // Расчеты для карточки выбора
-  const plannedDuration = currentSelection?.duration || 0;
+  const plannedOption = planStore.selectedOptions[currentCard?.title || ""];
+  const plannedDuration = plannedOption?.duration || 0;
   const forecastDuration = paymentSchedule.filter(
     (payment) => payment.construction === currentCard?.title
   ).length;
@@ -222,7 +223,10 @@ export default function ConstructionPage() {
   const getConstructionData = () => {
     if (!currentCard) return { planned: 0, actual: 0 };
 
-    const plannedCost = currentSelection?.cost || 0;
+    // Используем уже вычисленную plannedOption
+    const plannedCost = plannedOption?.cost || 0;
+
+    // Фактическая стоимость из paymentSchedule
     const actualCost = paymentSchedule
       .filter((payment) => payment.construction === currentCard.title)
       .reduce((total, payment) => {
