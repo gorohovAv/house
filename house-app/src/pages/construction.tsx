@@ -193,28 +193,44 @@ export default function ConstructionPage() {
   const getAdvanceRemainder = () => {
     if (!currentCard) return 0;
 
+    console.log("🔍 currentCard", currentCard);
+
     // Находим первый день строительства конструкции из менюшки
     const constructionPayments = paymentSchedule.filter(
       (payment) => payment.construction === currentCard.title
     );
+    console.log("🔍 constructionPayments", constructionPayments);
 
     if (constructionPayments.length === 0) return 0;
 
     const firstConstructionDay = Math.min(
       ...constructionPayments.map((p) => p.dayIndex)
     );
+    console.log("🔍 firstConstructionDay", firstConstructionDay);
 
     // Суммируем все транши до первого дня строительства конструкции из менюшки
     const fundingBeforeConstruction = fundingPlan
       .filter((funding) => funding.dayIndex < firstConstructionDay)
       .reduce((total, funding) => total + funding.amount, 0);
+    console.log("🔍 fundingBeforeConstruction", fundingBeforeConstruction);
 
     // Суммируем все amount до первого дня строительства конструкции из менюшки
     const paymentsBeforeConstruction = paymentSchedule
       .filter((payment) => payment.dayIndex < firstConstructionDay)
       .reduce((total, payment) => total + (payment.amount || 0), 0);
+    console.log("🔍 paymentsBeforeConstruction", paymentsBeforeConstruction);
 
-    return piggyBank + fundingBeforeConstruction - paymentsBeforeConstruction;
+    // Находим транш в день начала строительства конструкции
+    const fundingOnConstructionDay = fundingPlan
+      .filter((funding) => funding.dayIndex === firstConstructionDay)
+      .reduce((total, funding) => total + funding.amount, 0);
+    console.log("🔍 fundingOnConstructionDay", fundingOnConstructionDay);
+
+    return (
+      fundingBeforeConstruction -
+      paymentsBeforeConstruction +
+      fundingOnConstructionDay
+    );
   };
 
   const advanceRemainder = getAdvanceRemainder();
