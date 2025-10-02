@@ -7,7 +7,7 @@ import type { ConstructionOption } from "../constants";
 import LayeredCanvas from "../components/LayeredCanvas";
 import ConstructionCard from "../components/ConstructionCard";
 import Indicators from "../components/Indicators";
-import { ArrowLeftIcon, ArrowRightIcon } from "../components/Icons";
+import { ArrowLeftIcon, ArrowRightIcon, RiskIcon } from "../components/Icons";
 import { useTour } from "../components/TourProvider";
 import { useTourStorage } from "../hooks/useTourStorage";
 import { HOUSE_PLANNING_TOUR } from "../config/tours";
@@ -201,6 +201,7 @@ const createLayeredImageConfig = (
 
 export default function HousePage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [showLimitsPopup, setShowLimitsPopup] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -226,6 +227,17 @@ export default function HousePage() {
   const hasValidDuration = getRemainingDuration() >= 0;
   const canStartConstruction =
     allElementsSelected && hasValidBudget && hasValidDuration;
+
+  // Проверяем превышение лимитов
+  const hasExceededLimits = !hasValidBudget || !hasValidDuration;
+
+  // Показываем попап при превышении лимитов
+  useEffect(() => {
+    if (hasExceededLimits) {
+      setShowLimitsPopup(true);
+      setTimeout(() => setShowLimitsPopup(false), 3000);
+    }
+  }, [hasExceededLimits]);
 
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
@@ -339,6 +351,16 @@ export default function HousePage() {
           </div>
         </div>
       </div>
+
+      {/* Попап предупреждения о превышении лимитов */}
+      {showLimitsPopup && (
+        <div className="limits-popup">
+          <div className="popup-content">
+            <RiskIcon />
+            <span>Вы превысили лимиты</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
