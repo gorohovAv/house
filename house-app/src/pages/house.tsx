@@ -79,8 +79,7 @@ const createLayeredImageConfig = (
     };
     layers.push({
       id: "foundation",
-      assetPath:
-        foundationMap[foundationOption.type] || "/ФУНДАМЕНТСвайный.png",
+      assetPath: "/ФУНДАМЕНТПлиточный-итог.png",
       zIndex: zIndex++,
       opacity: 1,
       visible: true,
@@ -170,15 +169,6 @@ const createLayeredImageConfig = (
     layers.push({
       id: "roof",
       assetPath: roofMap[roofOption.type] || "/КРЫШАбитумная-черепица.png",
-      zIndex: zIndex++,
-      opacity: 1,
-      visible: true,
-    });
-  } else if (wallsOption && foundationOption && !roofOption) {
-    // Показываем недострой крыши
-    layers.push({
-      id: "roof-construction",
-      assetPath: "/КРЫШАстроительство.png",
       zIndex: zIndex++,
       opacity: 1,
       visible: true,
@@ -274,7 +264,7 @@ export default function HousePage() {
 
   return (
     <div className="house-page">
-      <div className="header">
+      <div className="header-house">
         <h1 className="title">Планирование</h1>
       </div>
 

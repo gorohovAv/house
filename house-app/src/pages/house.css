@@ -7,13 +7,14 @@
   font-family: var(--font-family);
 }
 
-.header {
+.header-house {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px 16px;
   background: var(--color-primary);
   color: var(--color-text);
+  width: 100%;
 }
 
 .title {
