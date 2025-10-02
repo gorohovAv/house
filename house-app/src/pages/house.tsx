@@ -87,9 +87,9 @@ const createLayeredImageConfig = (
     });
   }
 
-  // Стены/Этажи
+  // Стены/Этажи - показываем только если выбран фундамент
   const wallsOption = selectedOptions["Стены"];
-  if (wallsOption) {
+  if (wallsOption && foundationOption) {
     // Показываем оба этажа для выбранного стиля
     const wallsMap1: Record<string, string> = {
       "2 Традиционный стиль": "/Этаж1традиционный.png",
@@ -113,6 +113,24 @@ const createLayeredImageConfig = (
       visible: true,
     });
 
+    // Перекрытия между этажами
+    const overlayOption = selectedOptions["Перекрытие"];
+    if (overlayOption) {
+      const overlayMap: Record<string, string> = {
+        "3 Монолитное": "/Перекрытия-монолитные-итог.png",
+        "3 Сборное железобетон": "/Перекрытия-плиточные.png",
+        "3 Балочное деревянное": "/Перекрытия-балочные.png",
+      };
+      layers.push({
+        id: "overlay",
+        assetPath:
+          overlayMap[overlayOption.type] || "/Перекрытия-монолитные-итог.png",
+        zIndex: zIndex++,
+        opacity: 1,
+        visible: true,
+      });
+    }
+
     // Второй этаж
     layers.push({
       id: "walls-floor2",
@@ -132,9 +150,9 @@ const createLayeredImageConfig = (
     });
   }
 
-  // Крыша
+  // Крыша - показываем только если выбраны стены
   const roofOption = selectedOptions["Крыша"];
-  if (roofOption) {
+  if (roofOption && wallsOption && foundationOption) {
     const roofMap: Record<string, string> = {
       "4 Гибкая/битумная черепица": "/КРЫШАбитумная-черепица.png",
       "4 Керамическая черепица": "/КРЫШАкерамическая-черепица.png",
@@ -158,9 +176,9 @@ const createLayeredImageConfig = (
     });
   }
 
-  // Окна
+  // Окна - показываем только если выбраны стены
   const windowsOption = selectedOptions["Двери и Окна"];
-  if (windowsOption) {
+  if (windowsOption && wallsOption && foundationOption) {
     const windowsMap: Record<string, string> = {
       "5 Традиционный стиль": "/ОКНАтрадиционный.png",
       "5 Классический стиль": "/ОКНАклассический.png",
@@ -176,9 +194,9 @@ const createLayeredImageConfig = (
     });
   }
 
-  // Благоустройство
+  // Благоустройство - показываем только если выбраны стены
   const landscapingOption = selectedOptions["Благоустройство"];
-  if (landscapingOption) {
+  if (landscapingOption && wallsOption && foundationOption) {
     const landscapingMap: Record<string, string> = {
       "6 Сад": "/БУСад.png",
       "6 Мостик": "/БУМостик.png",
