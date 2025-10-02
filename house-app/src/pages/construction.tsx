@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./construction.css";
 import { useFactStore } from "../store/factStore";
@@ -6,7 +6,6 @@ import { usePlanStore } from "../store/store";
 import { useOnboardingStore } from "../store/onboardingStore";
 import { CONSTRUCTION_OPTIONS } from "../constants";
 import LayeredCanvas from "../components/LayeredCanvas";
-import Indicators from "../components/Indicators";
 import ConstructionCard from "../components/ConstructionCard";
 import CostChart from "../components/CostChart";
 import {
@@ -21,6 +20,7 @@ import { useTourStorage } from "../hooks/useTourStorage";
 import { CONSTRUCTION_TOUR } from "../config/tours";
 import type { ConstructionOption } from "../constants";
 import type { CreateResultRequest } from "../types/api";
+import type { PaymentScheduleItem } from "../store/factStore";
 
 // Базовый URL API
 const API_URL =
@@ -40,6 +40,26 @@ const getDayDeclension = (count: number): string => {
   } else {
     return "дней";
   }
+};
+
+// Функция проверки завершенности конструкции
+const isConstructionCompleted = (
+  constructionType: string,
+  paymentSchedule: PaymentScheduleItem[]
+): boolean => {
+  const constructionPayments = paymentSchedule.filter(
+    (payment) => payment.construction === constructionType
+  );
+
+  if (constructionPayments.length === 0) return false;
+
+  const totalDaysRequired = constructionPayments[0].daysRequired;
+  const totalDaysPayed = constructionPayments.reduce(
+    (sum, payment) => sum + (payment.daysPayed || 0),
+    0
+  );
+
+  return totalDaysPayed >= totalDaysRequired;
 };
 
 interface LayerConfig {
@@ -67,46 +87,230 @@ interface CardData {
   options: ConstructionOption[];
 }
 
-const layeredImageConfig: LayeredImageConfig = {
-  width: 288,
-  height: 196,
-  layers: [
-    {
-      id: "house",
-      assetPath: "/house.png",
-      zIndex: 1,
+// Функция для создания конфигурации слоев на основе готовности конструкций
+const createConstructionLayeredConfig = (
+  selectedOptions: Record<string, ConstructionOption | null>,
+  paymentSchedule: PaymentScheduleItem[]
+): LayeredImageConfig => {
+  const layers: LayerConfig[] = [];
+  let zIndex = 1;
+
+  // 1. Сырая земля (Плита) - всегда показывается как базовый слой
+  layers.push({
+    id: "base-ground",
+    assetPath: "/Плита.png",
+    zIndex: zIndex++,
+    opacity: 1,
+    visible: true,
+  });
+
+  // 2. Фундамент конкретный - показывается только если выбран
+  const foundationOption = selectedOptions["Фундамент"];
+  if (foundationOption) {
+    const foundationMap: Record<string, string> = {
+      "1 Свайный": "/ФУНДАМЕНТСвайный.png",
+      "1 Ленточный": "/ФУНДАМЕНТЛенточный.png",
+      "1 Плитный": "/ФУНДАМЕНТПлиточный.png",
+    };
+    layers.push({
+      id: "foundation",
+      assetPath:
+        foundationMap[foundationOption.type] || "/ФУНДАМЕНТСвайный.png",
+      zIndex: zIndex++,
       opacity: 1,
       visible: true,
-    },
-    {
-      id: "roof-red",
-      assetPath: "/redRoof.png",
-      zIndex: 2,
+    });
+  }
+
+  // 3. Фундамент итоговый + стены недострой первый этаж
+  const wallsOption = selectedOptions["Стены"];
+  const foundationCompleted = isConstructionCompleted(
+    "Фундамент",
+    paymentSchedule
+  );
+  const wallsCompleted = isConstructionCompleted("Стены", paymentSchedule);
+
+  if (wallsOption && foundationCompleted) {
+    if (wallsCompleted) {
+      // Готовые стены первый этаж
+      const wallsMap1: Record<string, string> = {
+        "2 Традиционный стиль": "/Этаж1традиционный.png",
+        "2 Классический стиль": "/Этаж1классический.png",
+        "2 Немецкий стиль": "/Этаж1немецкий.png",
+        "2 Стиль хай-тек": "/Этаж1хай-тек.png",
+      };
+      layers.push({
+        id: "walls-floor1",
+        assetPath: wallsMap1[wallsOption.type] || "/Этаж1традиционный.png",
+        zIndex: zIndex++,
+        opacity: 1,
+        visible: true,
+      });
+    } else {
+      // Недострой первого этажа
+      layers.push({
+        id: "walls-floor1-construction",
+        assetPath: "/Недострой-1этаж.png",
+        zIndex: zIndex++,
+        opacity: 1,
+        visible: true,
+      });
+    }
+  }
+
+  // 4. Перекрытие конкретное готовое + недострой следующего этажа
+  const overlayOption = selectedOptions["Перекрытие"];
+  const overlayCompleted = isConstructionCompleted(
+    "Перекрытие",
+    paymentSchedule
+  );
+
+  if (overlayOption && wallsCompleted) {
+    if (overlayCompleted) {
+      // Готовое перекрытие
+      const overlayMap: Record<string, string> = {
+        "3 Монолитное": "/Перекрытия-монолитные-итог.png",
+        "3 Сборное железобетон": "/Перекрытия-плиточные.png",
+        "3 Балочное деревянное": "/Перекрытия-балочные.png",
+      };
+      layers.push({
+        id: "overlay",
+        assetPath:
+          overlayMap[overlayOption.type] || "/Перекрытия-монолитные-итог.png",
+        zIndex: zIndex++,
+        opacity: 1,
+        visible: true,
+      });
+    } else {
+      // Недострой перекрытия
+      const overlayConstructionMap: Record<string, string> = {
+        "3 Монолитное": "/Перекрытия_монолитные_строительство.png",
+        "3 Сборное железобетон": "/Перекрытия_плиточные_строительство.png",
+        "3 Балочное деревянное": "/Перекрытия_балочные_строительство.png",
+      };
+      layers.push({
+        id: "overlay-construction",
+        assetPath:
+          overlayConstructionMap[overlayOption.type] ||
+          "/Перекрытия_монолитные_строительство.png",
+        zIndex: zIndex++,
+        opacity: 1,
+        visible: true,
+      });
+    }
+  }
+
+  // 5. Готовые стены второй этаж или недострой второго этажа
+  if (wallsOption && foundationCompleted && overlayCompleted) {
+    if (wallsCompleted) {
+      // Готовые стены второй этаж
+      const wallsMap2: Record<string, string> = {
+        "2 Традиционный стиль": "/Этаж2традиционный.png",
+        "2 Классический стиль": "/Этаж2классический.png",
+        "2 Немецкий стиль": "/Этаж2немецкий.png",
+        "2 Стиль хай-тек": "/Этаж-2хай-тек.png",
+      };
+      layers.push({
+        id: "walls-floor2",
+        assetPath: wallsMap2[wallsOption.type] || "/Этаж2традиционный.png",
+        zIndex: zIndex++,
+        opacity: 1,
+        visible: true,
+      });
+    } else {
+      // Недострой второго этажа
+      layers.push({
+        id: "walls-floor2-construction",
+        assetPath: "/Недострой-2этаж.png",
+        zIndex: zIndex++,
+        opacity: 1,
+        visible: true,
+      });
+    }
+  }
+
+  // 6. Готовые стены недострой крыши
+  const roofOption = selectedOptions["Крыша"];
+  const roofCompleted = isConstructionCompleted("Крыша", paymentSchedule);
+
+  if (roofOption && wallsCompleted && !roofCompleted) {
+    // Недострой крыши
+    layers.push({
+      id: "roof-construction",
+      assetPath: "/КРЫШАстроительство.png",
+      zIndex: zIndex++,
       opacity: 1,
-      visible: false,
-    },
-    {
-      id: "roof-blue",
-      assetPath: "/blueRoof.png",
-      zIndex: 2,
+      visible: true,
+    });
+  }
+
+  // 7. Готовая крыша и окна
+  if (roofOption && wallsCompleted && roofCompleted) {
+    // Готовая крыша
+    const roofMap: Record<string, string> = {
+      "4 Гибкая/битумная черепица": "/КРЫШАбитумная-черепица.png",
+      "4 Керамическая черепица": "/КРЫШАкерамическая-черепица.png",
+      "4 Металлочерепица": "/КРЫШАметаллочерепица.png",
+    };
+    layers.push({
+      id: "roof",
+      assetPath: roofMap[roofOption.type] || "/КРЫШАбитумная-черепица.png",
+      zIndex: zIndex++,
       opacity: 1,
-      visible: false,
-    },
-    {
-      id: "roof-green",
-      assetPath: "/greenRoof.png",
-      zIndex: 2,
+      visible: true,
+    });
+
+    // Окна - показываем только если выбраны и крыша готова
+    const windowsOption = selectedOptions["Двери и Окна"];
+    if (windowsOption) {
+      const windowsMap: Record<string, string> = {
+        "5 Традиционный стиль": "/ОКНАтрадиционный.png",
+        "5 Классический стиль": "/ОКНАклассический.png",
+        "5 Немецкий стиль": "/ОКНАнемецкий.png",
+        "5 Стиль хай-тек": "/ОКНАхайтек.png",
+      };
+      layers.push({
+        id: "windows",
+        assetPath: windowsMap[windowsOption.type] || "/ОКНАтрадиционный.png",
+        zIndex: zIndex++,
+        opacity: 1,
+        visible: true,
+      });
+    }
+  }
+
+  // 8. Благоустройство - показываем только если все основные конструкции готовы
+  const landscapingOption = selectedOptions["Благоустройство"];
+  const landscapingCompleted = isConstructionCompleted(
+    "Благоустройство",
+    paymentSchedule
+  );
+
+  if (
+    landscapingOption &&
+    wallsCompleted &&
+    roofCompleted &&
+    landscapingCompleted
+  ) {
+    const landscapingMap: Record<string, string> = {
+      "6 Сад": "/БУСад.png",
+      "6 Мостик": "/БУМостик.png",
+      "6 Пруд": "/БУПруд.png",
+    };
+    layers.push({
+      id: "landscaping",
+      assetPath: landscapingMap[landscapingOption.type] || "/БУСад.png",
+      zIndex: zIndex++,
       opacity: 1,
-      visible: false,
-    },
-    {
-      id: "roof-pink",
-      assetPath: "/pinkRoof.png",
-      zIndex: 2,
-      opacity: 1,
-      visible: false,
-    },
-  ],
+      visible: true,
+    });
+  }
+
+  return {
+    width: 288,
+    height: 196,
+    layers,
+  };
 };
 
 const getCardsFromConstants = (): CardData[] => {
@@ -126,7 +330,6 @@ const getCardsFromConstants = (): CardData[] => {
 const mockCards = getCardsFromConstants();
 
 export default function ConstructionPage() {
-  const [roofType, setRoofType] = useState<string>("");
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [requestAmount, setRequestAmount] = useState<string>("10000");
   const [showExceededPopup, setShowExceededPopup] = useState(false);
@@ -139,12 +342,6 @@ export default function ConstructionPage() {
   const {
     selectedOptions,
     selectOption,
-    getRemainingBudget,
-    getRemainingDuration,
-    getTotalCost,
-    getTotalDuration,
-    getRiskCosts,
-    getRiskDuration,
     periods,
     currentPeriodIndex,
     selectRiskSolution,
@@ -155,9 +352,6 @@ export default function ConstructionPage() {
     processDay,
     fundingPlan,
     paymentSchedule,
-    planningRemainder,
-    duration,
-    budget,
   } = useFactStore();
 
   const planStore = usePlanStore();
@@ -304,7 +498,7 @@ export default function ConstructionPage() {
   }, [currentPeriodIndex]);
 
   // Функция отправки результатов на бэкенд
-  const sendResultsToBackend = async () => {
+  const sendResultsToBackend = useCallback(async () => {
     try {
       // Получаем данные из стора плана
       const plannedDuration = planStore.getTotalDuration();
@@ -346,7 +540,7 @@ export default function ConstructionPage() {
     } catch (error) {
       console.error("Ошибка при отправке результатов:", error);
     }
-  };
+  }, [planStore, paymentSchedule, projectName]);
 
   // Переход на страницу сравнения после завершения всех периодов
   useEffect(() => {
@@ -360,7 +554,7 @@ export default function ConstructionPage() {
 
       return () => clearTimeout(timer);
     }
-  }, [isAllPeriodsCompleted, navigate]);
+  }, [isAllPeriodsCompleted, navigate, sendResultsToBackend]);
 
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
@@ -370,19 +564,6 @@ export default function ConstructionPage() {
 
     return () => clearTimeout(timer);
   }, [isTourCompleted, startTour]);
-
-  useEffect(() => {
-    // Обновляем тип крыши на основе выбранных опций
-    const roofOption = selectedOptions["Крыша"];
-    if (roofOption) {
-      const roofTypeMap: Record<string, string> = {
-        "4 Гибкая/битумная черепица": "red",
-        "4 Керамическая черепица": "blue",
-        "4 Металлочерепица": "green",
-      };
-      setRoofType(roofTypeMap[roofOption.type] || "pink");
-    }
-  }, [selectedOptions]);
 
   const handleCardSwipeLeft = () => {
     if (currentCardIndex < mockCards.length - 1) {
@@ -398,16 +579,6 @@ export default function ConstructionPage() {
 
   const handleOptionSelect = (option: ConstructionOption) => {
     selectOption(option.constructionType, option);
-
-    // Если это карточка крыши, обновляем тип крыши
-    if (currentCard?.title === "Крыша") {
-      const roofTypeMap: Record<string, string> = {
-        "4 Гибкая/битумная черепица": "red",
-        "4 Керамическая черепица": "blue",
-        "4 Металлочерепица": "green",
-      };
-      setRoofType(roofTypeMap[option.type] || "pink");
-    }
   };
 
   const handleRiskSolutionSelect = (solution: "solution" | "alternative") => {
@@ -449,26 +620,7 @@ export default function ConstructionPage() {
   };
 
   const updateLayeredConfig = () => {
-    const updatedConfig = { ...layeredImageConfig };
-
-    // Скрываем все крыши
-    updatedConfig.layers.forEach((layer) => {
-      if (layer.id.startsWith("roof-")) {
-        layer.visible = false;
-      }
-    });
-
-    // Показываем выбранную крышу
-    if (roofType) {
-      const roofLayer = updatedConfig.layers.find(
-        (layer) => layer.id === `roof-${roofType}`
-      );
-      if (roofLayer) {
-        roofLayer.visible = true;
-      }
-    }
-
-    return updatedConfig;
+    return createConstructionLayeredConfig(selectedOptions, paymentSchedule);
   };
 
   return (
