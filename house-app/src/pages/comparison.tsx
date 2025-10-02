@@ -191,7 +191,7 @@ const createPlannedHouseConfig = (
 
   return {
     width: 288,
-    height: 196,
+    height: 250,
     layers,
   };
 };
@@ -417,7 +417,7 @@ const createActualHouseConfig = (
 
   return {
     width: 288,
-    height: 196,
+    height: 250,
     layers,
   };
 };

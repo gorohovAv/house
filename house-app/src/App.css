@@ -17,6 +17,7 @@
   padding: 0;
   text-align: center;
   overflow-x: hidden;
+  background: var(--color-primary);
 }
 
 .logo {
