@@ -101,7 +101,7 @@ const createLayeredImageConfig = (
       "2 Традиционный стиль": "/Этаж2традиционный.png",
       "2 Классический стиль": "/Этаж2классический.png",
       "2 Немецкий стиль": "/Этаж2немецкий.png",
-      "2 Стиль хай-тек": "/Этаж2хай-тек.png",
+      "2 Стиль хай-тек": "/Этаж-2хай-тек.png",
     };
 
     // Первый этаж
@@ -139,41 +139,6 @@ const createLayeredImageConfig = (
       opacity: 1,
       visible: true,
     });
-  } else {
-    // Показываем недострой стен (оба этажа)
-    layers.push({
-      id: "walls-construction",
-      assetPath: "/Недострой-оба-этажа.png",
-      zIndex: zIndex++,
-      opacity: 1,
-      visible: true,
-    });
-  }
-
-  // Крыша - показываем только если выбраны стены
-  const roofOption = selectedOptions["Крыша"];
-  if (roofOption && wallsOption && foundationOption) {
-    const roofMap: Record<string, string> = {
-      "4 Гибкая/битумная черепица": "/КРЫШАбитумная-черепица.png",
-      "4 Керамическая черепица": "/КРЫШАкерамическая-черепица.png",
-      "4 Металлочерепица": "/КРЫШАметаллочерепица.png",
-    };
-    layers.push({
-      id: "roof",
-      assetPath: roofMap[roofOption.type] || "/КРЫШАбитумная-черепица.png",
-      zIndex: zIndex++,
-      opacity: 1,
-      visible: true,
-    });
-  } else {
-    // Показываем недострой крыши
-    layers.push({
-      id: "roof-construction",
-      assetPath: "/КРЫШАстроительство.png",
-      zIndex: zIndex++,
-      opacity: 1,
-      visible: true,
-    });
   }
 
   // Окна - показываем только если выбраны стены
@@ -188,6 +153,32 @@ const createLayeredImageConfig = (
     layers.push({
       id: "windows",
       assetPath: windowsMap[windowsOption.type] || "/ОКНАтрадиционный.png",
+      zIndex: zIndex++,
+      opacity: 1,
+      visible: true,
+    });
+  }
+
+  // Крыша - показываем только если выбраны стены (после окон для правильного z-index)
+  const roofOption = selectedOptions["Крыша"];
+  if (roofOption && wallsOption && foundationOption) {
+    const roofMap: Record<string, string> = {
+      "4 Гибкая/битумная черепица": "/КРЫШАбитумная-черепица.png",
+      "4 Керамическая черепица": "/КРЫШАкерамическая-черепица.png",
+      "4 Металлочерепица": "/КРЫШАметаллочерепица.png",
+    };
+    layers.push({
+      id: "roof",
+      assetPath: roofMap[roofOption.type] || "/КРЫШАбитумная-черепица.png",
+      zIndex: zIndex++,
+      opacity: 1,
+      visible: true,
+    });
+  } else if (wallsOption && foundationOption && !roofOption) {
+    // Показываем недострой крыши
+    layers.push({
+      id: "roof-construction",
+      assetPath: "/КРЫШАстроительство.png",
       zIndex: zIndex++,
       opacity: 1,
       visible: true,
