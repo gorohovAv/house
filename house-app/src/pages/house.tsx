@@ -69,7 +69,7 @@ const createLayeredImageConfig = (
     visible: true,
   });
 
-  // Фундамент
+  // Фундамент - показывается только если выбран
   const foundationOption = selectedOptions["Фундамент"];
   if (foundationOption) {
     const foundationMap: Record<string, string> = {
@@ -90,15 +90,33 @@ const createLayeredImageConfig = (
   // Стены/Этажи
   const wallsOption = selectedOptions["Стены"];
   if (wallsOption) {
-    const wallsMap: Record<string, string> = {
+    // Показываем оба этажа для выбранного стиля
+    const wallsMap1: Record<string, string> = {
       "2 Традиционный стиль": "/Этаж1традиционный.png",
       "2 Классический стиль": "/Этаж1классический.png",
       "2 Немецкий стиль": "/Этаж1немецкий.png",
       "2 Стиль хай-тек": "/Этаж1хай-тек.png",
     };
+    const wallsMap2: Record<string, string> = {
+      "2 Традиционный стиль": "/Этаж2традиционный.png",
+      "2 Классический стиль": "/Этаж2классический.png",
+      "2 Немецкий стиль": "/Этаж2немецкий.png",
+      "2 Стиль хай-тек": "/Этаж2хай-тек.png",
+    };
+
+    // Первый этаж
     layers.push({
-      id: "walls",
-      assetPath: wallsMap[wallsOption.type] || "/Этаж1традиционный.png",
+      id: "walls-floor1",
+      assetPath: wallsMap1[wallsOption.type] || "/Этаж1традиционный.png",
+      zIndex: zIndex++,
+      opacity: 1,
+      visible: true,
+    });
+
+    // Второй этаж
+    layers.push({
+      id: "walls-floor2",
+      assetPath: wallsMap2[wallsOption.type] || "/Этаж2традиционный.png",
       zIndex: zIndex++,
       opacity: 1,
       visible: true,
