@@ -103,6 +103,15 @@ const createLayeredImageConfig = (
       opacity: 1,
       visible: true,
     });
+  } else {
+    // Показываем недострой стен (оба этажа)
+    layers.push({
+      id: "walls-construction",
+      assetPath: "/Недострой-оба-этажа.png",
+      zIndex: zIndex++,
+      opacity: 1,
+      visible: true,
+    });
   }
 
   // Крыша
@@ -116,6 +125,15 @@ const createLayeredImageConfig = (
     layers.push({
       id: "roof",
       assetPath: roofMap[roofOption.type] || "/КРЫШАбитумная-черепица.png",
+      zIndex: zIndex++,
+      opacity: 1,
+      visible: true,
+    });
+  } else {
+    // Показываем недострой крыши
+    layers.push({
+      id: "roof-construction",
+      assetPath: "/КРЫШАстроительство.png",
       zIndex: zIndex++,
       opacity: 1,
       visible: true,
