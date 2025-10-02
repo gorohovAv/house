@@ -53,52 +53,119 @@ const getCardsFromConstants = (): CardData[] => {
 
 const mockCards = getCardsFromConstants();
 
-// Конфигурация для многослойного изображения
-const layeredImageConfig: LayeredImageConfig = {
-  width: 288,
-  height: 196,
-  layers: [
-    {
-      id: "house",
-      assetPath: "/house.png",
-      zIndex: 1,
+// Функция для создания конфигурации слоев на основе выбранных опций
+const createLayeredImageConfig = (
+  selectedOptions: Record<string, ConstructionOption>
+): LayeredImageConfig => {
+  const layers: LayerConfig[] = [];
+  let zIndex = 1;
+
+  // Плита - всегда показывается как базовый слой (земля)
+  layers.push({
+    id: "base-ground",
+    assetPath: "/Плита.png",
+    zIndex: zIndex++,
+    opacity: 1,
+    visible: true,
+  });
+
+  // Фундамент
+  const foundationOption = selectedOptions["Фундамент"];
+  if (foundationOption) {
+    const foundationMap: Record<string, string> = {
+      "1 Свайный": "/ФУНДАМЕНТСвайный.png",
+      "1 Ленточный": "/ФУНДАМЕНТЛенточный.png",
+      "1 Плитный": "/ФУНДАМЕНТПлиточный.png",
+    };
+    layers.push({
+      id: "foundation",
+      assetPath:
+        foundationMap[foundationOption.type] || "/ФУНДАМЕНТСвайный.png",
+      zIndex: zIndex++,
       opacity: 1,
       visible: true,
-    },
-    {
-      id: "roof-red",
-      assetPath: "/redRoof.png",
-      zIndex: 2,
+    });
+  }
+
+  // Стены/Этажи
+  const wallsOption = selectedOptions["Стены"];
+  if (wallsOption) {
+    const wallsMap: Record<string, string> = {
+      "2 Традиционный стиль": "/Этаж1традиционный.png",
+      "2 Классический стиль": "/Этаж1классический.png",
+      "2 Немецкий стиль": "/Этаж1немецкий.png",
+      "2 Стиль хай-тек": "/Этаж1хай-тек.png",
+    };
+    layers.push({
+      id: "walls",
+      assetPath: wallsMap[wallsOption.type] || "/Этаж1традиционный.png",
+      zIndex: zIndex++,
       opacity: 1,
-      visible: false,
-    },
-    {
-      id: "roof-blue",
-      assetPath: "/blueRoof.png",
-      zIndex: 2,
+      visible: true,
+    });
+  }
+
+  // Крыша
+  const roofOption = selectedOptions["Крыша"];
+  if (roofOption) {
+    const roofMap: Record<string, string> = {
+      "4 Гибкая/битумная черепица": "/КРЫШАбитумная-черепица.png",
+      "4 Керамическая черепица": "/КРЫШАкерамическая-черепица.png",
+      "4 Металлочерепица": "/КРЫШАметаллочерепица.png",
+    };
+    layers.push({
+      id: "roof",
+      assetPath: roofMap[roofOption.type] || "/КРЫШАбитумная-черепица.png",
+      zIndex: zIndex++,
       opacity: 1,
-      visible: false,
-    },
-    {
-      id: "roof-green",
-      assetPath: "/greenRoof.png",
-      zIndex: 2,
+      visible: true,
+    });
+  }
+
+  // Окна
+  const windowsOption = selectedOptions["Двери и Окна"];
+  if (windowsOption) {
+    const windowsMap: Record<string, string> = {
+      "5 Традиционный стиль": "/ОКНАтрадиционный.png",
+      "5 Классический стиль": "/ОКНАклассический.png",
+      "5 Немецкий стиль": "/ОКНАнемецкий.png",
+      "5 Стиль хай-тек": "/ОКНАхайтек.png",
+    };
+    layers.push({
+      id: "windows",
+      assetPath: windowsMap[windowsOption.type] || "/ОКНАтрадиционный.png",
+      zIndex: zIndex++,
       opacity: 1,
-      visible: false,
-    },
-    {
-      id: "roof-pink",
-      assetPath: "/pinkRoof.png",
-      zIndex: 2,
+      visible: true,
+    });
+  }
+
+  // Благоустройство
+  const landscapingOption = selectedOptions["Благоустройство"];
+  if (landscapingOption) {
+    const landscapingMap: Record<string, string> = {
+      "6 Сад": "/БУСад.png",
+      "6 Мостик": "/БУМостик.png",
+      "6 Пруд": "/БУПруд.png",
+    };
+    layers.push({
+      id: "landscaping",
+      assetPath: landscapingMap[landscapingOption.type] || "/БУСад.png",
+      zIndex: zIndex++,
       opacity: 1,
-      visible: false,
-    },
-  ],
+      visible: true,
+    });
+  }
+
+  return {
+    width: 288,
+    height: 196,
+    layers,
+  };
 };
 
 export default function HousePage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [roofType, setRoofType] = useState<string>("");
   const navigate = useNavigate();
 
   const {
@@ -148,16 +215,6 @@ export default function HousePage() {
 
   const handleOptionSelect = (option: ConstructionOption) => {
     selectOption(currentCard.title, option);
-
-    // Если это карточка крыши, обновляем тип крыши
-    if (currentCard.title === "Крыша") {
-      const roofTypeMap: Record<string, string> = {
-        "4 Гибкая/битумная черепица": "red",
-        "4 Керамическая черепица": "blue",
-        "4 Металлочерепица": "green",
-      };
-      setRoofType(roofTypeMap[option.type] || "pink");
-    }
   };
 
   const handleStartConstruction = () => {
@@ -166,27 +223,8 @@ export default function HousePage() {
     }
   };
 
-  const updateLayeredConfig = () => {
-    const updatedConfig = { ...layeredImageConfig };
-
-    // Скрываем все крыши
-    updatedConfig.layers.forEach((layer) => {
-      if (layer.id.startsWith("roof-")) {
-        layer.visible = false;
-      }
-    });
-
-    // Показываем выбранную крышу
-    if (roofType) {
-      const roofLayer = updatedConfig.layers.find(
-        (layer) => layer.id === `roof-${roofType}`
-      );
-      if (roofLayer) {
-        roofLayer.visible = true;
-      }
-    }
-
-    return updatedConfig;
+  const getCurrentLayeredConfig = () => {
+    return createLayeredImageConfig(selectedOptions);
   };
 
   return (
@@ -197,7 +235,7 @@ export default function HousePage() {
 
       <div className="house-container">
         <div className="house-display">
-          <LayeredCanvas config={updateLayeredConfig()} />
+          <LayeredCanvas config={getCurrentLayeredConfig()} />
         </div>
 
         <Indicators
