@@ -44,7 +44,7 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
       .attr("y", height - margin.top - margin.bottom)
       .attr("width", barWidth)
       .attr("height", 0)
-      .attr("fill", "#4CAF50")
+      .attr("fill", "#105ca9")
       .attr("rx", 4);
 
     // Фактический столбец
@@ -54,7 +54,7 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
       .attr("y", height - margin.top - margin.bottom)
       .attr("width", barWidth)
       .attr("height", 0)
-      .attr("fill", "#FF9800")
+      .attr("fill", "#ff6910")
       .attr("rx", 4);
 
     // Анимация появления столбцов

@@ -885,6 +885,7 @@ export default function ConstructionPage() {
                 if (amount > 0) {
                   console.log(`🏦 КУБЫШКА ПЕРЕД ЗАПРОСОМ: ${piggyBank} руб.`);
                   requestMoney(amount);
+                  setRequestAmount("");
                 }
               }}
             >
@@ -966,18 +967,7 @@ export default function ConstructionPage() {
               />
             )}
 
-            <div className="buttons">
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  console.log(
-                    `🏦 КУБЫШКА ПЕРЕД СТРОИТЕЛЬСТВОМ: ${piggyBank} руб.`
-                  );
-                }}
-              >
-                Строить
-              </button>
-            </div>
+            <div className="buttons"></div>
           </div>
         </div>
 

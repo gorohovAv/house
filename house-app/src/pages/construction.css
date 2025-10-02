@@ -141,7 +141,7 @@
 .forecast-card {
   flex: 1;
   background: #062f59;
-  border: 1px solid #2965a5;
+  border: 1px solid #d65000;
   border-radius: 16px;
   padding: 8px 16px;
   display: flex;
@@ -237,8 +237,8 @@
 }
 
 .risk-card {
-  background: var(--color-button2-primary);
-  border: 1px solid var(--color-secondary);
+  background: var(--color-secondary);
+  border: 1px solid var(--color-button-secondary);
 
   border-radius: 30px;
   padding: 16px;
@@ -306,7 +306,7 @@
 
 .solution-option.active {
   border-color: var(--color-primary);
-  background: rgba(255, 105, 16, 0.1);
+  border: 2px solid var(--color-button-secondary);
 }
 
 .risk-confirm-section {
