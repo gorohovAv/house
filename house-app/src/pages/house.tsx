@@ -194,7 +194,7 @@ const createLayeredImageConfig = (
 
   return {
     width: 288,
-    height: 196,
+    height: 250,
     layers,
   };
 };

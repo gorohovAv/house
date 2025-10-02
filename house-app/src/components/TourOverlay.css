@@ -61,7 +61,7 @@
   animation: tourElementCopyAppear 0.3s ease-out;
   transform-origin: center;
   box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.2);
-  transform: translateY(10px);
+  transform: translateY(0px);
 }
 
 @keyframes tourElementCopyAppear {

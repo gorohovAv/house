@@ -255,7 +255,7 @@ const createConstructionLayeredConfig = (
     layers.push({
       id: "roof",
       assetPath: roofMap[roofOption.type] || "/КРЫШАбитумная-черепица.png",
-      zIndex: zIndex++,
+      zIndex: zIndex + 5,
       opacity: 1,
       visible: true,
     });
@@ -308,7 +308,7 @@ const createConstructionLayeredConfig = (
 
   return {
     width: 288,
-    height: 196,
+    height: 250,
     layers,
   };
 };
@@ -372,8 +372,14 @@ export default function ConstructionPage() {
       return funding.dayIndex > periods[currentPeriodIndex - 1].startDay;
     }
   });
+  let today = 0;
+  if (currentPeriodIndex < periods.length) {
+    today = currentPeriod.startDay;
+  }
   const nextFundingText = nextFunding
-    ? `Финансирование через ${nextFunding.dayIndex} дней + ${nextFunding.amount}`
+    ? `Финансирование через ${nextFunding.dayIndex - today} дней + ${
+        nextFunding.amount
+      }`
     : "Финансирование завершено";
 
   // Расчеты для карточки выбора
