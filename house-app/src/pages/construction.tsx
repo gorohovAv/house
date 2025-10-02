@@ -229,11 +229,22 @@ const createConstructionLayeredConfig = (
     }
   }
 
-  // 6. Готовые стены недострой крыши
+  // 6. Недострой крыши - показываем только если построены стены второго этажа, крыша начата, но еще не готова
   const roofOption = selectedOptions["Крыша"];
   const roofCompleted = isConstructionCompleted("Крыша", paymentSchedule);
 
-  if (roofOption && wallsCompleted && !roofCompleted) {
+  // Проверяем, что строительство крыши началось (есть хотя бы один день с issued != null и != 0)
+  const roofStarted = paymentSchedule.some(
+    (payment) =>
+      payment.construction === "Крыша" &&
+      payment.issued !== null &&
+      payment.issued > 0
+  );
+
+  // Проверяем, что построены стены второго этажа (перекрытие завершено И стены завершены)
+  const secondFloorWallsBuilt = overlayCompleted && wallsCompleted;
+
+  if (roofStarted && !roofCompleted) {
     // Недострой крыши
     layers.push({
       id: "roof-construction",
@@ -245,7 +256,7 @@ const createConstructionLayeredConfig = (
   }
 
   // 7. Готовая крыша и окна
-  if (roofOption && wallsCompleted && roofCompleted) {
+  if (roofOption && secondFloorWallsBuilt && roofCompleted) {
     // Готовая крыша
     const roofMap: Record<string, string> = {
       "4 Гибкая/битумная черепица": "/КРЫШАбитумная-черепица.png",
@@ -288,7 +299,7 @@ const createConstructionLayeredConfig = (
 
   if (
     landscapingOption &&
-    wallsCompleted &&
+    secondFloorWallsBuilt &&
     roofCompleted &&
     landscapingCompleted
   ) {
@@ -331,7 +342,7 @@ const mockCards = getCardsFromConstants();
 
 export default function ConstructionPage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [requestAmount, setRequestAmount] = useState<string>("10000");
+  const [requestAmount, setRequestAmount] = useState<string>("");
   const [showExceededPopup, setShowExceededPopup] = useState(false);
   const [showLimitsPopup, setShowLimitsPopup] = useState(false);
   const [selectedRiskSolution, setSelectedRiskSolution] = useState<
@@ -377,10 +388,10 @@ export default function ConstructionPage() {
     today = currentPeriod.startDay;
   }
   const nextFundingText = nextFunding
-    ? `Финансирование через ${nextFunding.dayIndex - today} дней + ${
+    ? `Авансирование через ${nextFunding.dayIndex - today} дней + ${
         nextFunding.amount
       }`
-    : "Финансирование завершено";
+    : "Авансирование завершено";
 
   // Расчеты для карточки выбора
   const plannedOption = planStore.selectedOptions[currentCard?.title || ""];
@@ -817,10 +828,12 @@ export default function ConstructionPage() {
                 <div className="card-item">
                   <MoneyIcon />
                   <span>
-                    {paymentSchedule.reduce(
-                      (total, payment) => total + (payment.amount || 0),
-                      0
-                    )}
+                    {paymentSchedule.reduce((total, payment) => {
+                      if (payment.issued === 0 || payment.issued === null) {
+                        return total + (payment.amount || 0);
+                      }
+                      return total + (payment.issued || 0);
+                    }, 0)}
                   </span>
                 </div>
                 <div className="card-item">
@@ -862,7 +875,7 @@ export default function ConstructionPage() {
               className="request-amount-input"
               value={requestAmount}
               onChange={(e) => setRequestAmount(e.target.value)}
-              placeholder="Сумма"
+              placeholder="10000"
               min="1"
             />
             <button
@@ -920,7 +933,7 @@ export default function ConstructionPage() {
 
             <div className="plan-forecast-badges">
               <div className="plan-forecast-badge">
-                <div className="badge-title">План / Прогноз</div>
+                <div className="badge-title">План / Оценка</div>
                 <div className="badge-content">
                   <TimeIcon />
                   <span>
@@ -940,7 +953,7 @@ export default function ConstructionPage() {
             <CostChart
               planned={constructionData.planned}
               actual={constructionData.actual}
-              title="План/ Прогноз стоимости"
+              title="План/ Оценка стоимости"
             />
 
             {currentCard && (
@@ -954,7 +967,6 @@ export default function ConstructionPage() {
             )}
 
             <div className="buttons">
-              <button className="btn-secondary">К показателям</button>
               <button
                 className="btn-primary"
                 onClick={() => {

@@ -325,7 +325,6 @@ export default function HousePage() {
           </div>
 
           <div className="buttons">
-            <button className="btn-secondary">К показателям</button>
             <button
               className="btn-primary"
               disabled={!canStartConstruction}

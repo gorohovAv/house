@@ -78,8 +78,8 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
       .attr("font-size", "12px")
       .attr("fill", "white")
       .attr("font-weight", "bold")
-      .attr("text-anchor", "middle")
-      .text("План");
+      .attr("text-anchor", "middle");
+    //.text("План");
 
     g.append("text")
       .attr("x", chartStartX + barWidth + barSpacing + barWidth / 2)
@@ -87,8 +87,8 @@ const CostChart: React.FC<CostChartProps> = ({ planned, actual, title }) => {
       .attr("font-size", "12px")
       .attr("fill", "white")
       .attr("font-weight", "bold")
-      .attr("text-anchor", "middle")
-      .text("Факт");
+      .attr("text-anchor", "middle");
+    //.text("Факт");
 
     // Добавляем значения - размещаем их выше столбцов с достаточным отступом
     g.append("text")
