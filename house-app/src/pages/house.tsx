@@ -238,15 +238,12 @@ export default function HousePage() {
       setTimeout(() => setShowLimitsPopup(false), 3000);
     }
   }, [hasExceededLimits]);
-
+  const [tourStarted, setTourStarted] = useState(false);
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
-    const timer = setTimeout(() => {
-      startTour(HOUSE_PLANNING_TOUR);
-    }, 500); // Небольшая задержка для загрузки элементов
-
-    return () => clearTimeout(timer);
-  }, [isTourCompleted, startTour]);
+    startTour(HOUSE_PLANNING_TOUR);
+    setTourStarted(true);
+  }, [tourStarted]);
 
   const handleSwipeLeft = () => {
     if (currentCardIndex < mockCards.length - 1) {

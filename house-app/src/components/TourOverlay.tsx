@@ -165,9 +165,13 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     };
   }, [targetElement]);
 
-  // Обновляем позицию после скролла к элементу
+  // Обновляем позицию после скролла к элементу только для bottom тултипов
   useEffect(() => {
-    if (targetElement && elementPosition) {
+    if (
+      targetElement &&
+      elementPosition &&
+      currentStepConfig?.type === "bottom"
+    ) {
       const rect = targetElement.getBoundingClientRect();
       setElementPosition({
         top: rect.top + window.scrollY,
@@ -176,11 +180,11 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
         height: rect.height,
       });
     }
-  }, [targetElement, currentStep]);
+  }, [targetElement, currentStep, currentStepConfig?.type]);
 
-  // Дополнительное обновление позиции после завершения скролла
+  // Дополнительное обновление позиции после завершения скролла только для bottom тултипов
   useEffect(() => {
-    if (targetElement && isActive) {
+    if (targetElement && isActive && currentStepConfig?.type === "bottom") {
       const timeoutId = setTimeout(() => {
         const rect = targetElement.getBoundingClientRect();
         setElementPosition({
@@ -189,11 +193,11 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
           width: rect.width,
           height: rect.height,
         });
-      }, 500); // Даем время на завершение скролла
+      }, 500);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [targetElement, isActive, currentStep]);
+  }, [targetElement, isActive, currentStep, currentStepConfig?.type]);
 
   const handleButtonClick = (action: string, onClick?: () => void) => {
     if (onClick) {

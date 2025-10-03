@@ -577,14 +577,12 @@ export default function ConstructionPage() {
     }
   }, [isAllPeriodsCompleted, navigate, sendResultsToBackend]);
 
+  const [tourStarted, setTourStarted] = useState(false);
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
-    const timer = setTimeout(() => {
-      startTour(CONSTRUCTION_TOUR);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [isTourCompleted, startTour]);
+    startTour(CONSTRUCTION_TOUR);
+    setTourStarted(true);
+  }, []);
 
   const handleCardSwipeLeft = () => {
     if (currentCardIndex < mockCards.length - 1) {
