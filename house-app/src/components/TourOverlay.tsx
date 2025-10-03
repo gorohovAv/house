@@ -85,6 +85,14 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
       return;
     }
 
+    // Для модальных туров не нужно искать целевой элемент
+    if (currentStepConfig.type === "modal") {
+      setTargetElement(null);
+      setElementPosition(null);
+      setElementCopy(null);
+      return;
+    }
+
     const element = document.querySelector(currentStepConfig.target);
     if (element) {
       setTargetElement(element as Element);
@@ -165,13 +173,9 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     };
   }, [targetElement]);
 
-  // Обновляем позицию после скролла к элементу только для bottom тултипов
+  // Обновляем позицию после скролла к элементу
   useEffect(() => {
-    if (
-      targetElement &&
-      elementPosition &&
-      currentStepConfig?.type === "bottom"
-    ) {
+    if (targetElement && elementPosition) {
       const rect = targetElement.getBoundingClientRect();
       setElementPosition({
         top: rect.top + window.scrollY,
@@ -180,11 +184,11 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
         height: rect.height,
       });
     }
-  }, [targetElement, currentStep, currentStepConfig?.type]);
+  }, [targetElement, currentStep]);
 
-  // Дополнительное обновление позиции после завершения скролла только для bottom тултипов
+  // Дополнительное обновление позиции после завершения скролла
   useEffect(() => {
-    if (targetElement && isActive && currentStepConfig?.type === "bottom") {
+    if (targetElement && isActive) {
       const timeoutId = setTimeout(() => {
         const rect = targetElement.getBoundingClientRect();
         setElementPosition({
@@ -193,11 +197,11 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
           width: rect.width,
           height: rect.height,
         });
-      }, 500);
+      }, 500); // Даем время на завершение скролла
 
       return () => clearTimeout(timeoutId);
     }
-  }, [targetElement, isActive, currentStep, currentStepConfig?.type]);
+  }, [targetElement, isActive, currentStep]);
 
   const handleButtonClick = (action: string, onClick?: () => void) => {
     if (onClick) {
