@@ -482,32 +482,58 @@ export default function ConstructionPage() {
     );
     console.log("🔍 firstConstructionDay", firstConstructionDay);
 
-    // Суммируем все транши до первого дня строительства конструкции из менюшки
-    const fundingBeforeConstruction = fundingPlan
-      .filter((funding) => funding.dayIndex < firstConstructionDay)
-      .reduce((total, funding) => total + funding.amount, 0);
-    console.log("🔍 fundingBeforeConstruction", fundingBeforeConstruction);
+    // Суммируем запросы денег до начала строительства конструкции
+    const requestsBeforeConstruction = requestHistory
+      .filter((request) => {
+        // Находим период запроса по номеру
+        const requestPeriod = periods[request.periodNumber - 1];
+        if (!requestPeriod) return false;
 
-    // Суммируем все amount до первого дня строительства конструкции из менюшки
-    const paymentsBeforeConstruction = paymentSchedule
-      .filter((payment) => payment.dayIndex < firstConstructionDay)
-      .reduce((total, payment) => total + (payment.amount || 0), 0);
+        // Проверяем, что запрос был до начала строительства конструкции
+        return requestPeriod.startDay < firstConstructionDay;
+      })
+      .reduce((total, request) => total + request.requestedAmount, 0);
+    console.log("🔍 requestsBeforeConstruction", requestsBeforeConstruction);
+
+    // Суммируем дельты изменений конструкций до начала строительства
+    const constructionChangesBeforeConstruction = constructionChangeHistory
+      .filter((change) => {
+        // Находим период изменения по номеру
+        const changePeriod = periods[change.periodNumber - 1];
+        if (!changePeriod) return false;
+
+        // Проверяем, что изменение было до начала строительства конструкции
+        return changePeriod.startDay < firstConstructionDay;
+      })
+      .reduce((total, change) => total + change.costDifference, 0);
+    console.log(
+      "🔍 constructionChangesBeforeConstruction",
+      constructionChangesBeforeConstruction
+    );
+
+    // Суммируем решения рисков (только "solution") до начала строительства
+    const riskSolutionsBeforeConstruction = periods
+      .slice(0, currentPeriodIndex)
+      .filter((period) => {
+        if (!period.risk || period.isProtected) return false;
+        return period.startDay < firstConstructionDay;
+      })
+      .reduce((total, period) => {
+        // Проверяем, было ли принято решение "solution" для этого риска
+        // Предполагаем, что в сторе есть информация о принятых решениях
+        // Пока используем базовую стоимость риска
+        return total + (period.risk?.cost || 0);
+      }, 0);
+    console.log(
+      "🔍 riskSolutionsBeforeConstruction",
+      riskSolutionsBeforeConstruction
+    );
+
+    const paymentsBeforeConstruction =
+      constructionChangesBeforeConstruction + riskSolutionsBeforeConstruction;
     console.log("🔍 paymentsBeforeConstruction", paymentsBeforeConstruction);
 
-    // Находим транш в день начала строительства конструкции
-    let fundingOnConstructionDay = fundingPlan
-      .filter((funding) => funding.dayIndex === firstConstructionDay)
-      .reduce((total, funding) => total + funding.amount, 0);
-    if (currentCard?.title === "Стены") {
-      fundingOnConstructionDay = fundingOnConstructionDay * 2;
-    }
-    console.log("🔍 fundingOnConstructionDay", fundingOnConstructionDay);
-
-    return (
-      fundingBeforeConstruction -
-      paymentsBeforeConstruction +
-      fundingOnConstructionDay
-    );
+    return requestsBeforeConstruction - paymentsBeforeConstruction;
   };
 
   const advanceRemainder = getAdvanceRemainder();
