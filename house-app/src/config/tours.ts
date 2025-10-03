@@ -12,7 +12,7 @@ export const HOUSE_PLANNING_TOUR: TourConfig = {
       position: "center",
     },
     {
-      target: ".house-display",
+      target: ".layered-canvas",
       title: "Ваш будущий дом",
       description:
         "Здесь вы видите изображение дома. С каждым вашим выбором он будет визуально меняться и наполняться деталями.",
