@@ -62,6 +62,35 @@ const isConstructionCompleted = (
   return totalDaysPayed >= totalDaysRequired;
 };
 
+// Функция проверки завершенности этапа стен
+const isWallsStageCompleted = (
+  stage: "first" | "second",
+  paymentSchedule: PaymentScheduleItem[]
+): boolean => {
+  const wallsPayments = paymentSchedule.filter(
+    (payment) => payment.construction === "Стены"
+  );
+
+  if (wallsPayments.length === 0) return false;
+
+  const totalDaysRequired = wallsPayments[0].daysRequired;
+  const totalDaysPayed = wallsPayments.reduce((sum, payment) => {
+    if (payment.issued) {
+      return sum + 1;
+    }
+    return sum + 0;
+  }, 0);
+
+  if (stage === "first") {
+    // Первый этаж готов, если оплачено больше половины дней стен
+    const firstHalfDays = Math.floor(totalDaysRequired / 2);
+    return totalDaysPayed >= firstHalfDays;
+  }
+
+  // Второй этаж готов, если оплачены все дни стен
+  return totalDaysPayed >= totalDaysRequired;
+};
+
 interface LayerConfig {
   id: string;
   assetPath: string;
@@ -129,10 +158,13 @@ const createConstructionLayeredConfig = (
 
   // 3. Фундамент итоговый + стены недострой первый этаж
   const wallsOption = selectedOptions["Стены"];
-  const wallsCompleted = isConstructionCompleted("Стены", paymentSchedule);
+  const wallsFirstStageCompleted = isWallsStageCompleted(
+    "first",
+    paymentSchedule
+  );
 
   if (wallsOption && foundationCompleted) {
-    if (wallsCompleted) {
+    if (wallsFirstStageCompleted) {
       // Готовые стены первый этаж
       const wallsMap1: Record<string, string> = {
         "2 Традиционный стиль": "/Этаж1традиционный.png",
@@ -166,7 +198,7 @@ const createConstructionLayeredConfig = (
     paymentSchedule
   );
 
-  if (overlayOption && wallsCompleted) {
+  if (overlayOption && wallsFirstStageCompleted) {
     if (overlayCompleted) {
       // Готовое перекрытие
       const overlayMap: Record<string, string> = {
@@ -202,8 +234,13 @@ const createConstructionLayeredConfig = (
   }
 
   // 5. Готовые стены второй этаж или недострой второго этажа
+  const wallsSecondStageCompleted = isWallsStageCompleted(
+    "second",
+    paymentSchedule
+  );
+
   if (wallsOption && foundationCompleted && overlayCompleted) {
-    if (wallsCompleted) {
+    if (wallsSecondStageCompleted) {
       // Готовые стены второй этаж
       const wallsMap2: Record<string, string> = {
         "2 Традиционный стиль": "/Этаж2традиционный.png",
@@ -243,7 +280,7 @@ const createConstructionLayeredConfig = (
   );
 
   // Проверяем, что построены стены второго этажа (перекрытие завершено И стены завершены)
-  const secondFloorWallsBuilt = overlayCompleted && wallsCompleted;
+  const secondFloorWallsBuilt = overlayCompleted && wallsSecondStageCompleted;
 
   if (roofStarted && !roofCompleted) {
     // Недострой крыши
