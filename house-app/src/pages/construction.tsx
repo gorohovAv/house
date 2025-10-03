@@ -433,9 +433,12 @@ export default function ConstructionPage() {
     console.log("🔍 paymentsBeforeConstruction", paymentsBeforeConstruction);
 
     // Находим транш в день начала строительства конструкции
-    const fundingOnConstructionDay = fundingPlan
+    let fundingOnConstructionDay = fundingPlan
       .filter((funding) => funding.dayIndex === firstConstructionDay)
       .reduce((total, funding) => total + funding.amount, 0);
+    if (currentCard?.title === "Стены") {
+      fundingOnConstructionDay = fundingOnConstructionDay * 2;
+    }
     console.log("🔍 fundingOnConstructionDay", fundingOnConstructionDay);
 
     return (
