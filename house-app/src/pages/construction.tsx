@@ -378,6 +378,22 @@ const getCardsFromConstants = (): CardData[] => {
 
 const mockCards = getCardsFromConstants();
 
+// Типы для истории
+interface RequestHistoryItem {
+  periodNumber: number;
+  requestedAmount: number;
+  timestamp: Date;
+}
+
+interface ConstructionChangeItem {
+  periodNumber: number;
+  constructionType: string;
+  costDifference: number;
+  oldCost: number;
+  newCost: number;
+  timestamp: Date;
+}
+
 export default function ConstructionPage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [requestAmount, setRequestAmount] = useState<string>("");
@@ -386,6 +402,15 @@ export default function ConstructionPage() {
   const [selectedRiskSolution, setSelectedRiskSolution] = useState<
     "solution" | "alternative" | null
   >(null);
+
+  // Состояния для истории
+  const [requestHistory, setRequestHistory] = useState<RequestHistoryItem[]>(
+    []
+  );
+  const [constructionChangeHistory, setConstructionChangeHistory] = useState<
+    ConstructionChangeItem[]
+  >([]);
+
   const navigate = useNavigate();
 
   const {
@@ -634,7 +659,25 @@ export default function ConstructionPage() {
   };
 
   const handleOptionSelect = (option: ConstructionOption) => {
+    // Получаем текущую выбранную опцию для сравнения
+    const currentOption = selectedOptions[option.constructionType];
+
+    // Выбираем новую опцию
     selectOption(option.constructionType, option);
+
+    // Если была выбрана другая опция, записываем изменение в историю
+    if (currentOption && currentOption.type !== option.type) {
+      const costDifference = option.cost - currentOption.cost;
+      const newChangeItem: ConstructionChangeItem = {
+        periodNumber: currentPeriodIndex + 1,
+        constructionType: option.constructionType,
+        costDifference: costDifference,
+        oldCost: currentOption.cost,
+        newCost: option.cost,
+        timestamp: new Date(),
+      };
+      setConstructionChangeHistory((prev) => [...prev, newChangeItem]);
+    }
   };
 
   const handleRiskSolutionSelect = (solution: "solution" | "alternative") => {
@@ -924,6 +967,15 @@ export default function ConstructionPage() {
                 if (amount > 0) {
                   console.log(`🏦 КУБЫШКА ПЕРЕД ЗАПРОСОМ: ${piggyBank} руб.`);
                   requestMoney(amount);
+
+                  // Добавляем запрос в историю
+                  const newRequestItem: RequestHistoryItem = {
+                    periodNumber: currentPeriodIndex + 1,
+                    requestedAmount: amount,
+                    timestamp: new Date(),
+                  };
+                  setRequestHistory((prev) => [...prev, newRequestItem]);
+
                   setRequestAmount("");
                 }
               }}
