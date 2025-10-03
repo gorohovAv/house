@@ -491,9 +491,6 @@ const ComparisonPage: React.FC = () => {
               </div>
             </div>
           </div>
-
-          <div className="comparison-divider"></div>
-
           <div className="comparison-section">
             <div className="section-header">
               <h2 className="section-title">Итоговая постройка</h2>

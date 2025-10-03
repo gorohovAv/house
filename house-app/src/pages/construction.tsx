@@ -104,9 +104,14 @@ const createConstructionLayeredConfig = (
     visible: true,
   });
 
+  const foundationCompleted = isConstructionCompleted(
+    "Фундамент",
+    paymentSchedule
+  );
+
   // 2. Фундамент конкретный - показывается только если выбран
   const foundationOption = selectedOptions["Фундамент"];
-  if (foundationOption) {
+  if (foundationOption && !foundationCompleted) {
     const foundationMap: Record<string, string> = {
       "1 Свайный": "/ФУНДАМЕНТСвайный.png",
       "1 Ленточный": "/ФУНДАМЕНТЛенточный.png",
@@ -124,10 +129,6 @@ const createConstructionLayeredConfig = (
 
   // 3. Фундамент итоговый + стены недострой первый этаж
   const wallsOption = selectedOptions["Стены"];
-  const foundationCompleted = isConstructionCompleted(
-    "Фундамент",
-    paymentSchedule
-  );
   const wallsCompleted = isConstructionCompleted("Стены", paymentSchedule);
 
   if (wallsOption && foundationCompleted) {
