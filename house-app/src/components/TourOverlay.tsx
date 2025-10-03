@@ -35,6 +35,19 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
   const createElementCopy = (element: Element): HTMLElement => {
     const copy = element.cloneNode(true) as HTMLElement;
 
+    // Специальная обработка для .house-display - заменяем Canvas на статичное изображение
+    if (element.classList.contains("house-display")) {
+      const canvas = copy.querySelector("canvas");
+      if (canvas) {
+        const img = document.createElement("img");
+        img.src = "/Плита.png";
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "contain";
+        canvas.replaceWith(img);
+      }
+    }
+
     // Убираем все обработчики событий и делаем все элементы неинтерактивными
     const allElements = copy.querySelectorAll("*");
     allElements.forEach((el) => {
