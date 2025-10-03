@@ -137,7 +137,15 @@
   margin-bottom: 14px;
 }
 
-.plan-card,
+.plan-card {
+  flex: 1;
+  background: #062f59;
+  border-radius: 16px;
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .forecast-card {
   flex: 1;
   background: #062f59;
@@ -595,9 +603,7 @@
 }
 
 .cost-chart-container {
-  padding: 20px;
-  margin-bottom: 14px;
-  min-height: 150px;
+  min-height: 100px;
 }
 
 .chart-title {
