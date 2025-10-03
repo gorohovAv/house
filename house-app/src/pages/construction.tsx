@@ -936,12 +936,29 @@ export default function ConstructionPage() {
                 <div className="card-item">
                   <MoneyIcon />
                   <span>
-                    {paymentSchedule.reduce((total, payment) => {
-                      if (payment.issued === 0 || payment.issued === null) {
-                        return total + (payment.amount || 0);
-                      }
-                      return total + (payment.issued || 0);
-                    }, 0)}
+                    {(() => {
+                      // Стоимость всех выбранных конструкций
+                      const constructionsCost = Object.values(
+                        selectedOptions
+                      ).reduce(
+                        (total, option) => total + (option?.cost || 0),
+                        0
+                      );
+
+                      // Стоимость всех рисков с решением "solution"
+                      const risksCost = periods
+                        .slice(0, currentPeriodIndex)
+                        .reduce((total, period) => {
+                          if (period.risk && !period.isProtected) {
+                            // Проверяем, было ли принято решение "solution" для этого риска
+                            // Пока используем базовую стоимость риска, если он не защищен
+                            return total + (period.risk.cost || 0);
+                          }
+                          return total;
+                        }, 0);
+
+                      return constructionsCost + risksCost;
+                    })()}
                   </span>
                 </div>
                 <div className="card-item">
