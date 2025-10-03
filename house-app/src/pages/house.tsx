@@ -241,17 +241,12 @@ export default function HousePage() {
 
   // Запускаем тур при первом посещении страницы
   useEffect(() => {
-    // Проверяем, что тур еще не завершен и не активен
-    if (isTourCompleted(HOUSE_PLANNING_TOUR.id)) {
-      return;
-    }
-
     const timer = setTimeout(() => {
       startTour(HOUSE_PLANNING_TOUR);
     }, 500); // Небольшая задержка для загрузки элементов
 
     return () => clearTimeout(timer);
-  }, [isTourCompleted]); // Убираем startTour из зависимостей
+  }, [isTourCompleted, startTour]);
 
   const handleSwipeLeft = () => {
     if (currentCardIndex < mockCards.length - 1) {
