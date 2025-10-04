@@ -133,10 +133,11 @@ const createConstructionLayeredConfig = (
     visible: true,
   });
 
-  const foundationCompleted = isConstructionCompleted(
-    "Фундамент",
-    paymentSchedule
-  );
+  const foundationCompleted =
+    paymentSchedule.filter(
+      (payment) =>
+        payment.construction === "Фундамент" && payment.issued === null
+    ).length === 0;
 
   // 2. Фундамент конкретный - показывается только если выбран
   const foundationOption = selectedOptions["Фундамент"];
