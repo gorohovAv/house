@@ -495,6 +495,10 @@ export default function ConstructionPage() {
       .reduce((total, request) => total + request.requestedAmount, 0);
     console.log("🔍 requestsBeforeConstruction", requestsBeforeConstruction);
 
+    // Получаем номинальную стоимость текущей конструкции
+    const currentConstructionCost = plannedOption?.cost || 0;
+    console.log("🔍 currentConstructionCost", currentConstructionCost);
+
     // Суммируем дельты изменений конструкций до начала строительства
     const constructionChangesBeforeConstruction = constructionChangeHistory
       .filter((change) => {
@@ -529,11 +533,93 @@ export default function ConstructionPage() {
       riskSolutionsBeforeConstruction
     );
 
+    // Особенная обработка для стен
+    let additionalRequestsBeforeConstruction = 0;
+    let additionalRiskSolutionsBeforeConstruction = 0;
+
+    if (currentCard.title === "Стены") {
+      // Для стен учитываем запросы денег и риски в периоды фундамента и перекрытий
+
+      // Находим периоды фундамента (первый период строительства)
+      const foundationPeriods = periods.filter((period, index) => {
+        // Предполагаем, что фундамент строится в первых периодах
+        return index < 3; // первые 3 периода обычно фундамент
+      });
+
+      // Находим периоды перекрытий (периоды между этапами стен)
+      const overlayPeriods = periods.filter((period, index) => {
+        // Перекрытия обычно строятся между первой и второй половиной стен
+        return index >= 3 && index < 6; // периоды 3-5 обычно перекрытия
+      });
+
+      // Суммируем запросы денег в периоды фундамента
+      const foundationRequests = requestHistory
+        .filter((request) => {
+          const requestPeriod = periods[request.periodNumber - 1];
+          if (!requestPeriod) return false;
+          return foundationPeriods.some(
+            (fp) => fp.startDay === requestPeriod.startDay
+          );
+        })
+        .reduce((total, request) => total + request.requestedAmount, 0);
+
+      // Суммируем запросы денег в периоды перекрытий
+      const overlayRequests = requestHistory
+        .filter((request) => {
+          const requestPeriod = periods[request.periodNumber - 1];
+          if (!requestPeriod) return false;
+          return overlayPeriods.some(
+            (op) => op.startDay === requestPeriod.startDay
+          );
+        })
+        .reduce((total, request) => total + request.requestedAmount, 0);
+
+      // Суммируем риски в периоды фундамента
+      const foundationRisks = foundationPeriods
+        .filter(
+          (period) =>
+            period.risk &&
+            !period.isProtected &&
+            period.selectedSolution === "solution"
+        )
+        .reduce((total, period) => total + (period.risk?.cost || 0), 0);
+
+      // Суммируем риски в периоды перекрытий
+      const overlayRisks = overlayPeriods
+        .filter((period) => period.risk && !period.isProtected)
+        .reduce((total, period) => total + (period.risk?.cost || 0), 0);
+
+      additionalRequestsBeforeConstruction =
+        foundationRequests + overlayRequests;
+      additionalRiskSolutionsBeforeConstruction =
+        foundationRisks + overlayRisks;
+
+      console.log(
+        "🔍 walls additional requests:",
+        additionalRequestsBeforeConstruction
+      );
+      console.log(
+        "🔍 walls additional risks:",
+        additionalRiskSolutionsBeforeConstruction
+      );
+    }
+
+    const totalRequestsBeforeConstruction = requestsBeforeConstruction; //+ additionalRequestsBeforeConstruction;
+    const totalRiskSolutionsBeforeConstruction =
+      riskSolutionsBeforeConstruction +
+      additionalRiskSolutionsBeforeConstruction;
+
     const paymentsBeforeConstruction =
-      constructionChangesBeforeConstruction + riskSolutionsBeforeConstruction;
+      constructionChangesBeforeConstruction +
+      totalRiskSolutionsBeforeConstruction;
     console.log("🔍 paymentsBeforeConstruction", paymentsBeforeConstruction);
 
-    return requestsBeforeConstruction - paymentsBeforeConstruction;
+    // Добавляем номинальную стоимость текущей конструкции к запросам
+    const totalIncome =
+      totalRequestsBeforeConstruction + currentConstructionCost;
+    console.log("🔍 totalIncome", totalIncome);
+
+    return totalIncome - paymentsBeforeConstruction;
   };
 
   const advanceRemainder = getAdvanceRemainder();
