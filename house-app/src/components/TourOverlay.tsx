@@ -25,10 +25,11 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     skipTour,
     completeTour,
   } = useTour();
-  const [targetElement, setTargetElement] = useState<Element | null>(null);
-  const [elementPosition, setElementPosition] =
-    useState<ElementPosition | null>(null);
-  const [elementCopy, setElementCopy] = useState<HTMLElement | null>(null);
+  const [targetElements, setTargetElements] = useState<Element[]>([]);
+  const [elementPositions, setElementPositions] = useState<ElementPosition[]>(
+    []
+  );
+  const [elementCopies, setElementCopies] = useState<HTMLElement[]>([]);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const currentStepConfig = activeTour?.steps[currentStep];
@@ -68,22 +69,26 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     return copy;
   };
 
-  const scrollToElement = (element: Element) => {
+  const scrollToElements = (elements: Element[]) => {
+    if (elements.length === 0) return;
+
     // Ищем контейнер скролла (construction-scroll-container)
     const scrollContainer = document.querySelector(
       ".construction-scroll-container"
     );
 
+    // Скроллим к первому элементу
+    const firstElement = elements[0];
     if (scrollContainer) {
       // Скроллим внутри контейнера
-      element.scrollIntoView({
+      firstElement.scrollIntoView({
         behavior: "smooth",
         block: "center",
         inline: "center",
       });
     } else {
       // Fallback к обычному скроллу
-      element.scrollIntoView({
+      firstElement.scrollIntoView({
         behavior: "smooth",
         block: "center",
         inline: "center",
@@ -92,78 +97,113 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
   };
 
   useEffect(() => {
+    // Всегда очищаем предыдущие состояния в начале
+    setTargetElements([]);
+    setElementPositions([]);
+    setElementCopies([]);
+
     if (!isActive || !currentStepConfig) {
-      setTargetElement(null);
-      setElementPosition(null);
-      setElementCopy(null);
       return;
     }
 
-    // Для модальных туров не нужно искать целевой элемент
+    // Для модальных туров не нужно искать целевые элементы
     if (currentStepConfig.type === "modal") {
-      setTargetElement(null);
-      setElementPosition(null);
-      setElementCopy(null);
       return;
     }
 
-    const element = document.querySelector(currentStepConfig.target);
-    if (element) {
-      setTargetElement(element as Element);
+    // Преобразуем target в массив селекторов
+    const selectors = Array.isArray(currentStepConfig.target)
+      ? currentStepConfig.target
+      : [currentStepConfig.target];
 
-      // Создаем копию элемента
-      const copy = createElementCopy(element);
-      setElementCopy(copy);
+    // Находим все элементы
+    const elements: Element[] = [];
+    const foundElementIds = new Set<string>(); // Для предотвращения дублирования
 
-      // Скроллим к элементу только если указано scrollTo: true
+    selectors.forEach((selector) => {
+      const foundElements = document.querySelectorAll(selector);
+      foundElements.forEach((el) => {
+        // Создаем уникальный ID для элемента на основе его позиции и содержимого
+        const elementId = `${el.tagName}-${el.className}-${
+          el.getBoundingClientRect().top
+        }-${el.getBoundingClientRect().left}`;
+
+        // Добавляем только если такого элемента еще нет
+        if (!foundElementIds.has(elementId)) {
+          foundElementIds.add(elementId);
+          elements.push(el);
+        }
+      });
+    });
+
+    if (elements.length > 0) {
+      setTargetElements(elements);
+
+      // Создаем копии элементов
+      const copies = elements.map((element) => createElementCopy(element));
+      setElementCopies(copies);
+
+      // Скроллим к элементам только если указано scrollTo: true
       if (currentStepConfig.scrollTo) {
-        scrollToElement(element);
+        scrollToElements(elements);
 
         // Небольшая задержка для завершения скролла
         setTimeout(() => {
+          const positions = elements.map((element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+              top: rect.top + window.scrollY,
+              left: rect.left + window.scrollX,
+              width: rect.width,
+              height: rect.height,
+            };
+          });
+          setElementPositions(positions);
+        }, 300);
+      } else {
+        // Устанавливаем позиции сразу без скролла
+        const positions = elements.map((element) => {
           const rect = element.getBoundingClientRect();
-          setElementPosition({
+          return {
             top: rect.top + window.scrollY,
             left: rect.left + window.scrollX,
             width: rect.width,
             height: rect.height,
-          });
-        }, 300);
-      } else {
-        // Устанавливаем позицию сразу без скролла
-        const rect = element.getBoundingClientRect();
-        setElementPosition({
-          top: rect.top + window.scrollY,
-          left: rect.left + window.scrollX,
-          width: rect.width,
-          height: rect.height,
+          };
         });
+        setElementPositions(positions);
       }
     }
   }, [isActive, currentStepConfig]);
 
   useEffect(() => {
     const handleResize = () => {
-      if (targetElement) {
-        const rect = targetElement.getBoundingClientRect();
-        setElementPosition({
-          top: rect.top + window.scrollY,
-          left: rect.left + window.scrollX,
-          width: rect.width,
-          height: rect.height,
+      if (targetElements.length > 0) {
+        const positions = targetElements.map((element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            top: rect.top + window.scrollY,
+            left: rect.left + window.scrollX,
+            width: rect.width,
+            height: rect.height,
+          };
         });
+        setElementPositions(positions);
       }
     };
 
     const handleScroll = () => {
-      if (targetElement) {
-        const rect = targetElement.getBoundingClientRect();
-        setElementPosition({
-          top: rect.top + window.scrollY,
-          left: rect.left + window.scrollX,
-          width: rect.width,
-          height: rect.height,
+      if (targetElements.length > 0) {
+        const positions = targetElements.map((element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            top: rect.top + window.scrollY,
+            left: rect.left + window.scrollX,
+            width: rect.width,
+            height: rect.height,
+          };
         });
+        setElementPositions(positions);
       }
     };
 
@@ -185,37 +225,44 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
         scrollContainer.removeEventListener("scroll", handleScroll);
       }
     };
-  }, [targetElement]);
+  }, [targetElements]);
 
-  // Обновляем позицию после скролла к элементу
+  // Обновляем позицию после скролла к элементам
   useEffect(() => {
-    if (targetElement && elementPosition) {
-      const rect = targetElement.getBoundingClientRect();
-      setElementPosition({
-        top: rect.top + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-        height: rect.height,
-      });
-    }
-  }, [targetElement, currentStep]);
-
-  // Дополнительное обновление позиции после завершения скролла
-  useEffect(() => {
-    if (targetElement && isActive) {
-      const timeoutId = setTimeout(() => {
-        const rect = targetElement.getBoundingClientRect();
-        setElementPosition({
+    // Очищаем при смене шага
+    if (targetElements.length > 0 && elementPositions.length > 0) {
+      const positions = targetElements.map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
           top: rect.top + window.scrollY,
           left: rect.left + window.scrollX,
           width: rect.width,
           height: rect.height,
+        };
+      });
+      setElementPositions(positions);
+    }
+  }, [targetElements, currentStep]);
+
+  // Дополнительное обновление позиции после завершения скролла
+  useEffect(() => {
+    if (targetElements.length > 0 && isActive) {
+      const timeoutId = setTimeout(() => {
+        const positions = targetElements.map((element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            top: rect.top + window.scrollY,
+            left: rect.left + window.scrollX,
+            width: rect.width,
+            height: rect.height,
+          };
         });
+        setElementPositions(positions);
       }, 500); // Даем время на завершение скролла
 
       return () => clearTimeout(timeoutId);
     }
-  }, [targetElement, isActive, currentStep]);
+  }, [targetElements, isActive, currentStep]);
 
   const handleButtonClick = (action: string, onClick?: () => void) => {
     if (onClick) {
@@ -301,19 +348,25 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
           {/* Темная пелена */}
           <div className="tour-backdrop" onClick={handleOverlayClick} />
 
-          {/* Копия целевого элемента поверх пелены */}
-          {elementPosition && elementCopy && (
-            <div
-              className="tour-element-copy"
-              style={{
-                top: elementPosition.top,
-                left: elementPosition.left,
-                width: elementPosition.width,
-                height: elementPosition.height,
-                pointerEvents: "none",
-              }}
-              dangerouslySetInnerHTML={{ __html: elementCopy.outerHTML }}
-            />
+          {/* Копии целевых элементов поверх пелены */}
+          {elementPositions.map(
+            (position, index) =>
+              elementCopies[index] && (
+                <div
+                  key={`${position.top}-${position.left}-${position.width}-${position.height}-${index}`}
+                  className="tour-element-copy"
+                  style={{
+                    top: position.top,
+                    left: position.left,
+                    width: position.width,
+                    height: position.height,
+                    pointerEvents: "none",
+                  }}
+                  dangerouslySetInnerHTML={{
+                    __html: elementCopies[index].outerHTML,
+                  }}
+                />
+              )
           )}
 
           {/* Контент тура */}

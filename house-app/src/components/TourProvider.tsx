@@ -8,7 +8,7 @@ import React, {
 import { markTourCompleted } from "../hooks/useTourStorage";
 
 export interface TourStepConfig {
-  target: string;
+  target: string | string[];
   title: string;
   description: string;
   type: "modal" | "bottom";

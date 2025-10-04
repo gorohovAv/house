@@ -74,7 +74,7 @@ export const CONSTRUCTION_TOUR: TourConfig = {
       //position: "center",
     },
     {
-      target: ".protection-card .risk-card",
+      target: [".protection-card", ".risk-card"],
       title: "1. Блок рисков",
       description:
         "Здесь появляется непредвиденная ситуация, которая может повлиять на вашу стройку.\nЧто делать? Вам нужно будет выбрать одно из двух последствий.\nВарианты могут быть разными: увеличение стоимости, задержка сроков или, если повезёт, сообщение о том, что риск удалось избежать!",
@@ -91,7 +91,12 @@ export const CONSTRUCTION_TOUR: TourConfig = {
     },
     {
       //target: ".plan-forecast-cards .balance-simple-badges .next-funding-text",
-      target: ".plan-forecast-cards .balance-simple-badges",
+      //target: ".plan-forecast-cards .balance-simple-badges",
+      target: [
+        ".plan-forecast-cards",
+        ".balance-simple-badges",
+        ".next-funding-text",
+      ],
       title: "3. <b>Ваша панель управления</b>",
       description:
         "Здесь собраны все ключевые цифры. Следите за ними, чтобы держать проект под контролем!",
@@ -155,40 +160,21 @@ export const CONSTRUCTION_TOUR: TourConfig = {
       scrollTo: true,
     },
     {
-      target: ".plan-forecast-badges",
-      title: "11. Аналитика",
+      target: [
+        ".plan-forecast-badges",
+        ".cost-chart-container",
+        ".plan-forecast-badge",
+        ".forecast-remainder-badge",
+      ],
+      title: "11. Аналитика элементов",
       description:
-        "Теперь каталог дополнен аналитикой по каждому виду элементов",
-      type: "bottom",
-      scrollTo: true,
-    },
-    {
-      target: ".cost-chart-container",
-      title: "12. Диаграмма План/Оценка",
-      description:
-        'Диаграмма "План/Оценка":\nНаглядно показывает, как изменится стоимость элемента, если вы его поменяете.',
-      type: "bottom",
-      scrollTo: true,
-    },
-    {
-      target: ".plan-forecast-badge",
-      title: "13. Дни План/Оценка",
-      description:
-        'Дни "План/Оценка":\nЦифры показывают плановые и прогнозные сроки монтажа (с учётом возможных простоев).',
-      type: "bottom",
-      scrollTo: true,
-    },
-    {
-      target: ".forecast-remainder-badge",
-      title: "14. Остаток аванса",
-      description:
-        "Остаток аванса:\nПокажет, сколько денег у вас будет на момент начала строительства этого элемента.",
+        "Теперь каталог дополнен подробной аналитикой по каждому виду элементов:\n• Диаграмма 'План/Оценка' наглядно показывает изменение стоимости\n• Дни 'План/Оценка' показывают плановые и прогнозные сроки монтажа\n• Остаток аванса покажет, сколько денег будет на момент начала строительства",
       type: "bottom",
       scrollTo: true,
     },
     {
       target: ".options",
-      title: "15. Строки с вариантами",
+      title: "12. Строки с вариантами",
       description:
         "Строки с вариантами:\nЗдесь вы можете просто выберать тот тип, который вам теперь больше подходит!",
       type: "bottom",
