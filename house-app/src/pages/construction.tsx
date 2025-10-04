@@ -591,8 +591,12 @@ export default function ConstructionPage() {
 
       additionalRequestsBeforeConstruction =
         foundationRequests + overlayRequests;
+      console.log("🔍 foundationRequests 888", foundationRequests);
+      console.log("🔍 overlayRequests 888", overlayRequests);
       additionalRiskSolutionsBeforeConstruction =
         foundationRisks + overlayRisks;
+      console.log("🔍 foundationRisks 88851", foundationRisks);
+      console.log("🔍 overlayRisks 88851", overlayRisks);
 
       console.log(
         "🔍 walls additional requests:",
@@ -604,14 +608,31 @@ export default function ConstructionPage() {
       );
     }
 
-    const totalRequestsBeforeConstruction = requestsBeforeConstruction; //+ additionalRequestsBeforeConstruction;
+    const totalRequestsBeforeConstruction =
+      requestsBeforeConstruction + additionalRequestsBeforeConstruction;
     const totalRiskSolutionsBeforeConstruction =
-      riskSolutionsBeforeConstruction +
-      additionalRiskSolutionsBeforeConstruction;
+      riskSolutionsBeforeConstruction;
+    //additionalRiskSolutionsBeforeConstruction;
+    console.log(
+      "🔍 riskSolutionsBeforeConstruction 8885",
+      riskSolutionsBeforeConstruction
+    );
+    console.log(
+      "🔍 additionalRiskSolutionsBeforeConstruction 8885",
+      additionalRiskSolutionsBeforeConstruction
+    );
 
     const paymentsBeforeConstruction =
       constructionChangesBeforeConstruction +
       totalRiskSolutionsBeforeConstruction;
+    console.log(
+      "🔍 totalRiskSolutionsBeforeConstruction 888",
+      totalRiskSolutionsBeforeConstruction
+    );
+    console.log(
+      "🔍 constructionChangesBeforeConstruction 888",
+      constructionChangesBeforeConstruction
+    );
     console.log("🔍 paymentsBeforeConstruction", paymentsBeforeConstruction);
 
     // Добавляем номинальную стоимость текущей конструкции к запросам

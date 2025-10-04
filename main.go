@@ -64,11 +64,11 @@ func main() {
 
 	// Настройка CORS
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://93.183.68.113:8080", "http://93.183.68.113", "http://scheduler-assistant.ru", "https://scheduler-assistant.ru", "http://10.92.50.3:5173"},
+		AllowOrigins:     []string{"*"}, // Разрешаем все источники для разработки
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		AllowCredentials: false, // Должно быть false при AllowOrigins: ["*"]
 	}))
 
 	// API эндпоинты
