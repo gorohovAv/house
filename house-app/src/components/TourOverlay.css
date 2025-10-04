@@ -243,6 +243,13 @@
   transition: all 0.2s ease;
 }
 
+/* Форматирование текста в турах */
+.tour-text-large {
+  font-size: 1.3em !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
 /* Мобильная оптимизация */
 @media (max-width: 480px) {
   .tour-modal {

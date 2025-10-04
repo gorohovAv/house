@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTour } from "./TourProvider";
+import { FormattedText } from "./FormattedText";
 import "./TourOverlay.css";
 
 interface TourOverlayProps {
@@ -259,9 +260,11 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
       return (
         <div className="tour-modal">
           <div className="tour-modal-content">
-            <h3 className="tour-modal-title">{currentStepConfig.title}</h3>
+            <h3 className="tour-modal-title">
+              <FormattedText text={currentStepConfig.title} />
+            </h3>
             <p className="tour-modal-description">
-              {currentStepConfig.description}
+              <FormattedText text={currentStepConfig.description} />
             </p>
           </div>
         </div>
@@ -272,9 +275,11 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
       return (
         <div className="tour-bottom-tooltip">
           <div className="tour-bottom-content">
-            <h4 className="tour-bottom-title">{currentStepConfig.title}</h4>
+            <h4 className="tour-bottom-title">
+              <FormattedText text={currentStepConfig.title} />
+            </h4>
             <p className="tour-bottom-description">
-              {currentStepConfig.description}
+              <FormattedText text={currentStepConfig.description} />
             </p>
           </div>
         </div>
