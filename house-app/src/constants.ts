@@ -204,7 +204,7 @@ export const RISKS: Risk[] = [
     duration: 6,
     alternativeDescription: "Взять паузу для проведения контрольных замеров",
     affectedElement: "Фундамент",
-    affectedStyle: "Плитный",
+    affectedStyle: "Плитный, Свайный, Ленточный",
   },
   {
     id: 4,
@@ -235,7 +235,7 @@ export const RISKS: Risk[] = [
     duration: 3,
     alternativeDescription: "Дождаться пополнения на складе",
     affectedElement: "Стены",
-    affectedStyle: "Традиционный стиль",
+    affectedStyle: "Традиционный стиль, Немецкий стиль",
   },
   {
     id: 7,
@@ -255,7 +255,8 @@ export const RISKS: Risk[] = [
     duration: 3,
     alternativeDescription: "Дождаться бригаду",
     affectedElement: "Стены",
-    affectedStyle: "Немецкий стиль, Стиль хай-тек",
+    affectedStyle:
+      "Немецкий стиль, Стиль хай-тек, Классический стиль, Традиционный стиль",
   },
   {
     id: 9,
@@ -266,7 +267,7 @@ export const RISKS: Risk[] = [
     alternativeDescription:
       "Отсортировать по оттенкам и использовать для кладки разных стен",
     affectedElement: "Стены",
-    affectedStyle: "Классический стиль",
+    affectedStyle: "Классический стиль, Стиль хай-тек",
   },
   {
     id: 10,
@@ -351,7 +352,7 @@ export const RISKS: Risk[] = [
     duration: 7,
     alternativeDescription: "Дождаться поставки импортных элементов",
     affectedElement: "Двери и Окна",
-    affectedStyle: "Классический стиль",
+    affectedStyle: "Классический стиль, Стиль хай-тек, Немецкий стиль",
   },
   {
     id: 18,
@@ -361,7 +362,7 @@ export const RISKS: Risk[] = [
     duration: 2,
     alternativeDescription: "Дождаться доставки от завода",
     affectedElement: "Двери и Окна",
-    affectedStyle: "Немецкий стиль",
+    affectedStyle: "Немецкий стиль, Традиционный стиль",
   },
   {
     id: 19,
@@ -371,7 +372,7 @@ export const RISKS: Risk[] = [
     duration: 7,
     alternativeDescription: "Дождаться поставки импортных элементов",
     affectedElement: "Двери и Окна",
-    affectedStyle: "Стиль хай-тек",
+    affectedStyle: "Стиль хай-тек, Классический стиль",
   },
   {
     id: 20,
@@ -381,7 +382,7 @@ export const RISKS: Risk[] = [
     duration: 3,
     alternativeDescription: "Дождаться возвращения бригады на объект",
     affectedElement: "Двери и Окна",
-    affectedStyle: "Немецкий стиль",
+    affectedStyle: "Немецкий стиль, Традиционный стиль",
   },
   {
     id: 21,
