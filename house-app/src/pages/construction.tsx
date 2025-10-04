@@ -857,7 +857,10 @@ export default function ConstructionPage() {
   };
 
   const updateLayeredConfig = () => {
-    return createConstructionLayeredConfig(selectedOptions, paymentSchedule);
+    return createConstructionLayeredConfig(
+      selectedOptions,
+      paymentSchedule.filter((payment) => payment.dayIndex < 90)
+    );
   };
 
   return (
