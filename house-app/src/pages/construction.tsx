@@ -932,7 +932,9 @@ export default function ConstructionPage() {
                 <div className="risk-header">
                   <div className="risk-indicator">
                     <RiskIcon />
-                    <span>Риск {currentRisk.id}</span>
+                    <div className="risk-indicator-text">
+                      Риск {currentRisk.id}
+                    </div>
                   </div>
                 </div>
 

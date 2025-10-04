@@ -42,6 +42,10 @@
   color: var(--color-text);
   min-width: 65px;
   margin: 10px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  justify-self: center;
 }
 
 .completion-card {
@@ -315,6 +319,12 @@
 .solution-option.active {
   border-color: var(--color-primary);
   border: 2px solid var(--color-button-secondary);
+}
+
+.risk-indicator-text {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
 .risk-confirm-section {
@@ -873,4 +883,90 @@
     font-size: 12px;
     padding: 8px 12px;
   }
+}
+
+/* Стили для центровки элементов во время тура */
+.tour-element-copy .risk-indicator-text,
+.tour-element-copy .badge-title,
+.tour-element-copy .card-title,
+.tour-element-copy .options-title {
+  text-align: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* Принудительная центровка для заголовков карточек риска */
+.tour-element-copy .risk-indicator {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.tour-element-copy .risk-indicator-text {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+.tour-element-copy .protection-description {
+  text-align: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* Принудительная центровка для заголовков беджей */
+.tour-element-copy .badge-title {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+/* Принудительная центровка для заголовков карточек */
+.tour-element-copy .card-title {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+/* Принудительная центровка для заголовка опций */
+.tour-element-copy .options-title {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  flex: 1 !important;
+}
+
+/* Центровка для контейнеров заголовков */
+.tour-element-copy .options-header {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.tour-element-copy .house-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.tour-element-copy .house-title {
+  text-align: left !important;
+}
+
+/* Центровка для заголовков в карточках плана/прогноза */
+.tour-element-copy .plan-card .card-title,
+.tour-element-copy .forecast-card .card-title {
+  text-align: center !important;
+}
+
+/* Центровка для заголовков в беджах */
+.tour-element-copy .balance-badge .badge-title,
+.tour-element-copy .simple-badge .badge-title,
+.tour-element-copy .plan-forecast-badge .badge-title,
+.tour-element-copy .forecast-remainder-badge .badge-title {
+  text-align: center !important;
 }
