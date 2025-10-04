@@ -269,7 +269,11 @@ const createConstructionLayeredConfig = (
 
   // 6. Недострой крыши - показываем только если построены стены второго этажа, крыша начата, но еще не готова
   const roofOption = selectedOptions["Крыша"];
-  const roofCompleted = isConstructionCompleted("Крыша", paymentSchedule);
+  //const roofCompleted = isConstructionCompleted("Крыша", paymentSchedule);
+  const roofCompleted =
+    paymentSchedule.filter(
+      (payment) => payment.construction === "Крыша" && payment.issued === null
+    ).length === 0;
 
   // Проверяем, что строительство крыши началось (есть хотя бы один день с issued != null и != 0)
   const roofStarted = paymentSchedule.some(
