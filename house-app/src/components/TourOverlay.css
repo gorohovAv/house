@@ -187,6 +187,10 @@
   z-index: 10001;
 }
 
+.tour-bottom-tooltip.no-button {
+  bottom: 140px;
+}
+
 @keyframes tourTooltipAppear {
   from {
     opacity: 0;

@@ -13,6 +13,7 @@ export interface TourStepConfig {
   description: string;
   type: "modal" | "bottom";
   scrollTo?: boolean;
+  disableNext?: boolean;
 }
 
 export interface TourConfig {

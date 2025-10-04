@@ -240,7 +240,7 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
   };
 
   const handleOverlayClick = () => {
-    if (!isActive || !activeTour) return;
+    if (!isActive || !activeTour || !currentStepConfig) return;
 
     // Если это последний шаг, завершаем тур
     if (currentStep === activeTour.steps.length - 1) {
@@ -273,7 +273,11 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
 
     if (currentStepConfig.type === "bottom") {
       return (
-        <div className="tour-bottom-tooltip">
+        <div
+          className={`tour-bottom-tooltip ${
+            currentStepConfig.disableNext ? "no-button" : ""
+          }`}
+        >
           <div className="tour-bottom-content">
             <h4 className="tour-bottom-title">
               <FormattedText text={currentStepConfig.title} />
@@ -316,14 +320,16 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
           {renderTourContent()}
 
           {/* Фиксированная кнопка Далее */}
-          <div className="tour-bottom-button">
-            <button
-              className="tour-button tour-button-primary"
-              onClick={() => handleButtonClick("next")}
-            >
-              Далее
-            </button>
-          </div>
+          {!currentStepConfig.disableNext && (
+            <div className="tour-bottom-button">
+              <button
+                className="tour-button tour-button-primary"
+                onClick={() => handleButtonClick("next")}
+              >
+                Далее
+              </button>
+            </div>
+          )}
         </div>,
         document.body
       )}

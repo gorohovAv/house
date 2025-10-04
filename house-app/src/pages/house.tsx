@@ -333,11 +333,12 @@ export default function HousePage() {
             />
           </div>
 
-          <div className="buttons">
+          <div className="buttons-wrapper">
             <button
               className="btn-primary"
               disabled={!canStartConstruction}
               onClick={handleStartConstruction}
+              id="start-construction-button"
               style={{
                 opacity: canStartConstruction ? 1 : 0.5,
                 cursor: canStartConstruction ? "pointer" : "not-allowed",

@@ -208,13 +208,14 @@
   white-space: nowrap;
 }
 
-.buttons {
+.buttons-wrapper {
   display: flex;
   gap: 16px;
   margin-bottom: 14px;
 }
 
 .btn-primary {
+  width: 100%;
   flex: 1;
   background: var(--color-button-primary);
   color: var(--color-text);
