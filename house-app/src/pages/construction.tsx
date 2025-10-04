@@ -538,7 +538,7 @@ export default function ConstructionPage() {
       riskSolutionsBeforeConstruction
     );
 
-    // Особенная обработка для стен
+    // Особенная обработка для конструкций
     let additionalRequestsBeforeConstruction = 0;
     let additionalRiskSolutionsBeforeConstruction = 0;
 
@@ -611,10 +611,259 @@ export default function ConstructionPage() {
         "🔍 walls additional risks:",
         additionalRiskSolutionsBeforeConstruction
       );
+    } else if (currentCard.title === "Перекрытие") {
+      // Для перекрытия учитываем периоды фундамента и стен первого этажа
+
+      // Находим периоды фундамента (первые периоды)
+      const foundationPeriods = periods.filter((period, index) => {
+        return index < 2; // первые 2 периода обычно фундамент
+      });
+
+      // Находим периоды стен первого этажа (следующие периоды)
+      const wallsFirstFloorPeriods = periods.filter((period, index) => {
+        return index >= 2 && index < 4; // периоды 2-3 обычно стены первого этажа
+      });
+
+      // Суммируем запросы денег в периоды фундамента
+      const foundationRequests = requestHistory
+        .filter((request) => {
+          const requestPeriod = periods[request.periodNumber - 1];
+          if (!requestPeriod) return false;
+          return foundationPeriods.some(
+            (fp) => fp.startDay === requestPeriod.startDay
+          );
+        })
+        .reduce((total, request) => total + request.requestedAmount, 0);
+
+      // Суммируем запросы денег в периоды стен первого этажа
+      const wallsFirstFloorRequests = requestHistory
+        .filter((request) => {
+          const requestPeriod = periods[request.periodNumber - 1];
+          if (!requestPeriod) return false;
+          return wallsFirstFloorPeriods.some(
+            (wp) => wp.startDay === requestPeriod.startDay
+          );
+        })
+        .reduce((total, request) => total + request.requestedAmount, 0);
+
+      // Суммируем риски в периоды фундамента
+      const foundationRisks = foundationPeriods
+        .filter(
+          (period) =>
+            period.risk &&
+            !period.isProtected &&
+            period.selectedSolution === "solution"
+        )
+        .reduce((total, period) => total + (period.risk?.cost || 0), 0);
+
+      // Суммируем риски в периоды стен первого этажа
+      const wallsFirstFloorRisks = wallsFirstFloorPeriods
+        .filter(
+          (period) =>
+            period.risk &&
+            !period.isProtected &&
+            period.selectedSolution === "solution"
+        )
+        .reduce((total, period) => total + (period.risk?.cost || 0), 0);
+
+      additionalRequestsBeforeConstruction =
+        foundationRequests + wallsFirstFloorRequests;
+      additionalRiskSolutionsBeforeConstruction =
+        foundationRisks + wallsFirstFloorRisks;
+
+      console.log("🔍 Перекрытие - foundation requests:", foundationRequests);
+      console.log(
+        "🔍 Перекрытие - walls first floor requests:",
+        wallsFirstFloorRequests
+      );
+      console.log("🔍 Перекрытие - foundation risks:", foundationRisks);
+      console.log(
+        "🔍 Перекрытие - walls first floor risks:",
+        wallsFirstFloorRisks
+      );
+    } else if (currentCard.title === "Крыша") {
+      // Для крыши учитываем периоды фундамента, стен первого этажа, перекрытия и стен второго этажа
+
+      // Находим периоды фундамента
+      const foundationPeriods = periods.filter((period, index) => {
+        return index < 2;
+      });
+
+      // Находим периоды стен первого этажа
+      const wallsFirstFloorPeriods = periods.filter((period, index) => {
+        return index >= 2 && index < 4;
+      });
+
+      // Находим периоды перекрытия
+      const overlayPeriods = periods.filter((period, index) => {
+        return index >= 4 && index < 5;
+      });
+
+      // Находим периоды стен второго этажа
+      const wallsSecondFloorPeriods = periods.filter((period, index) => {
+        return index >= 5 && index < 6;
+      });
+
+      // Суммируем запросы денег во всех предыдущих периодах
+      const foundationRequests = requestHistory
+        .filter((request) => {
+          const requestPeriod = periods[request.periodNumber - 1];
+          if (!requestPeriod) return false;
+          return foundationPeriods.some(
+            (fp) => fp.startDay === requestPeriod.startDay
+          );
+        })
+        .reduce((total, request) => total + request.requestedAmount, 0);
+
+      const wallsFirstFloorRequests = requestHistory
+        .filter((request) => {
+          const requestPeriod = periods[request.periodNumber - 1];
+          if (!requestPeriod) return false;
+          return wallsFirstFloorPeriods.some(
+            (wp) => wp.startDay === requestPeriod.startDay
+          );
+        })
+        .reduce((total, request) => total + request.requestedAmount, 0);
+
+      const overlayRequests = requestHistory
+        .filter((request) => {
+          const requestPeriod = periods[request.periodNumber - 1];
+          if (!requestPeriod) return false;
+          return overlayPeriods.some(
+            (op) => op.startDay === requestPeriod.startDay
+          );
+        })
+        .reduce((total, request) => total + request.requestedAmount, 0);
+
+      const wallsSecondFloorRequests = requestHistory
+        .filter((request) => {
+          const requestPeriod = periods[request.periodNumber - 1];
+          if (!requestPeriod) return false;
+          return wallsSecondFloorPeriods.some(
+            (wp) => wp.startDay === requestPeriod.startDay
+          );
+        })
+        .reduce((total, request) => total + request.requestedAmount, 0);
+
+      // Суммируем риски во всех предыдущих периодах
+      const foundationRisks = foundationPeriods
+        .filter(
+          (period) =>
+            period.risk &&
+            !period.isProtected &&
+            period.selectedSolution === "solution"
+        )
+        .reduce((total, period) => total + (period.risk?.cost || 0), 0);
+
+      const wallsFirstFloorRisks = wallsFirstFloorPeriods
+        .filter(
+          (period) =>
+            period.risk &&
+            !period.isProtected &&
+            period.selectedSolution === "solution"
+        )
+        .reduce((total, period) => total + (period.risk?.cost || 0), 0);
+
+      const overlayRisks = overlayPeriods
+        .filter(
+          (period) =>
+            period.risk &&
+            !period.isProtected &&
+            period.selectedSolution === "solution"
+        )
+        .reduce((total, period) => total + (period.risk?.cost || 0), 0);
+
+      const wallsSecondFloorRisks = wallsSecondFloorPeriods
+        .filter(
+          (period) =>
+            period.risk &&
+            !period.isProtected &&
+            period.selectedSolution === "solution"
+        )
+        .reduce((total, period) => total + (period.risk?.cost || 0), 0);
+
+      additionalRequestsBeforeConstruction =
+        foundationRequests +
+        wallsFirstFloorRequests +
+        overlayRequests +
+        wallsSecondFloorRequests;
+      additionalRiskSolutionsBeforeConstruction =
+        foundationRisks +
+        wallsFirstFloorRisks +
+        overlayRisks +
+        wallsSecondFloorRisks;
+
+      console.log("🔍 Крыша - все предыдущие периоды учтены");
+    } else if (currentCard.title === "Двери и Окна") {
+      // Для дверей и окон учитываем все предыдущие периоды: фундамент, стены первого этажа, перекрытие, стены второго этажа, крыша
+
+      // Находим все периоды до текущего (все предыдущие конструкции)
+      const previousPeriods = periods.filter((period, index) => {
+        return index < 5; // все периоды до дверей и окон
+      });
+
+      // Суммируем запросы денег во всех предыдущих периодах
+      const previousRequests = requestHistory
+        .filter((request) => {
+          const requestPeriod = periods[request.periodNumber - 1];
+          if (!requestPeriod) return false;
+          return previousPeriods.some(
+            (pp) => pp.startDay === requestPeriod.startDay
+          );
+        })
+        .reduce((total, request) => total + request.requestedAmount, 0);
+
+      // Суммируем риски во всех предыдущих периодах
+      const previousRisks = previousPeriods
+        .filter(
+          (period) =>
+            period.risk &&
+            !period.isProtected &&
+            period.selectedSolution === "solution"
+        )
+        .reduce((total, period) => total + (period.risk?.cost || 0), 0);
+
+      additionalRequestsBeforeConstruction = previousRequests;
+      additionalRiskSolutionsBeforeConstruction = previousRisks;
+
+      console.log("🔍 Двери и Окна - все предыдущие периоды учтены");
+    } else if (currentCard.title === "Благоустройство") {
+      // Для благоустройства учитываем все предыдущие периоды: фундамент, стены первого этажа, перекрытие, стены второго этажа, крыша, двери и окна
+
+      // Находим все периоды до текущего (все предыдущие конструкции)
+      const previousPeriods = periods.filter((period, index) => {
+        return index < 6; // все периоды до благоустройства
+      });
+
+      // Суммируем запросы денег во всех предыдущих периодах
+      const previousRequests = requestHistory
+        .filter((request) => {
+          const requestPeriod = periods[request.periodNumber - 1];
+          if (!requestPeriod) return false;
+          return previousPeriods.some(
+            (pp) => pp.startDay === requestPeriod.startDay
+          );
+        })
+        .reduce((total, request) => total + request.requestedAmount, 0);
+
+      // Суммируем риски во всех предыдущих периодах
+      const previousRisks = previousPeriods
+        .filter(
+          (period) =>
+            period.risk &&
+            !period.isProtected &&
+            period.selectedSolution === "solution"
+        )
+        .reduce((total, period) => total + (period.risk?.cost || 0), 0);
+
+      additionalRequestsBeforeConstruction = previousRequests;
+      additionalRiskSolutionsBeforeConstruction = previousRisks;
+
+      console.log("🔍 Благоустройство - все предыдущие периоды учтены");
     }
 
-    const totalRequestsBeforeConstruction =
-      requestsBeforeConstruction + additionalRequestsBeforeConstruction;
+    const totalRequestsBeforeConstruction = requestsBeforeConstruction;
+    //requestsBeforeConstruction + additionalRequestsBeforeConstruction;
     const totalRiskSolutionsBeforeConstruction =
       riskSolutionsBeforeConstruction;
     //additionalRiskSolutionsBeforeConstruction;
