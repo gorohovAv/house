@@ -451,7 +451,7 @@ const ComparisonPage: React.FC = () => {
   const getActualHouseConfig = (): LayeredImageConfig => {
     return createActualHouseConfig(
       factStore.selectedOptions,
-      factStore.paymentSchedule
+      factStore.paymentSchedule.filter((payment) => payment.dayIndex < 90)
     );
   };
 
