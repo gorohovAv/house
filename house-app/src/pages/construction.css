@@ -298,7 +298,7 @@
 }
 
 .solution-option {
-  border: 2px solid var(--color-accent);
+  border: 2px solid #486686;
   border-radius: 8px;
   padding: 8px;
   display: flex;
