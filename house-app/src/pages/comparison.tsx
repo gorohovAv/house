@@ -49,6 +49,35 @@ const isConstructionCompleted = (
   return totalDaysPayed >= totalDaysRequired;
 };
 
+// Функция проверки завершенности этапа стен (из construction.tsx)
+const isWallsStageCompleted = (
+  stage: "first" | "second",
+  paymentSchedule: PaymentScheduleItem[]
+): boolean => {
+  const wallsPayments = paymentSchedule.filter(
+    (payment) => payment.construction === "Стены"
+  );
+
+  if (wallsPayments.length === 0) return false;
+
+  const totalDaysRequired = wallsPayments[0].daysRequired;
+  const totalDaysPayed = wallsPayments.reduce((sum, payment) => {
+    if (payment.issued) {
+      return sum + 1;
+    }
+    return sum + 0;
+  }, 0);
+
+  if (stage === "first") {
+    // Первый этаж готов, если оплачено больше половины дней стен
+    const firstHalfDays = Math.floor(totalDaysRequired / 2);
+    return totalDaysPayed >= firstHalfDays;
+  }
+
+  // Второй этаж готов, если оплачены все дни стен
+  return totalDaysPayed >= totalDaysRequired;
+};
+
 // Функция для создания конфигурации планового домика (из house.tsx)
 const createPlannedHouseConfig = (
   selectedOptions: Record<string, ConstructionOption>
@@ -213,9 +242,15 @@ const createActualHouseConfig = (
     visible: true,
   });
 
+  const foundationCompleted =
+    paymentSchedule.filter(
+      (payment) =>
+        payment.construction === "Фундамент" && payment.issued === null
+    ).length === 0;
+
   // 2. Фундамент конкретный - показывается только если выбран
   const foundationOption = selectedOptions["Фундамент"];
-  if (foundationOption) {
+  if (foundationOption && !foundationCompleted) {
     const foundationMap: Record<string, string> = {
       "1 Свайный": "/ФУНДАМЕНТСвайный.png",
       "1 Ленточный": "/ФУНДАМЕНТЛенточный.png",
@@ -233,14 +268,13 @@ const createActualHouseConfig = (
 
   // 3. Фундамент итоговый + стены недострой первый этаж
   const wallsOption = selectedOptions["Стены"];
-  const foundationCompleted = isConstructionCompleted(
-    "Фундамент",
+  const wallsFirstStageCompleted = isWallsStageCompleted(
+    "first",
     paymentSchedule
   );
-  const wallsCompleted = isConstructionCompleted("Стены", paymentSchedule);
 
   if (wallsOption && foundationCompleted) {
-    if (wallsCompleted) {
+    if (wallsFirstStageCompleted) {
       // Готовые стены первый этаж
       const wallsMap1: Record<string, string> = {
         "2 Традиционный стиль": "/Этаж1традиционный.png",
@@ -274,7 +308,7 @@ const createActualHouseConfig = (
     paymentSchedule
   );
 
-  if (overlayOption && wallsCompleted) {
+  if (overlayOption && wallsFirstStageCompleted) {
     if (overlayCompleted) {
       // Готовое перекрытие
       const overlayMap: Record<string, string> = {
@@ -310,8 +344,13 @@ const createActualHouseConfig = (
   }
 
   // 5. Готовые стены второй этаж или недострой второго этажа
+  const wallsSecondStageCompleted = isWallsStageCompleted(
+    "second",
+    paymentSchedule
+  );
+
   if (wallsOption && foundationCompleted && overlayCompleted) {
-    if (wallsCompleted) {
+    if (wallsSecondStageCompleted) {
       // Готовые стены второй этаж
       const wallsMap2: Record<string, string> = {
         "2 Традиционный стиль": "/Этаж2традиционный.png",
@@ -338,11 +377,25 @@ const createActualHouseConfig = (
     }
   }
 
-  // 6. Готовые стены недострой крыши
+  // 6. Недострой крыши - показываем только если построены стены второго этажа, крыша начата, но еще не готова
   const roofOption = selectedOptions["Крыша"];
-  const roofCompleted = isConstructionCompleted("Крыша", paymentSchedule);
+  const roofCompleted =
+    paymentSchedule.filter(
+      (payment) => payment.construction === "Крыша" && payment.issued === null
+    ).length === 0;
 
-  if (roofOption && wallsCompleted && !roofCompleted) {
+  // Проверяем, что строительство крыши началось (есть хотя бы один день с issued != null и != 0)
+  const roofStarted = paymentSchedule.some(
+    (payment) =>
+      payment.construction === "Крыша" &&
+      payment.issued !== null &&
+      payment.issued > 0
+  );
+
+  // Проверяем, что построены стены второго этажа (перекрытие завершено И стены завершены)
+  const secondFloorWallsBuilt = overlayCompleted && wallsSecondStageCompleted;
+
+  if (roofStarted && !roofCompleted) {
     // Недострой крыши
     layers.push({
       id: "roof-construction",
@@ -354,7 +407,7 @@ const createActualHouseConfig = (
   }
 
   // 7. Готовая крыша и окна
-  if (roofOption && wallsCompleted && roofCompleted) {
+  if (roofOption && secondFloorWallsBuilt && roofCompleted) {
     // Готовая крыша
     const roofMap: Record<string, string> = {
       "4 Гибкая/битумная черепица": "/КРЫШАбитумная-черепица.png",
@@ -364,7 +417,7 @@ const createActualHouseConfig = (
     layers.push({
       id: "roof",
       assetPath: roofMap[roofOption.type] || "/КРЫШАбитумная-черепица.png",
-      zIndex: zIndex++,
+      zIndex: zIndex + 5,
       opacity: 1,
       visible: true,
     });
@@ -397,7 +450,7 @@ const createActualHouseConfig = (
 
   if (
     landscapingOption &&
-    wallsCompleted &&
+    secondFloorWallsBuilt &&
     roofCompleted &&
     landscapingCompleted
   ) {
