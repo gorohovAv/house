@@ -510,6 +510,7 @@ export default function ConstructionPage() {
         // Находим период изменения по номеру
         const changePeriod = periods[change.periodNumber - 1];
         if (!changePeriod) return false;
+        if (change.constructionType === currentCard.title) return false;
 
         // Проверяем, что изменение было до начала строительства конструкции
         return changePeriod.startDay < firstConstructionDay;
