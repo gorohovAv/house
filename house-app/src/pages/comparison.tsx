@@ -78,6 +78,33 @@ const isWallsStageCompleted = (
   return totalDaysPayed >= totalDaysRequired;
 };
 
+// Функция проверки завершенности всех конструкций
+const isAllConstructionsCompleted = (
+  paymentSchedule: PaymentScheduleItem[]
+): boolean => {
+  const constructionTypes = [
+    "Фундамент",
+    "Стены",
+    "Перекрытие",
+    "Крыша",
+    "Двери и Окна",
+    "Благоустройство",
+  ];
+
+  return constructionTypes.every((constructionType) => {
+    const constructionPayments = paymentSchedule.filter(
+      (payment) => payment.construction === constructionType
+    );
+
+    if (constructionPayments.length === 0) return false;
+
+    // Ищем хотя бы один день где daysRequired === daysPayed
+    return constructionPayments.some(
+      (payment) => payment.daysRequired === payment.daysPayed
+    );
+  });
+};
+
 // Функция для создания конфигурации планового домика (из house.tsx)
 const createPlannedHouseConfig = (
   selectedOptions: Record<string, ConstructionOption>
@@ -490,10 +517,14 @@ const ComparisonPage: React.FC = () => {
     return total + (payment.issued || 0);
   }, 0);
 
-  // Фактическая длительность - количество дней, когда были выданы деньги
-  const actualDuration = factStore.paymentSchedule.filter(
-    (payment) => payment.issued !== null
-  ).length;
+  // Фактическая длительность - если домик недостроен, показываем 90 дней
+  const isConstructionCompleted = isAllConstructionsCompleted(
+    factStore.paymentSchedule
+  );
+  const actualDuration = isConstructionCompleted
+    ? factStore.paymentSchedule.filter((payment) => payment.issued !== null)
+        .length
+    : 90;
 
   // Конфигурация для планируемого дома (по выборам из planStore)
   const getPlannedHouseConfig = (): LayeredImageConfig => {
