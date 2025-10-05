@@ -92,6 +92,7 @@
 }
 
 .house-display {
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -99,6 +100,7 @@
   background: #002246;
   border-radius: 0;
   min-height: 350px;
+  justify-self: center;
 }
 
 .house-container {
@@ -565,6 +567,7 @@
   flex-direction: column;
   gap: 14px;
   box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.85);
+  margin: 0 1px;
 }
 
 .plan-forecast-badges {
