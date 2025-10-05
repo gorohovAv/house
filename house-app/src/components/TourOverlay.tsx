@@ -97,11 +97,30 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    // Всегда очищаем предыдущие состояния в начале
+    // Принудительная очистка всех состояний перед новым рендером
     setTargetElements([]);
     setElementPositions([]);
     setElementCopies([]);
 
+    if (!isActive || !currentStepConfig) {
+      return;
+    }
+
+    // Небольшая задержка для гарантированной очистки
+    const cleanupTimeout = setTimeout(() => {
+      // Дополнительная очистка для предотвращения гонок состояний
+      setTargetElements([]);
+      setElementPositions([]);
+      setElementCopies([]);
+    }, 50);
+
+    return () => {
+      clearTimeout(cleanupTimeout);
+    };
+  }, [isActive, currentStep]);
+
+  // Отдельный useEffect для поиска и рендера элементов после очистки
+  useEffect(() => {
     if (!isActive || !currentStepConfig) {
       return;
     }
@@ -111,44 +130,59 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
       return;
     }
 
-    // Преобразуем target в массив селекторов
-    const selectors = Array.isArray(currentStepConfig.target)
-      ? currentStepConfig.target
-      : [currentStepConfig.target];
+    // Задержка для гарантированной очистки предыдущих элементов
+    const renderTimeout = setTimeout(() => {
+      // Преобразуем target в массив селекторов
+      const selectors = Array.isArray(currentStepConfig.target)
+        ? currentStepConfig.target
+        : [currentStepConfig.target];
 
-    // Находим все элементы
-    const elements: Element[] = [];
-    const foundElementIds = new Set<string>(); // Для предотвращения дублирования
+      // Находим все элементы
+      const elements: Element[] = [];
+      const foundElementIds = new Set<string>(); // Для предотвращения дублирования
 
-    selectors.forEach((selector) => {
-      const foundElements = document.querySelectorAll(selector);
-      foundElements.forEach((el) => {
-        // Создаем уникальный ID для элемента на основе его позиции и содержимого
-        const elementId = `${el.tagName}-${el.className}-${
-          el.getBoundingClientRect().top
-        }-${el.getBoundingClientRect().left}`;
+      selectors.forEach((selector) => {
+        const foundElements = document.querySelectorAll(selector);
+        foundElements.forEach((el) => {
+          // Создаем уникальный ID для элемента на основе его позиции и содержимого
+          const elementId = `${el.tagName}-${el.className}-${
+            el.getBoundingClientRect().top
+          }-${el.getBoundingClientRect().left}`;
 
-        // Добавляем только если такого элемента еще нет
-        if (!foundElementIds.has(elementId)) {
-          foundElementIds.add(elementId);
-          elements.push(el);
-        }
+          // Добавляем только если такого элемента еще нет
+          if (!foundElementIds.has(elementId)) {
+            foundElementIds.add(elementId);
+            elements.push(el);
+          }
+        });
       });
-    });
 
-    if (elements.length > 0) {
-      setTargetElements(elements);
+      if (elements.length > 0) {
+        setTargetElements(elements);
 
-      // Создаем копии элементов
-      const copies = elements.map((element) => createElementCopy(element));
-      setElementCopies(copies);
+        // Создаем копии элементов
+        const copies = elements.map((element) => createElementCopy(element));
+        setElementCopies(copies);
 
-      // Скроллим к элементам только если указано scrollTo: true
-      if (currentStepConfig.scrollTo) {
-        scrollToElements(elements);
+        // Скроллим к элементам только если указано scrollTo: true
+        if (currentStepConfig.scrollTo) {
+          scrollToElements(elements);
 
-        // Небольшая задержка для завершения скролла
-        setTimeout(() => {
+          // Небольшая задержка для завершения скролла
+          setTimeout(() => {
+            const positions = elements.map((element) => {
+              const rect = element.getBoundingClientRect();
+              return {
+                top: rect.top + window.scrollY,
+                left: rect.left + window.scrollX,
+                width: rect.width,
+                height: rect.height,
+              };
+            });
+            setElementPositions(positions);
+          }, 300);
+        } else {
+          // Устанавливаем позиции сразу без скролла
           const positions = elements.map((element) => {
             const rect = element.getBoundingClientRect();
             return {
@@ -159,21 +193,13 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
             };
           });
           setElementPositions(positions);
-        }, 300);
-      } else {
-        // Устанавливаем позиции сразу без скролла
-        const positions = elements.map((element) => {
-          const rect = element.getBoundingClientRect();
-          return {
-            top: rect.top + window.scrollY,
-            left: rect.left + window.scrollX,
-            width: rect.width,
-            height: rect.height,
-          };
-        });
-        setElementPositions(positions);
+        }
       }
-    }
+    }, 100); // Увеличиваем задержку для гарантированной очистки
+
+    return () => {
+      clearTimeout(renderTimeout);
+    };
   }, [isActive, currentStepConfig]);
 
   useEffect(() => {
@@ -227,22 +253,13 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     };
   }, [targetElements]);
 
-  // Обновляем позицию после скролла к элементам
+  // Дополнительная очистка при смене шага
   useEffect(() => {
-    // Очищаем при смене шага
-    if (targetElements.length > 0 && elementPositions.length > 0) {
-      const positions = targetElements.map((element) => {
-        const rect = element.getBoundingClientRect();
-        return {
-          top: rect.top + window.scrollY,
-          left: rect.left + window.scrollX,
-          width: rect.width,
-          height: rect.height,
-        };
-      });
-      setElementPositions(positions);
-    }
-  }, [targetElements, currentStep]);
+    // Принудительно очищаем все элементы при смене шага
+    setTargetElements([]);
+    setElementPositions([]);
+    setElementCopies([]);
+  }, [currentStep]);
 
   // Дополнительное обновление позиции после завершения скролла
   useEffect(() => {
@@ -349,25 +366,27 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
           <div className="tour-backdrop" onClick={handleOverlayClick} />
 
           {/* Копии целевых элементов поверх пелены */}
-          {elementPositions.map(
-            (position, index) =>
-              elementCopies[index] && (
-                <div
-                  key={`${position.top}-${position.left}-${position.width}-${position.height}-${index}`}
-                  className="tour-element-copy"
-                  style={{
-                    top: position.top,
-                    left: position.left,
-                    width: position.width,
-                    height: position.height,
-                    pointerEvents: "none",
-                  }}
-                  dangerouslySetInnerHTML={{
-                    __html: elementCopies[index].outerHTML,
-                  }}
-                />
-              )
-          )}
+          {elementPositions.length > 0 &&
+            elementCopies.length > 0 &&
+            elementPositions.map(
+              (position, index) =>
+                elementCopies[index] && (
+                  <div
+                    key={`${currentStep}-${position.top}-${position.left}-${position.width}-${position.height}-${index}`}
+                    className="tour-element-copy"
+                    style={{
+                      top: position.top,
+                      left: position.left,
+                      width: position.width,
+                      height: position.height,
+                      pointerEvents: "none",
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: elementCopies[index].outerHTML,
+                    }}
+                  />
+                )
+            )}
 
           {/* Контент тура */}
           {renderTourContent()}
