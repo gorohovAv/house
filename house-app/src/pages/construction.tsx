@@ -981,6 +981,28 @@ export default function ConstructionPage() {
     setSelectedRiskSolution(null);
   }, [currentPeriodIndex]);
 
+  // Функция проверки достроенности дома
+  const isHouseCompleted = useCallback(() => {
+    // Получаем все уникальные типы конструкций из paymentSchedule
+    const constructionTypes = [
+      ...new Set(paymentSchedule.map((p) => p.construction)),
+    ];
+
+    // Проверяем каждую конструкцию на завершенность
+    return constructionTypes.every((constructionType) => {
+      const constructionPayments = paymentSchedule.filter(
+        (payment) => payment.construction === constructionType
+      );
+
+      if (constructionPayments.length === 0) return false;
+
+      // Проверяем, есть ли хотя бы один день где daysRequired === daysPayed
+      return constructionPayments.some(
+        (payment) => payment.daysRequired === payment.daysPayed
+      );
+    });
+  }, [paymentSchedule]);
+
   // Функция отправки результатов на бэкенд
   const sendResultsToBackend = useCallback(async () => {
     try {
@@ -998,12 +1020,16 @@ export default function ConstructionPage() {
         (payment) => payment.issued !== null && payment.issued > 0
       ).length;
 
+      // Проверяем достроенность дома
+      const houseCompleted = isHouseCompleted();
+
       const resultData: CreateResultRequest = {
         name: projectName || "Игрок",
         planned_duration: plannedDuration,
         planned_cost: plannedCost,
         actual_duration: actualDuration,
         actual_cost: actualCost,
+        is_completed: houseCompleted,
       };
 
       console.log("📊 Данные для отправки:", resultData);
@@ -1024,7 +1050,7 @@ export default function ConstructionPage() {
     } catch (error) {
       console.error("Ошибка при отправке результатов:", error);
     }
-  }, [planStore, paymentSchedule, projectName]);
+  }, [planStore, paymentSchedule, projectName, isHouseCompleted]);
 
   // Переход на страницу сравнения после завершения всех периодов
   useEffect(() => {

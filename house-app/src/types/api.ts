@@ -6,6 +6,7 @@ export interface CreateResultRequest {
   planned_cost: number;
   actual_duration: number;
   actual_cost: number;
+  is_completed: boolean;
 }
 
 export interface ConstructionResult {
@@ -17,6 +18,7 @@ export interface ConstructionResult {
   actual_cost: number;
   cost_difference: number;
   duration_difference: number;
+  is_completed: boolean;
   created_at: string;
 }
 

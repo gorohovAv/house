@@ -24,6 +24,7 @@ type ConstructionResult struct {
 	ActualCost            int       `json:"actual_cost"`            
 	CostDifference        int       `json:"cost_difference"`        // разница в стоимости
 	DurationDifference    int       `json:"duration_difference"`    // разница в длительности
+	IsCompleted           bool      `json:"is_completed"`           // достроен ли дом
 	CreatedAt             time.Time `json:"created_at"`
 }
 
@@ -34,6 +35,7 @@ type CreateResultRequest struct {
 	PlannedCost     int    `json:"planned_cost" binding:"required,min=0"`
 	ActualDuration  int    `json:"actual_duration" binding:"required,min=1"`
 	ActualCost      int    `json:"actual_cost" binding:"required,min=0"`
+	IsCompleted     bool   `json:"is_completed"`
 }
 
 var db *gorm.DB
@@ -106,6 +108,7 @@ func createResult(c *gin.Context) {
 		ActualCost:         req.ActualCost,
 		CostDifference:     costDiff,
 		DurationDifference: durationDiff,
+		IsCompleted:        req.IsCompleted,
 		CreatedAt:          time.Now(),
 	}
 
@@ -125,15 +128,25 @@ func getResults(c *gin.Context) {
 		return
 	}
 
-	// Сортировка по разности стоимости (по возрастанию), затем по длительности, затем по времени создания
+	// Сортировка: сначала по достроенности (достроенные первыми), затем по разности стоимости, затем по длительности, затем по времени создания
 	sort.Slice(results, func(i, j int) bool {
-		if results[i].CostDifference == results[j].CostDifference {
-			if results[i].DurationDifference == results[j].DurationDifference {
-				return results[i].CreatedAt.Before(results[j].CreatedAt)
-			}
+		// Сначала сортируем по достроенности (достроенные дома первыми)
+		if results[i].IsCompleted != results[j].IsCompleted {
+			return results[i].IsCompleted && !results[j].IsCompleted
+		}
+		
+		// Затем по разности стоимости (по возрастанию)
+		if results[i].CostDifference != results[j].CostDifference {
+			return results[i].CostDifference < results[j].CostDifference
+		}
+		
+		// Затем по разности длительности (по возрастанию)
+		if results[i].DurationDifference != results[j].DurationDifference {
 			return results[i].DurationDifference < results[j].DurationDifference
 		}
-		return results[i].CostDifference < results[j].CostDifference
+		
+		// Наконец по времени создания (раньше созданные первыми)
+		return results[i].CreatedAt.Before(results[j].CreatedAt)
 	})
 
 	c.JSON(http.StatusOK, results)
@@ -149,15 +162,25 @@ func getResultsPage(c *gin.Context) {
 		return
 	}
 
-	// Сортировка по разности стоимости (по возрастанию), затем по длительности, затем по времени создания
+	// Сортировка: сначала по достроенности (достроенные первыми), затем по разности стоимости, затем по длительности, затем по времени создания
 	sort.Slice(results, func(i, j int) bool {
-		if results[i].CostDifference == results[j].CostDifference {
-			if results[i].DurationDifference == results[j].DurationDifference {
-				return results[i].CreatedAt.Before(results[j].CreatedAt)
-			}
+		// Сначала сортируем по достроенности (достроенные дома первыми)
+		if results[i].IsCompleted != results[j].IsCompleted {
+			return results[i].IsCompleted && !results[j].IsCompleted
+		}
+		
+		// Затем по разности стоимости (по возрастанию)
+		if results[i].CostDifference != results[j].CostDifference {
+			return results[i].CostDifference < results[j].CostDifference
+		}
+		
+		// Затем по разности длительности (по возрастанию)
+		if results[i].DurationDifference != results[j].DurationDifference {
 			return results[i].DurationDifference < results[j].DurationDifference
 		}
-		return results[i].CostDifference < results[j].CostDifference
+		
+		// Наконец по времени создания (раньше созданные первыми)
+		return results[i].CreatedAt.Before(results[j].CreatedAt)
 	})
 
 	// Загружаем шаблон из файла
