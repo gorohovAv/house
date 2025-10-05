@@ -681,6 +681,19 @@
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* Блокировка кнопок и элементов */
+.btn-primary.blocked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.solution-option.blocked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .popup-content {
   display: flex;
   align-items: center;

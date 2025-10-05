@@ -408,6 +408,8 @@ export default function ConstructionPage() {
   const [selectedRiskSolution, setSelectedRiskSolution] = useState<
     "solution" | "alternative" | null
   >(null);
+  const [isButtonsBlocked, setIsButtonsBlocked] = useState(false);
+  const [isRiskSelectionBlocked, setIsRiskSelectionBlocked] = useState(false);
 
   // Состояния для истории
   const [requestHistory, setRequestHistory] = useState<RequestHistoryItem[]>(
@@ -982,6 +984,21 @@ export default function ConstructionPage() {
     setSelectedRiskSolution(null);
   }, [currentPeriodIndex]);
 
+  // Блокируем кнопки и выбор решений на 2 секунды при рендере карточек риска/защиты
+  useEffect(() => {
+    if (currentRisk) {
+      setIsButtonsBlocked(true);
+      setIsRiskSelectionBlocked(true);
+
+      const timer = setTimeout(() => {
+        setIsButtonsBlocked(false);
+        setIsRiskSelectionBlocked(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentRisk, currentPeriodIndex]);
+
   // Функция проверки достроенности дома
   const isHouseCompleted = useCallback(() => {
     // Получаем все уникальные типы конструкций из paymentSchedule
@@ -1109,41 +1126,35 @@ export default function ConstructionPage() {
   };
 
   const handleRiskSolutionSelect = (solution: "solution" | "alternative") => {
+    if (isRiskSelectionBlocked) return;
     setSelectedRiskSolution(solution);
   };
 
   const handleConfirmRiskSolution = () => {
-    if (currentPeriod && selectedRiskSolution) {
-      console.log(`🏦 КУБЫШКА ПЕРЕД ВЫБОРОМ РЕШЕНИЯ: ${piggyBank} руб.`);
+    if (isButtonsBlocked || !currentPeriod || !selectedRiskSolution) return;
 
-      // Применяем выбранное решение
-      selectRiskSolution(currentPeriod.id, selectedRiskSolution);
+    console.log(`🏦 КУБЫШКА ПЕРЕД ВЫБОРОМ РЕШЕНИЯ: ${piggyBank} руб.`);
 
-      // Обрабатываем дни текущего периода перед переходом
-      const currentPeriodDays =
-        currentPeriod.endDay - currentPeriod.startDay + 1;
-      console.log(
-        `🏗️ Обработка ${currentPeriodDays} дней периода ${
-          currentPeriodIndex + 1
-        }`
-      );
+    // Применяем выбранное решение
+    selectRiskSolution(currentPeriod.id, selectedRiskSolution);
 
-      for (
-        let day = currentPeriod.startDay;
-        day <= currentPeriod.endDay;
-        day++
-      ) {
-        processDay(day);
-      }
+    // Обрабатываем дни текущего периода перед переходом
+    const currentPeriodDays = currentPeriod.endDay - currentPeriod.startDay + 1;
+    console.log(
+      `🏗️ Обработка ${currentPeriodDays} дней периода ${currentPeriodIndex + 1}`
+    );
 
-      // Сбрасываем локальное состояние
-      setSelectedRiskSolution(null);
-
-      // Переходим к следующему периоду после выбора решения
-      setTimeout(() => {
-        moveToNextPeriod();
-      }, 1000);
+    for (let day = currentPeriod.startDay; day <= currentPeriod.endDay; day++) {
+      processDay(day);
     }
+
+    // Сбрасываем локальное состояние
+    setSelectedRiskSolution(null);
+
+    // Переходим к следующему периоду после выбора решения
+    setTimeout(() => {
+      moveToNextPeriod();
+    }, 1000);
   };
 
   const updateLayeredConfig = () => {
@@ -1193,8 +1204,13 @@ export default function ConstructionPage() {
                   </div>
 
                   <button
-                    className="btn-primary protection-button"
+                    className={`btn-primary protection-button ${
+                      isButtonsBlocked ? "blocked" : ""
+                    }`}
+                    disabled={isButtonsBlocked}
                     onClick={() => {
+                      if (isButtonsBlocked) return;
+
                       console.log(
                         `🏦 КУБЫШКА ПЕРЕД ЗАЩИТОЙ: ${piggyBank} руб.`
                       );
@@ -1221,7 +1237,9 @@ export default function ConstructionPage() {
                       }, 1000);
                     }}
                   >
-                    Перейти к следующему периоду
+                    {isButtonsBlocked
+                      ? "Подождите..."
+                      : "Перейти к следующему периоду"}
                   </button>
                 </div>
               </div>
@@ -1244,8 +1262,14 @@ export default function ConstructionPage() {
                   <div
                     className={`solution-option ${
                       selectedRiskSolution === "solution" ? "active" : ""
-                    }`}
+                    } ${isRiskSelectionBlocked ? "blocked" : ""}`}
                     onClick={() => handleRiskSolutionSelect("solution")}
+                    style={{
+                      cursor: isRiskSelectionBlocked
+                        ? "not-allowed"
+                        : "pointer",
+                      opacity: isRiskSelectionBlocked ? 0.5 : 1,
+                    }}
                   >
                     <div className="solution-text">{currentRisk.solution}</div>
                     <div className="solution-indicators">
@@ -1263,8 +1287,14 @@ export default function ConstructionPage() {
                   <div
                     className={`solution-option ${
                       selectedRiskSolution === "alternative" ? "active" : ""
-                    }`}
+                    } ${isRiskSelectionBlocked ? "blocked" : ""}`}
                     onClick={() => handleRiskSolutionSelect("alternative")}
+                    style={{
+                      cursor: isRiskSelectionBlocked
+                        ? "not-allowed"
+                        : "pointer",
+                      opacity: isRiskSelectionBlocked ? 0.5 : 1,
+                    }}
                   >
                     <div className="solution-text">
                       {currentRisk.alternativeDescription}
@@ -1291,10 +1321,13 @@ export default function ConstructionPage() {
                       Подтвердите выбор риска
                     </div>
                     <button
-                      className="btn-primary risk-confirm-button"
+                      className={`btn-primary risk-confirm-button ${
+                        isButtonsBlocked ? "blocked" : ""
+                      }`}
+                      disabled={isButtonsBlocked}
                       onClick={handleConfirmRiskSolution}
                     >
-                      Подтвердить
+                      {isButtonsBlocked ? "Подождите..." : "Подтвердить"}
                     </button>
                   </div>
                 )}
