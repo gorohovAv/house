@@ -16,7 +16,7 @@ export const HOUSE_PLANNING_TOUR: TourConfig = {
       description:
         "Здесь вы видите изображение дома. С каждым вашим выбором он будет визуально меняться и наполняться деталями.",
       type: "bottom",
-      scrollTo: true,
+      scrollTo: false,
     },
     {
       target: ".indicators",
@@ -24,7 +24,7 @@ export const HOUSE_PLANNING_TOUR: TourConfig = {
       description:
         "Здесь два важных показателя:<br><b>Остаток лимита</b>: Сколько ещё можно потратить, не выходя за рамки бюджета.<br><b>Остаток дней</b>: Сколько дней у вас осталось, чтобы успеть по плану.",
       type: "bottom",
-      scrollTo: true,
+      scrollTo: false,
     },
     {
       target: ".controls-panel",
