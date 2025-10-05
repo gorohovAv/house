@@ -313,34 +313,144 @@ export const useFactStore = create<FactState>()(
       },
 
       assignRandomRisk: (periodId: number) => {
-        const { selectedOptions, periods } = get();
+        const { selectedOptions, periods, getModifiedDuration } = get();
         const period = periods.find((p) => p.id === periodId);
 
         if (!period) return;
 
-        // Определяем, какая конструкция строится в этот период
+        // Определяем, какая конструкция ФАКТИЧЕСКИ строится в день начала периода
         const currentDay = period.startDay;
         let currentConstructionDay = 1;
         let currentConstructionType = null;
         let currentConstructionStyle = null;
 
-        for (const [type, option] of Object.entries(selectedOptions)) {
-          if (
-            option &&
-            currentDay >= currentConstructionDay &&
-            currentDay < currentConstructionDay + option.duration
-          ) {
-            currentConstructionType = type;
-            // Извлекаем стиль из типа опции (например, "2 Классический стиль" -> "Классический стиль")
-            currentConstructionStyle = option.type
-              .split(" ")
-              .slice(1)
-              .join(" ");
-            break;
-          }
+        // Используем правильный порядок строительства
+        for (const constructionType of CONSTRUCTION_ORDER) {
+          const option = selectedOptions[constructionType];
           if (option) {
-            currentConstructionDay += option.duration;
+            const modifiedDuration = getModifiedDuration(constructionType);
+            
+            // Специальная логика для стен - разбиваем на два периода
+            if (constructionType === "Стены") {
+              const firstHalfDuration = Math.floor(modifiedDuration / 2);
+              const secondHalfDuration = modifiedDuration - firstHalfDuration;
+              
+              // Проверяем первую половину стен
+              if (currentDay >= currentConstructionDay && 
+                  currentDay < currentConstructionDay + firstHalfDuration) {
+                currentConstructionType = constructionType;
+                currentConstructionStyle = option.type
+                  .split(" ")
+                  .slice(1)
+                  .join(" ");
+                break;
+              }
+              currentConstructionDay += firstHalfDuration;
+              
+              // Проверяем перекрытия между частями стен
+              const ceilingOption = selectedOptions["Перекрытие"];
+              if (ceilingOption) {
+                const ceilingDuration = getModifiedDuration("Перекрытие");
+                if (currentDay >= currentConstructionDay && 
+                    currentDay < currentConstructionDay + ceilingDuration) {
+                  currentConstructionType = "Перекрытие";
+                  currentConstructionStyle = ceilingOption.type
+                    .split(" ")
+                    .slice(1)
+                    .join(" ");
+                  break;
+                }
+                currentConstructionDay += ceilingDuration;
+              }
+              
+              // Проверяем вторую половину стен
+              if (currentDay >= currentConstructionDay && 
+                  currentDay < currentConstructionDay + secondHalfDuration) {
+                currentConstructionType = constructionType;
+                currentConstructionStyle = option.type
+                  .split(" ")
+                  .slice(1)
+                  .join(" ");
+                break;
+              }
+              currentConstructionDay += secondHalfDuration;
+            } else if (constructionType !== "Перекрытие") {
+              // Обычная логика для всех остальных конструкций
+              if (currentDay >= currentConstructionDay && 
+                  currentDay < currentConstructionDay + modifiedDuration) {
+                currentConstructionType = constructionType;
+                currentConstructionStyle = option.type
+                  .split(" ")
+                  .slice(1)
+                  .join(" ");
+                break;
+              }
+              currentConstructionDay += modifiedDuration;
+            }
           }
+        }
+
+        // Отладочная информация
+        console.log(`🔍 assignRandomRisk для периода ${periodId}:`);
+        console.log(`   День начала периода: ${currentDay}`);
+        console.log(`   Фактически строится: ${currentConstructionType}`);
+        console.log(`   Стиль конструкции: ${currentConstructionStyle}`);
+
+        // Если не удалось определить конструкцию, это означает, что в этот день ничего не строится
+        // В таком случае назначаем риск для следующего элемента, который должен начаться
+        if (!currentConstructionType) {
+          console.log(`⚠️ В день ${currentDay} ничего не строится, ищем следующий элемент...`);
+          
+          // Ищем следующий элемент, который должен начаться
+          let nextConstructionDay = 1;
+          for (const constructionType of CONSTRUCTION_ORDER) {
+            const option = selectedOptions[constructionType];
+            if (option) {
+              const modifiedDuration = getModifiedDuration(constructionType);
+              
+              if (constructionType === "Стены") {
+                const firstHalfDuration = Math.floor(modifiedDuration / 2);
+                const secondHalfDuration = modifiedDuration - firstHalfDuration;
+                
+                // Проверяем первую половину стен
+                if (currentDay < nextConstructionDay + firstHalfDuration) {
+                  currentConstructionType = constructionType;
+                  currentConstructionStyle = option.type.split(" ").slice(1).join(" ");
+                  break;
+                }
+                nextConstructionDay += firstHalfDuration;
+                
+                // Проверяем перекрытия
+                const ceilingOption = selectedOptions["Перекрытие"];
+                if (ceilingOption) {
+                  const ceilingDuration = getModifiedDuration("Перекрытие");
+                  if (currentDay < nextConstructionDay + ceilingDuration) {
+                    currentConstructionType = "Перекрытие";
+                    currentConstructionStyle = ceilingOption.type.split(" ").slice(1).join(" ");
+                    break;
+                  }
+                  nextConstructionDay += ceilingDuration;
+                }
+                
+                // Проверяем вторую половину стен
+                if (currentDay < nextConstructionDay + secondHalfDuration) {
+                  currentConstructionType = constructionType;
+                  currentConstructionStyle = option.type.split(" ").slice(1).join(" ");
+                  break;
+                }
+                nextConstructionDay += secondHalfDuration;
+              } else if (constructionType !== "Перекрытие") {
+                if (currentDay < nextConstructionDay + modifiedDuration) {
+                  currentConstructionType = constructionType;
+                  currentConstructionStyle = option.type.split(" ").slice(1).join(" ");
+                  break;
+                }
+                nextConstructionDay += modifiedDuration;
+              }
+            }
+          }
+          
+          console.log(`   Найден следующий элемент: ${currentConstructionType}`);
         }
 
         // Берем ВСЕ риски для данного элемента конструкции
@@ -356,6 +466,10 @@ export const useFactStore = create<FactState>()(
         const randomRisk =
           availableRisks[Math.floor(Math.random() * availableRisks.length)];
 
+        console.log(`   Доступные риски: ${availableRisks.length}`);
+        console.log(`   Выбранный риск: ${randomRisk?.description}`);
+        console.log(`   Риск влияет на: ${randomRisk?.affectedElement}`);
+
         // Проверяем, защищен ли пользователь от этого риска
         // Пользователь защищен, если стиль риска НЕ совпадает с выбранным стилем
         const isProtected =
@@ -364,6 +478,8 @@ export const useFactStore = create<FactState>()(
             .split(", ")
             .map((s) => s.trim())
             .includes(currentConstructionStyle);
+
+        console.log(`   Защищен от риска: ${isProtected}`);
 
         set((state) => ({
           periods: state.periods.map((period: Period) =>
@@ -419,7 +535,7 @@ export const useFactStore = create<FactState>()(
               const firstHalfPrice = Math.floor(overallPrice / 2);
               const secondHalfPrice = overallPrice - firstHalfPrice;
 
-              // Первая половина стен - с остатком на первый день
+              // Первая половина стен - равномерное распределение с остатком на последний день
               const firstHalfDailyAmount = Math.floor(
                 firstHalfPrice / firstHalfDuration
               );
@@ -430,7 +546,7 @@ export const useFactStore = create<FactState>()(
                 paymentSchedule.push({
                   dayIndex: currentDay + i,
                   amount:
-                    i === 0
+                    i === firstHalfDuration - 1
                       ? firstHalfDailyAmount + firstHalfRemainder
                       : firstHalfDailyAmount,
                   issued: null,
@@ -468,7 +584,7 @@ export const useFactStore = create<FactState>()(
                 const dailyCeilingAmount =
                   overallCeilingPrice / overallCeilingDuration;
 
-                // Перекрытия с остатком на первый день
+                // Перекрытия с остатком на последний день
                 const ceilingDailyAmount = Math.floor(dailyCeilingAmount);
                 const ceilingRemainder =
                   overallCeilingPrice -
@@ -478,7 +594,7 @@ export const useFactStore = create<FactState>()(
                   paymentSchedule.push({
                     dayIndex: currentDay + i,
                     amount:
-                      i === 0
+                      i === overallCeilingDuration - 1
                         ? ceilingDailyAmount + ceilingRemainder
                         : ceilingDailyAmount,
                     issued: null,
@@ -492,7 +608,7 @@ export const useFactStore = create<FactState>()(
                 currentDay += overallCeilingDuration;
               }
 
-              // Вторая половина стен - с остатком на первый день
+              // Вторая половина стен - с остатком на последний день
               const secondHalfDailyAmount = Math.floor(
                 secondHalfPrice / secondHalfDuration
               );
@@ -503,7 +619,7 @@ export const useFactStore = create<FactState>()(
                 paymentSchedule.push({
                   dayIndex: currentDay + i,
                   amount:
-                    i === 0
+                    i === secondHalfDuration - 1
                       ? secondHalfDailyAmount + secondHalfRemainder
                       : secondHalfDailyAmount,
                   issued: null,
@@ -517,7 +633,7 @@ export const useFactStore = create<FactState>()(
               currentDay += secondHalfDuration;
             } else if (constructionType !== "Перекрытие") {
               // Обычная логика для всех остальных конструкций (кроме перекрытий, которые уже обработаны в логике стен)
-              // С остатком на первый день
+              // С остатком на последний день
               const dailyAmountFloor = Math.floor(dailyAmount);
               const remainder =
                 overallPrice - dailyAmountFloor * overallDuration;
@@ -526,7 +642,7 @@ export const useFactStore = create<FactState>()(
                 paymentSchedule.push({
                   dayIndex: currentDay + i,
                   amount:
-                    i === 0 ? dailyAmountFloor + remainder : dailyAmountFloor,
+                    i === overallDuration - 1 ? dailyAmountFloor + remainder : dailyAmountFloor,
                   issued: null,
                   construction: constructionType,
                   daysRequired: overallDuration,

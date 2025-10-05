@@ -528,7 +528,12 @@ export default function ConstructionPage() {
     const riskSolutionsBeforeConstruction = periods
       .slice(0, currentPeriodIndex)
       .filter((period) => {
-        if (!period.risk || period.isProtected) return false;
+        if (
+          !period.risk ||
+          period.isProtected ||
+          period.selectedSolution === "solution"
+        )
+          return false;
         return period.startDay < firstConstructionDay;
       })
       .reduce((total, period) => {
@@ -1389,7 +1394,11 @@ export default function ConstructionPage() {
                       const risksCost = periods
                         .slice(0, currentPeriodIndex)
                         .reduce((total, period) => {
-                          if (period.risk && !period.isProtected) {
+                          if (
+                            period.risk &&
+                            !period.isProtected &&
+                            period.selectedSolution === "solution"
+                          ) {
                             // Проверяем, было ли принято решение "solution" для этого риска
                             // Пока используем базовую стоимость риска, если он не защищен
                             return total + (period.risk.cost || 0);
