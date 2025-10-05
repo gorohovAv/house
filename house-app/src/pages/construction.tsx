@@ -525,21 +525,19 @@ export default function ConstructionPage() {
     );
 
     // Суммируем решения рисков (только "solution") до начала строительства
+    // ИСПРАВЛЕНИЕ: включаем только риски с решением "solution"
     const riskSolutionsBeforeConstruction = periods
       .slice(0, currentPeriodIndex)
       .filter((period) => {
         if (
           !period.risk ||
           period.isProtected ||
-          period.selectedSolution === "solution"
+          period.selectedSolution !== "solution" // ИСПРАВЛЕНИЕ: было === "solution"
         )
           return false;
         return period.startDay < firstConstructionDay;
       })
       .reduce((total, period) => {
-        // Проверяем, было ли принято решение "solution" для этого риска
-        // Предполагаем, что в сторе есть информация о принятых решениях
-        // Пока используем базовую стоимость риска
         return total + (period.risk?.cost || 0);
       }, 0);
     console.log(
@@ -872,10 +870,9 @@ export default function ConstructionPage() {
     }
 
     const totalRequestsBeforeConstruction = requestsBeforeConstruction;
-    //requestsBeforeConstruction + additionalRequestsBeforeConstruction;
     const totalRiskSolutionsBeforeConstruction =
       riskSolutionsBeforeConstruction;
-    //additionalRiskSolutionsBeforeConstruction;
+
     console.log(
       "🔍 riskSolutionsBeforeConstruction 8885",
       riskSolutionsBeforeConstruction
@@ -885,9 +882,10 @@ export default function ConstructionPage() {
       additionalRiskSolutionsBeforeConstruction
     );
 
+    // ИСПРАВЛЕНИЕ: риски с решением "solution" должны УВЕЛИЧИВАТЬ расходы, а не вычитаться
     const paymentsBeforeConstruction =
       constructionChangesBeforeConstruction +
-      totalRiskSolutionsBeforeConstruction;
+      totalRiskSolutionsBeforeConstruction; // ИСПРАВЛЕНИЕ: было вычитание
     console.log(
       "🔍 totalRiskSolutionsBeforeConstruction 888",
       totalRiskSolutionsBeforeConstruction

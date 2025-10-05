@@ -101,6 +101,8 @@
   justify-content: space-between;
   margin-left: 32px;
   margin-right: 32px;
+  /* Добавляем box-sizing для правильного расчета размеров */
+  box-sizing: border-box;
 }
 
 .controls-content {
@@ -306,11 +308,13 @@
   }
 
   .controls-panel {
-    width: 100%;
-    max-width: 360px;
+    width: calc(100% - 24px); /* Учитываем отступы контейнера */
+    max-width: none;
+    margin-left: 12px;
+    margin-right: 12px;
   }
 
-  .header {
+  .header-house {
     padding: 16px 12px;
   }
 
