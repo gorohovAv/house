@@ -905,26 +905,30 @@ export default function ConstructionPage() {
     if (!currentCard) return { planned: 0, actual: 0 };
 
     // Используем уже вычисленную plannedOption
-    const plannedCost = plannedOption?.cost  0;
+    const plannedCost = plannedOption?.cost || 0;
 
     // Проверяем, заменил ли пользователь тип конструкции
     // Ищем последнее изменение для данной конструкции
     const constructionChanges = constructionChangeHistory.filter(
       (change) => change.constructionType === currentCard?.title
     );
-    const constructionChange = constructionChanges[constructionChanges.length - 1];
+    const constructionChange =
+      constructionChanges[constructionChanges.length - 1];
 
     // Если есть изменение конструкции, используем новую стоимость, иначе - плановую
-    const baseCost = constructionChange ? constructionChange.newCost : plannedCost;
+    const baseCost = constructionChange
+      ? constructionChange.newCost
+      : plannedCost;
 
     // Оценка стоимости = Базовая стоимость + Стоимость решений рисков
     const riskCosts = periods
-      .filter((period) => 
-        period.risk && 
-        period.selectedSolution === "solution" && 
-        period.risk.affectedElement === currentCard?.title
+      .filter(
+        (period) =>
+          period.risk &&
+          period.selectedSolution === "solution" &&
+          period.risk.affectedElement === currentCard?.title
       )
-      .reduce((total, period) => total + (period.risk?.cost  0), 0);
+      .reduce((total, period) => total + (period.risk?.cost || 0), 0);
 
     const estimatedCost = baseCost + riskCosts;
 
