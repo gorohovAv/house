@@ -15,7 +15,7 @@ const API_URL =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1" ||
   window.location.hostname === "10.92.50.3"
-    ? "http://localhost:8080/api"
+    ? `http://${window.location.hostname}:8080/api`
     : "https://scheduler-assistant.ru/api";
 
 const Results: React.FC = () => {
