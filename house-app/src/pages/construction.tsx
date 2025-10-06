@@ -973,11 +973,17 @@ export default function ConstructionPage() {
   const hasExceededPlan =
     forecatsCostForPopup > planStore.getTotalCost() ||
     paymentSchedule.length > planStore.getTotalDuration();
-  const hasExceedPlanMoney = forecatsCostForPopup > planStore.getTotalCost();
+  const hasExceedPlanMoney =
+    forecatsCostForPopup -
+      requestHistory.reduce((sum, item) => sum + item.requestedAmount, 0) >
+    planStore.getTotalCost();
   const hasExceededLimits =
     forecatsCostForPopup > 50000 || paymentSchedule.length > 90;
 
-  const hasExceededLimitsMoney = (forecatsCostForPopup - requestHistory.reduce((sum, item) => return sum += item.requestAmount )) > 50000;
+  const hasExceededLimitsMoney =
+    forecatsCostForPopup -
+      requestHistory.reduce((sum, item) => sum + item.requestedAmount, 0) >
+    50000;
 
   const [showExceedMoneyPopup, setShowExceedMoneyPopup] = useState(false);
   // Показываем попапы при превышении
