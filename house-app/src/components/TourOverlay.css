@@ -5,7 +5,7 @@
   width: 100vw;
   height: 100vh;
   z-index: 9999;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .tour-backdrop {
@@ -15,7 +15,8 @@
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.7);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   animation: tourBackdropFadeIn 0.3s ease-out;
 }
 
@@ -61,16 +62,17 @@
   transform-origin: center;
   box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.2);
   transition: opacity 0.2s ease-out;
+  /* transform: translateY(0px); */
 }
 
 @keyframes tourElementCopyAppear {
   0% {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.95) translateY(2px);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(2px);
   }
 }
 
@@ -187,7 +189,7 @@
 }
 
 .tour-bottom-tooltip.no-button {
-  bottom: 250px;
+  bottom: 140px;
 }
 
 @keyframes tourTooltipAppear {
@@ -251,6 +253,95 @@
   font-size: 1.3em !important;
   font-weight: 700 !important;
   line-height: 1.2 !important;
+}
+
+/* Новые стили для улучшенного тура */
+.tour-budget-info {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+}
+
+.tour-budget-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.tour-features {
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  border-left: 3px solid #4CAF50;
+}
+
+.tour-warning {
+  background: rgba(255, 152, 0, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  border-left: 3px solid #FF9800;
+}
+
+.tour-advice {
+  background: rgba(33, 150, 243, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  border-left: 3px solid #2196F3;
+}
+
+/* Стили для тура строительства */
+.tour-construction-features {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+}
+
+.tour-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tour-feature-item:first-child {
+  background: rgba(255, 152, 0, 0.1);
+  border-left: 3px solid #FF9800;
+}
+
+.tour-feature-item:nth-child(2) {
+  background: rgba(76, 175, 80, 0.1);
+  border-left: 3px solid #4CAF50;
+}
+
+.tour-feature-item:nth-child(3) {
+  background: rgba(33, 150, 243, 0.1);
+  border-left: 3px solid #2196F3;
+}
+
+.tour-feature-item:nth-child(4) {
+  background: rgba(156, 39, 176, 0.1);
+  border-left: 3px solid #9C27B0;
+}
+
+.tour-mission {
+  background: rgba(255, 193, 7, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  border-left: 3px solid #FFC107;
+  font-weight: 600;
 }
 
 /* Мобильная оптимизация */

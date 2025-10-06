@@ -73,3 +73,31 @@ export const CupBronzeIcon = () => (
 export const MedalIcon = () => (
   <img src="/src/assets/icons/medal.svg" alt="Medal" width="48" height="48" />
 );
+
+// Новые иконки для тура
+export const PlanIcon = () => (
+  <img
+    src="/src/assets/icons/logo.svg"
+    alt="Plan"
+    width="20"
+    height="20"
+  />
+);
+
+export const WarningIcon = () => (
+  <img
+    src="/src/assets/icons/risk-icon.svg"
+    alt="Warning"
+    width="20"
+    height="20"
+  />
+);
+
+export const CheckIcon = () => (
+  <img
+    src="/src/assets/icons/medal.svg"
+    alt="Check"
+    width="20"
+    height="20"
+  />
+);

@@ -462,9 +462,33 @@ export const useFactStore = create<FactState>()(
           return;
         }
 
-        // Случайно выбираем любой риск для этого элемента
-        const randomRisk =
-          availableRisks[Math.floor(Math.random() * availableRisks.length)];
+        let selectedRisk;
+
+        // Специальная логика для первого периода
+        if (periodId === 1) {
+          // Сначала ищем специфические риски для текущего стиля
+          const specificRisks = availableRisks.filter((risk) => {
+            return risk.affectedStyle
+              .split(", ")
+              .map((s) => s.trim())
+              .includes(currentConstructionStyle);
+          });
+
+          if (specificRisks.length > 0) {
+            // Если есть специфические риски, выбираем случайный из них
+            selectedRisk = specificRisks[Math.floor(Math.random() * specificRisks.length)];
+            console.log(`   Первый период: выбран специфический риск для стиля ${currentConstructionStyle}`);
+          } else {
+            // Если специфических нет, берем универсальный риск (ID: 3)
+            selectedRisk = availableRisks.find(risk => risk.id === 3);
+            console.log(`   Первый период: специфических рисков нет, выбран универсальный риск`);
+          }
+        } else {
+          // Для остальных периодов - случайный выбор как раньше
+          selectedRisk = availableRisks[Math.floor(Math.random() * availableRisks.length)];
+        }
+
+        const randomRisk = selectedRisk;
 
         console.log(`   Доступные риски: ${availableRisks.length}`);
         console.log(`   Выбранный риск: ${randomRisk?.description}`);
