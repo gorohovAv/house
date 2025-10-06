@@ -161,12 +161,6 @@ const Results: React.FC = () => {
           </div>
         ))}
 
-        {results.length > 10 && (
-          <div className="results-divider">
-            <span>...</span>
-          </div>
-        )}
-
         {/*results.length > 10 && (
           <div className="results-item results-item-last">
             <span className="results-position">
