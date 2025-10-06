@@ -26,7 +26,7 @@ import type { PaymentScheduleItem } from "../store/factStore";
 const API_URL =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1" ||
-  window.location.hostname === "192.168.31.213" // меняем здесь
+  window.location.hostname === "10.92.50.3" // меняем здесь
     ? `http://${window.location.hostname}:8080/api`
     : "https://scheduler-assistant.ru/api";
 
@@ -1341,6 +1341,37 @@ export default function ConstructionPage() {
               <div className="no-risk-content">
                 <div className="no-risk-icon">✅</div>
                 <div className="no-risk-text">В этом периоде рисков нет</div>
+                <button
+                  className="btn-primary"
+                  onClick={() => {
+                    if (isButtonsBlocked) return;
+
+                    console.log(`🏦 КУБЫШКА ПЕРЕД ЗАЩИТОЙ: ${piggyBank} руб.`);
+                    // Обрабатываем дни текущего периода перед переходом
+                    const currentPeriodDays =
+                      currentPeriod.endDay - currentPeriod.startDay + 1;
+                    console.log(
+                      `🛡️ Обработка ${currentPeriodDays} дней периода ${
+                        currentPeriodIndex + 1
+                      } (защита)`
+                    );
+
+                    for (
+                      let day = currentPeriod.startDay;
+                      day <= currentPeriod.endDay;
+                      day++
+                    ) {
+                      processDay(day);
+                    }
+
+                    // Переходим к следующему периоду
+                    setTimeout(() => {
+                      moveToNextPeriod();
+                    }, 1000);
+                  }}
+                >
+                  Перейти к следующему периоду
+                </button>
               </div>
             </div>
           )}

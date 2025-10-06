@@ -187,7 +187,7 @@
 }
 
 .tour-bottom-tooltip.no-button {
-  bottom: 140px;
+  bottom: 250px;
 }
 
 @keyframes tourTooltipAppear {

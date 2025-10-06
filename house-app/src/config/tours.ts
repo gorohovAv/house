@@ -25,6 +25,7 @@ export const HOUSE_PLANNING_TOUR: TourConfig = {
         "Здесь два важных показателя:<br><b>Остаток лимита</b>: Сколько ещё можно потратить, не выходя за рамки бюджета.<br><b>Остаток дней</b>: Сколько дней у вас осталось, чтобы успеть по плану.",
       type: "bottom",
       scrollTo: false,
+      disableNext: true,
     },
     {
       target: ".controls-panel",
