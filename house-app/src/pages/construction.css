@@ -155,7 +155,6 @@
 .forecast-card {
   flex: 1;
   background: #062f59;
-  border: 1px solid #d65000;
   border-radius: 16px;
   padding: 8px 16px;
   display: flex;
@@ -923,6 +922,7 @@
   justify-content: center !important;
   align-items: center !important;
   text-align: center !important;
+  color: white !important;
 }
 
 .tour-element-copy .protection-description {

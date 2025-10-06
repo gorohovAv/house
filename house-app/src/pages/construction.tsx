@@ -973,14 +973,29 @@ export default function ConstructionPage() {
   const hasExceededPlan =
     forecatsCostForPopup > planStore.getTotalCost() ||
     paymentSchedule.length > planStore.getTotalDuration();
+  const hasExceedPlanMoney = forecatsCostForPopup > planStore.getTotalCost();
   const hasExceededLimits =
     forecatsCostForPopup > 50000 || paymentSchedule.length > 90;
 
+  const [showExceedMoneyPopup, setShowExceedMoneyPopup] = useState(false);
   // Показываем попапы при превышении
   useEffect(() => {
-    if (hasExceededPlan && !hasExceededLimits) {
+    if (hasExceededPlan && hasExceedPlanMoney && !hasExceededLimits) {
       setShowExceededPopup(true);
       setTimeout(() => setShowExceededPopup(false), 3000);
+    }
+  }, [
+    hasExceededPlan,
+    forecatsCostForPopup,
+    paymentSchedule.length,
+    hasExceededLimits,
+  ]);
+
+  // Показываем попапы при превышении денег дай денег сука
+  useEffect(() => {
+    if (hasExceedPlanMoney && !hasExceededLimits) {
+      setShowExceedMoneyPopup(true);
+      setTimeout(() => setShowExceedMoneyPopup(false), 3000);
     }
   }, [
     hasExceededPlan,
@@ -1366,14 +1381,14 @@ export default function ConstructionPage() {
               </div>
             )
           ) : (
-            <div className="no-risk-card">
+            <div className="protection-card">
               <div className="no-risk-content">
                 <div className="no-risk-icon">✅</div>
                 <div className="no-risk-text">В этом периоде рисков нет</div>
                 <button
                   className="btn-primary"
                   onClick={() => {
-                    if (isButtonsBlocked) return;
+                    //if (isButtonsBlocked) return;
 
                     console.log(`🏦 КУБЫШКА ПЕРЕД ЗАЩИТОЙ: ${piggyBank} руб.`);
                     // Обрабатываем дни текущего периода перед переходом
@@ -1627,6 +1642,17 @@ export default function ConstructionPage() {
             <div className="popup-content">
               <RiskIcon />
               <span>Вы превысили лимиты, вы не достроете дом</span>
+            </div>
+          </div>
+        )}
+        {showExceedMoneyPopup && (
+          <div className="exceeded-popup">
+            <div className="popup-content">
+              <RiskIcon />
+              <span>
+                Вы превысили плановые показатели, запросите денег, иначе вы не
+                достроите дом
+              </span>
             </div>
           </div>
         )}
