@@ -276,5 +276,123 @@
       </div>
       {{end}}
     </div>
+
+    <script>
+      // Функция для получения результатов с сервера
+      async function fetchResults() {
+        try {
+          const response = await fetch("/api/results");
+          if (!response.ok) {
+            throw new Error("Ошибка при получении результатов");
+          }
+          const results = await response.json();
+          updateResultsDisplay(results);
+        } catch (error) {
+          console.error("Ошибка при загрузке результатов:", error);
+        }
+      }
+
+      // Функция для обновления отображения результатов
+      function updateResultsDisplay(results) {
+        const resultsContent = document.querySelector(".results-content");
+        const noResults = document.querySelector(".no-results");
+
+        if (!results || results.length === 0) {
+          if (noResults) {
+            noResults.style.display = "block";
+          }
+          if (resultsContent) {
+            resultsContent.style.display = "none";
+          }
+          return;
+        }
+
+        if (noResults) {
+          noResults.style.display = "none";
+        }
+        if (resultsContent) {
+          resultsContent.style.display = "flex";
+        }
+
+        // Очищаем текущий контент
+        resultsContent.innerHTML = "";
+
+        // Создаем элементы для каждого результата
+        results.forEach((result, index) => {
+          const resultItem = document.createElement("div");
+          resultItem.className = `results-item ${
+            index === 0 ? "results-item-current" : ""
+          }`;
+
+          const position = document.createElement("span");
+          position.className = "results-position";
+          position.textContent = index + 1;
+
+          const icon = document.createElement("div");
+          icon.className = "results-icon";
+
+          const iconElement = document.createElement("div");
+          if (index === 0) {
+            iconElement.className = "trophy-gold";
+          } else if (index === 1) {
+            iconElement.className = "trophy-silver";
+          } else if (index === 2) {
+            iconElement.className = "trophy-bronze";
+          } else {
+            iconElement.className = "medal";
+          }
+          icon.appendChild(iconElement);
+
+          const name = document.createElement("span");
+          name.className = "results-name";
+          name.textContent = result.Name;
+
+          resultItem.appendChild(position);
+          resultItem.appendChild(icon);
+          resultItem.appendChild(name);
+
+          resultsContent.appendChild(resultItem);
+        });
+
+        // Добавляем разделитель и последний элемент если результатов больше 10
+        if (results.length > 10) {
+          const divider = document.createElement("div");
+          divider.className = "results-divider";
+          const span = document.createElement("span");
+          span.textContent = "...";
+          divider.appendChild(span);
+          resultsContent.appendChild(divider);
+
+          const lastItem = document.createElement("div");
+          lastItem.className = "results-item results-item-last";
+
+          const lastPosition = document.createElement("span");
+          lastPosition.className = "results-position";
+          lastPosition.textContent = results.length;
+
+          const lastIcon = document.createElement("div");
+          lastIcon.className = "results-icon";
+          const lastIconElement = document.createElement("div");
+          lastIconElement.className = "medal";
+          lastIcon.appendChild(lastIconElement);
+
+          const lastName = document.createElement("span");
+          lastName.className = "results-name";
+          lastName.textContent = results[results.length - 1].Name;
+
+          lastItem.appendChild(lastPosition);
+          lastItem.appendChild(lastIcon);
+          lastItem.appendChild(lastName);
+
+          resultsContent.appendChild(lastItem);
+        }
+      }
+
+      // Запускаем обновление результатов каждые 5 секунд
+      setInterval(fetchResults, 5000);
+
+      // Загружаем результаты сразу при загрузке страницы
+      document.addEventListener("DOMContentLoaded", fetchResults);
+    </script>
   </body>
 </html>
