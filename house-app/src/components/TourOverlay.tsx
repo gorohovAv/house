@@ -303,8 +303,18 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     }
   };
 
-  const handleOverlayClick = () => {
+  const handleOverlayClick = (event: React.MouseEvent) => {
     if (!isActive || !activeTour || !currentStepConfig) return;
+
+    // Предотвращаем срабатывание на клики по кнопкам и контенту тура
+    const target = event.target as HTMLElement;
+    if (
+      target.closest(".tour-bottom-button") ||
+      target.closest(".tour-modal") ||
+      target.closest(".tour-bottom-tooltip")
+    ) {
+      return;
+    }
 
     // Если это последний шаг, завершаем тур
     if (currentStep === activeTour.steps.length - 1) {
@@ -361,9 +371,13 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     <>
       {children}
       {createPortal(
-        <div className="tour-overlay" ref={overlayRef}>
+        <div
+          className="tour-overlay"
+          ref={overlayRef}
+          onClick={handleOverlayClick}
+        >
           {/* Темная пелена */}
-          <div className="tour-backdrop" onClick={handleOverlayClick} />
+          <div className="tour-backdrop" />
 
           {/* Копии целевых элементов поверх пелены */}
           {elementPositions.length > 0 &&
