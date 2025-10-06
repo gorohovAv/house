@@ -26,7 +26,7 @@ import type { PaymentScheduleItem } from "../store/factStore";
 const API_URL =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1" ||
-  window.location.hostname === "10.92.50.3" // меняем здесь
+  window.location.hostname === "192.168.3.14" // меняем здесь http://192.168.3.14:5173/
     ? `http://${window.location.hostname}:8080/api`
     : "https://scheduler-assistant.ru/api";
 
@@ -977,6 +977,8 @@ export default function ConstructionPage() {
   const hasExceededLimits =
     forecatsCostForPopup > 50000 || paymentSchedule.length > 90;
 
+  const hasExceededLimitsMoney = forecatsCostForPopup > 50000;
+
   const [showExceedMoneyPopup, setShowExceedMoneyPopup] = useState(false);
   // Показываем попапы при превышении
   useEffect(() => {
@@ -1003,6 +1005,13 @@ export default function ConstructionPage() {
     paymentSchedule.length,
     hasExceededLimits,
   ]);
+  const [showLimitsMoneyPopup, setShowLimitsMoneyPopup] = useState(false);
+  useEffect(() => {
+    if (hasExceededLimitsMoney) {
+      setShowLimitsMoneyPopup(true);
+      setTimeout(() => setShowLimitsMoneyPopup(false), 3000);
+    }
+  }, [hasExceedPlanMoney, hasExceededLimits]);
 
   useEffect(() => {
     if (hasExceededLimits) {
@@ -1633,6 +1642,15 @@ export default function ConstructionPage() {
             <div className="popup-content">
               <RiskIcon />
               <span>Вы превысили плановые показатели</span>
+            </div>
+          </div>
+        )}
+
+        {showLimitsMoneyPopup && (
+          <div className="limits-popup">
+            <div className="popup-content">
+              <RiskIcon />
+              <span>Вы превысили бюджет, вы не достроете дом</span>
             </div>
           </div>
         )}
