@@ -14,7 +14,7 @@ import "./results.css";
 const API_URL =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1" ||
-  window.location.hostname === "10.92.50.3"
+  window.location.hostname === "192.168.31.213" // меняем здесь
     ? `http://${window.location.hostname}:8080/api`
     : "https://scheduler-assistant.ru/api";
 
@@ -167,7 +167,7 @@ const Results: React.FC = () => {
           </div>
         )}
 
-        {results.length > 10 && (
+        {/*results.length > 10 && (
           <div className="results-item results-item-last">
             <span className="results-position">
               {results[results.length - 1].position}
@@ -179,7 +179,7 @@ const Results: React.FC = () => {
               {results[results.length - 1].name}
             </span>
           </div>
-        )}
+        )*/}
       </div>
       {/* 
       <button className="results-play-again" onClick={handlePlayAgain}>
