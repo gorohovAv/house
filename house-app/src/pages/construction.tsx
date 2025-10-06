@@ -943,29 +943,58 @@ export default function ConstructionPage() {
 
   const constructionData = getConstructionData();
 
-  // Проверяем превышение лимитов
-  const hasExceededPlan = constructionData.actual > constructionData.planned;
-  const hasExceededLimits =
-    forecastDuration > plannedDuration ||
-    paymentSchedule.reduce(
-      (total, payment) => total + (payment.amount || 0),
+  const forecatsCostForPopup = (() => {
+    // Стоимость всех выбранных конструкций
+    const constructionsCost = Object.values(selectedOptions).reduce(
+      (total, option) => total + (option?.cost || 0),
       0
-    ) > planStore.getTotalCost();
+    );
+
+    // Стоимость всех рисков с решением "solution"
+    const risksCost = periods
+      .slice(0, currentPeriodIndex)
+      .reduce((total, period) => {
+        if (
+          period.risk &&
+          !period.isProtected &&
+          period.selectedSolution === "solution"
+        ) {
+          // Проверяем, было ли принято решение "solution" для этого риска
+          // Пока используем базовую стоимость риска, если он не защищен
+          return total + (period.risk.cost || 0);
+        }
+        return total;
+      }, 0);
+
+    return constructionsCost + risksCost;
+  })();
+
+  // Проверяем превышение лимитов
+  const hasExceededPlan =
+    forecatsCostForPopup > planStore.getTotalCost() ||
+    paymentSchedule.length > planStore.getTotalDuration();
+  const hasExceededLimits =
+    forecatsCostForPopup > 50000 || paymentSchedule.length > 90;
 
   // Показываем попапы при превышении
   useEffect(() => {
-    if (hasExceededPlan) {
+    if (hasExceededPlan && !hasExceededLimits) {
       setShowExceededPopup(true);
       setTimeout(() => setShowExceededPopup(false), 3000);
     }
-  }, [hasExceededPlan]);
+  }, [
+    hasExceededPlan,
+    forecatsCostForPopup,
+    paymentSchedule.length,
+    hasExceededLimits,
+  ]);
 
   useEffect(() => {
     if (hasExceededLimits) {
       setShowLimitsPopup(true);
       setTimeout(() => setShowLimitsPopup(false), 3000);
     }
-  }, [hasExceededLimits]);
+  }, [forecatsCostForPopup, hasExceededLimits, paymentSchedule.length]);
 
   // Проверяем, завершены ли все периоды
   const isAllPeriodsCompleted = currentPeriodIndex >= periods.length;
@@ -1588,7 +1617,7 @@ export default function ConstructionPage() {
           <div className="exceeded-popup">
             <div className="popup-content">
               <RiskIcon />
-              <span>Вы превысили плановую стоимость</span>
+              <span>Вы превысили плановые показатели</span>
             </div>
           </div>
         )}
@@ -1597,7 +1626,7 @@ export default function ConstructionPage() {
           <div className="limits-popup">
             <div className="popup-content">
               <RiskIcon />
-              <span>Вы превысили лимиты</span>
+              <span>Вы превысили лимиты, вы не достроете дом</span>
             </div>
           </div>
         )}
