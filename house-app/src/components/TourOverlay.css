@@ -62,7 +62,7 @@
   transform-origin: center;
   box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.2);
   transition: opacity 0.2s ease-out;
-  /* transform: translateY(0px); */
+  transform: none !important;
 }
 
 @keyframes tourElementCopyAppear {
@@ -276,7 +276,7 @@
   border-radius: 8px;
   padding: 12px;
   margin: 8px 0;
-  border-left: 3px solid #4CAF50;
+  border-left: 3px solid #4caf50;
 }
 
 .tour-warning {
@@ -284,7 +284,7 @@
   border-radius: 8px;
   padding: 12px;
   margin: 8px 0;
-  border-left: 3px solid #FF9800;
+  border-left: 3px solid #ff9800;
 }
 
 .tour-advice {
@@ -292,7 +292,7 @@
   border-radius: 8px;
   padding: 12px;
   margin: 8px 0;
-  border-left: 3px solid #2196F3;
+  border-left: 3px solid #2196f3;
 }
 
 /* Стили для тура строительства */
@@ -317,22 +317,22 @@
 
 .tour-feature-item:first-child {
   background: rgba(255, 152, 0, 0.1);
-  border-left: 3px solid #FF9800;
+  border-left: 3px solid #ff9800;
 }
 
 .tour-feature-item:nth-child(2) {
   background: rgba(76, 175, 80, 0.1);
-  border-left: 3px solid #4CAF50;
+  border-left: 3px solid #4caf50;
 }
 
 .tour-feature-item:nth-child(3) {
   background: rgba(33, 150, 243, 0.1);
-  border-left: 3px solid #2196F3;
+  border-left: 3px solid #2196f3;
 }
 
 .tour-feature-item:nth-child(4) {
   background: rgba(156, 39, 176, 0.1);
-  border-left: 3px solid #9C27B0;
+  border-left: 3px solid #9c27b0;
 }
 
 .tour-mission {
@@ -340,7 +340,7 @@
   border-radius: 8px;
   padding: 12px;
   margin: 8px 0;
-  border-left: 3px solid #FFC107;
+  border-left: 3px solid #ffc107;
   font-weight: 600;
 }
 

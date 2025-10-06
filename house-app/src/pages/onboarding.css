@@ -6,9 +6,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
-
 
 .onboarding-content-wrapper {
   flex: 1;
@@ -38,7 +37,7 @@
 .onboarding-logo {
   width: 100px;
   height: 100px;
-  background: linear-gradient(135deg, #FFA772 0%, #FF6910 100%);
+  background: linear-gradient(135deg, #ffa772 0%, #ff6910 100%);
   border-radius: 30px;
   display: flex;
   align-items: center;
@@ -276,83 +275,83 @@
     max-width: 100%;
     padding: 0 16px;
   }
-  
+
   .onboarding-presentation {
     padding: 0 8px;
     max-width: 100%;
   }
-  
+
   .onboarding-hero {
     margin-bottom: 24px;
   }
-  
+
   .onboarding-icon {
     font-size: 40px;
     margin-bottom: 12px;
   }
-  
+
   .onboarding-title {
     font-size: 22px;
     line-height: 1.2;
   }
-  
+
   .onboarding-mission,
   .onboarding-journey,
   .onboarding-challenge {
     padding: 16px;
     margin-bottom: 20px;
   }
-  
+
   .onboarding-mission h2,
   .onboarding-journey h2,
   .onboarding-challenge h2 {
     font-size: 18px;
     margin-bottom: 12px;
   }
-  
+
   .onboarding-mission p,
   .onboarding-journey p,
   .onboarding-challenge p {
     font-size: 14px;
     line-height: 1.4;
   }
-  
+
   .onboarding-goals li {
     font-size: 14px;
     padding: 6px 10px;
     margin: 6px 0;
   }
-  
+
   .onboarding-stages {
     flex-direction: column;
     gap: 12px;
     margin: 12px 0;
   }
-  
+
   .onboarding-stage {
     padding: 12px;
   }
-  
+
   .stage-icon {
     font-size: 28px;
     margin-bottom: 6px;
   }
-  
+
   .stage-content h3 {
     font-size: 16px;
     margin-bottom: 4px;
   }
-  
+
   .stage-content p {
     font-size: 12px;
     line-height: 1.3;
   }
-  
+
   .onboarding-arrow {
     transform: rotate(90deg);
     font-size: 20px;
   }
-  
+
   .onboarding-wish {
     font-size: 18px;
     padding: 12px;
@@ -365,31 +364,31 @@
   .onboarding-title {
     font-size: 20px;
   }
-  
+
   .onboarding-mission,
   .onboarding-journey,
   .onboarding-challenge {
     padding: 12px;
     margin-bottom: 16px;
   }
-  
+
   .onboarding-goals li {
     font-size: 13px;
     padding: 5px 8px;
   }
-  
+
   .onboarding-stage {
     padding: 10px;
   }
-  
+
   .stage-icon {
     font-size: 24px;
   }
-  
+
   .stage-content h3 {
     font-size: 14px;
   }
-  
+
   .stage-content p {
     font-size: 11px;
   }
