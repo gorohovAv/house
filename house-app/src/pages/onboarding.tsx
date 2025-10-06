@@ -485,6 +485,8 @@ const OnboardingPage = () => {
           {getButtonText()}
         </button>
       </div>
+
+      <div className="page-spacer"></div>
     </div>
   );
 };

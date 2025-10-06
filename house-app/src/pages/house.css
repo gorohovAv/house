@@ -372,3 +372,9 @@
     transform: translate(-50%, -50%) scale(1);
   }
 }
+
+.page-spacer {
+  height: 150px;
+  width: 100%;
+  background: transparent;
+}

@@ -203,6 +203,8 @@ const Results: React.FC = () => {
           </div>
         </div>
       )}
+
+      <div className="page-spacer"></div>
     </div>
   );
 };

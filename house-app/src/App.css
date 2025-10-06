@@ -18,17 +18,6 @@
   text-align: center;
   overflow-x: hidden;
   background: var(--color-primary);
-  overscroll-behavior: none;
-  -webkit-overscroll-behavior: none;
-  -ms-overscroll-behavior: none;
-}
-
-html,
-body {
-  overscroll-behavior: none;
-  -webkit-overscroll-behavior: none;
-  -ms-overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
 }
 
 .logo {

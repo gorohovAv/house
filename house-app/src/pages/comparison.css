@@ -211,3 +211,9 @@
   background: url("/src/assets/icons/VectorDown.svg") no-repeat;
   pointer-events: none;
 }
+
+.page-spacer {
+  height: 150px;
+  width: 100%;
+  background: transparent;
+}

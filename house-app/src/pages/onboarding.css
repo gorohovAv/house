@@ -544,3 +544,9 @@
     border-radius: 0;
   }
 }
+
+.page-spacer {
+  height: 150px;
+  width: 100%;
+  background: transparent;
+}

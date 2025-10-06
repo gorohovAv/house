@@ -605,6 +605,8 @@ const ComparisonPage: React.FC = () => {
           Далее
         </button>
       </div>
+
+      <div className="page-spacer"></div>
     </div>
   );
 };

@@ -285,3 +285,9 @@
     max-width: calc(100% - 32px);
   }
 }
+
+.page-spacer {
+  height: 50px;
+  width: 100%;
+  background: transparent;
+}

@@ -977,7 +977,7 @@ export default function ConstructionPage() {
   const hasExceededLimits =
     forecatsCostForPopup > 50000 || paymentSchedule.length > 90;
 
-  const hasExceededLimitsMoney = forecatsCostForPopup > 50000;
+  const hasExceededLimitsMoney = (forecatsCostForPopup - requestHistory.reduce((sum, item) => return sum += item.requestAmount )) > 50000;
 
   const [showExceedMoneyPopup, setShowExceedMoneyPopup] = useState(false);
   // Показываем попапы при превышении
@@ -1675,6 +1675,8 @@ export default function ConstructionPage() {
           </div>
         )}
       </div>
+
+      <div className="page-spacer"></div>
     </div>
   );
 }

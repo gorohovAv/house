@@ -359,6 +359,8 @@ export default function HousePage() {
           </div>
         </div>
       )}
+
+      <div className="page-spacer"></div>
     </div>
   );
 }

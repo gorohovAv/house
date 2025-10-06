@@ -986,3 +986,9 @@
 .tour-element-copy .forecast-remainder-badge .badge-title {
   text-align: center !important;
 }
+
+.page-spacer {
+  height: 150px;
+  width: 100%;
+  background: transparent;
+}
