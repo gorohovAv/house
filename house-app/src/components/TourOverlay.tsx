@@ -96,6 +96,44 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
     }
   };
 
+  // Блокировка скролла при активации тура
+  useEffect(() => {
+    if (isActive) {
+      // Добавляем CSS класс для блокировки скролла
+      document.body.classList.add("tour-active");
+
+      // Блокируем скролл на контейнере строительства
+      const scrollContainer = document.querySelector(
+        ".construction-scroll-container"
+      );
+      if (scrollContainer) {
+        scrollContainer.classList.add("tour-active");
+      }
+    } else {
+      // Убираем CSS классы
+      document.body.classList.remove("tour-active");
+
+      const scrollContainer = document.querySelector(
+        ".construction-scroll-container"
+      );
+      if (scrollContainer) {
+        scrollContainer.classList.remove("tour-active");
+      }
+    }
+
+    return () => {
+      // Очистка при размонтировании
+      document.body.classList.remove("tour-active");
+
+      const scrollContainer = document.querySelector(
+        ".construction-scroll-container"
+      );
+      if (scrollContainer) {
+        scrollContainer.classList.remove("tour-active");
+      }
+    };
+  }, [isActive]);
+
   useEffect(() => {
     // Принудительная очистка всех состояний перед новым рендером
     setTargetElements([]);
@@ -302,6 +340,53 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ children }) => {
         break;
     }
   };
+
+  // Блокировка скролла через обработчики событий
+  useEffect(() => {
+    if (!isActive) return;
+
+    const preventScroll = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    const preventWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    const preventTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    const preventKeyScroll = (e: KeyboardEvent) => {
+      // Блокируем клавиши скролла
+      if ([32, 33, 34, 35, 36, 37, 38, 39, 40].includes(e.keyCode)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    };
+
+    // Добавляем обработчики для блокировки скролла
+    document.addEventListener("wheel", preventWheel, { passive: false });
+    document.addEventListener("touchmove", preventTouchMove, {
+      passive: false,
+    });
+    document.addEventListener("keydown", preventKeyScroll, { passive: false });
+    document.addEventListener("scroll", preventScroll, { passive: false });
+
+    return () => {
+      document.removeEventListener("wheel", preventWheel);
+      document.removeEventListener("touchmove", preventTouchMove);
+      document.removeEventListener("keydown", preventKeyScroll);
+      document.removeEventListener("scroll", preventScroll);
+    };
+  }, [isActive]);
 
   const handleOverlayClick = (event: React.MouseEvent) => {
     if (!isActive || !activeTour || !currentStepConfig) return;

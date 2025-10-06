@@ -1,5 +1,12 @@
 import { type TourConfig } from "../components/TourProvider";
-import { MoneyIcon, TimeIcon, RiskIcon, PlanIcon, WarningIcon, CheckIcon } from "../components/Icons";
+import {
+  MoneyIcon,
+  TimeIcon,
+  RiskIcon,
+  PlanIcon,
+  WarningIcon,
+  CheckIcon,
+} from "../components/Icons";
 
 export const HOUSE_PLANNING_TOUR: TourConfig = {
   id: "house-planning-tour",
@@ -25,7 +32,7 @@ export const HOUSE_PLANNING_TOUR: TourConfig = {
       description:
         "Здесь два важных показателя:<br><b>Остаток лимита</b>: Сколько ещё можно потратить, не выходя за рамки бюджета.<br><b>Остаток дней</b>: Сколько дней у вас осталось, чтобы успеть по плану.",
       type: "bottom",
-      scrollTo: false,
+      scrollTo: true,
     },
     {
       target: ".controls-panel",

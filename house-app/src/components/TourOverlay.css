@@ -6,6 +6,26 @@
   height: 100vh;
   z-index: 9999;
   pointer-events: none;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+/* Блокировка скролла для body во время тура */
+body.tour-active {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+
+/* Блокировка скролла для контейнера строительства */
+.construction-scroll-container.tour-active {
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
 }
 
 .tour-backdrop {
@@ -189,7 +209,7 @@
 }
 
 .tour-bottom-tooltip.no-button {
-  bottom: 140px;
+  bottom: 200px;
 }
 
 @keyframes tourTooltipAppear {
