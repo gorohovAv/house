@@ -717,7 +717,7 @@ const ComparisonPage: React.FC = () => {
           </div>
           <div className="comparison-section">
             <div className="section-header">
-              <h2 className="section-title">Прогноз постройки</h2>
+              <h2 className="section-title">Итоговая постройка</h2>
             </div>
             <div className="house-display-comparison">
               <LayeredCanvas config={getActualHouseConfig()} />

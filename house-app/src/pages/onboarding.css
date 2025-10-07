@@ -516,6 +516,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  margin-bottom: 50px;
 }
 
 .onboarding-button-primary {

@@ -347,7 +347,7 @@ const OnboardingPage = () => {
           />
         </div>
         <div className="onboarding-title">
-          <h1>СТРОИМ ДОМ</h1>
+          <h1>СТРОЙБЮДЖЕТ</h1>
           <p>деловая игра</p>
         </div>
       </div>
@@ -415,9 +415,6 @@ const OnboardingPage = () => {
             <p>
               Проявите стратегическое мышление, будьте внимательны к деталям!
             </p>
-            <div className="onboarding-wish">
-              🚀 <strong>Удачи!</strong>
-            </div>
           </div>
         </div>
       </div>
