@@ -19,50 +19,19 @@
           rgba(0, 84, 172, 1) 100%
         );
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 0;
-        position: relative;
-        overflow: hidden;
-      }
-
-      body::before {
-        content: "";
-        position: absolute;
-        top: 50px;
-        left: 0;
-        width: 200px;
-        height: 300px;
-        background: url("data:image/svg+xml,%3Csvg width='200' height='300' viewBox='0 0 200 300' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100 0L200 100L100 200L0 100L100 0Z' fill='%23FF6910' fill-opacity='0.1'/%3E%3Cpath d='M100 100L200 200L100 300L0 200L100 100Z' fill='%23FF6910' fill-opacity='0.1'/%3E%3C/svg%3E")
-          no-repeat;
-        pointer-events: none;
-        z-index: 0;
-      }
-
-      body::after {
-        content: "";
-        position: absolute;
-        bottom: 50px;
-        right: 0;
-        width: 200px;
-        height: 300px;
-        background: url("data:image/svg+xml,%3Csvg width='200' height='300' viewBox='0 0 200 300' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100 0L200 100L100 200L0 100L100 0Z' fill='%23FF6910' fill-opacity='0.1'/%3E%3Cpath d='M100 100L200 200L100 300L0 200L100 100Z' fill='%23FF6910' fill-opacity='0.1'/%3E%3C/svg%3E")
-          no-repeat;
-        pointer-events: none;
-        z-index: 0;
+        padding: 20px;
+        overflow-y: auto;
       }
 
       .results-container {
         width: 100%;
+        height: 100%;
         max-width: 900px;
         margin: 0 auto;
         background: rgba(0, 34, 70, 0.9);
         border-radius: 20px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         overflow: hidden;
-        position: relative;
-        z-index: 1;
       }
 
       .results-header {
@@ -84,12 +53,13 @@
       }
 
       .results-content {
-        flex: 1;
         width: 100%;
-        padding: 0 16px;
+        padding: 16px;
         display: flex;
         flex-direction: column;
         gap: 8px;
+        max-height: 70vh;
+        overflow-y: auto;
       }
 
       .results-item {
@@ -105,10 +75,6 @@
 
       .results-item-current {
         background: #ff6910;
-        border-radius: 16px;
-      }
-
-      .results-item-last {
         border-radius: 16px;
       }
 
@@ -141,24 +107,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-      }
-
-      .results-divider {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 48px;
-        padding: 0 16px;
-        border-top: 1px solid #2965a5;
-        border-bottom: 1px solid #2965a5;
-      }
-
-      .results-divider span {
-        color: #fff;
-        font-family: "Inter", sans-serif;
-        font-size: 24px;
-        font-weight: 700;
-        line-height: 1.2;
       }
 
       .no-results {
@@ -213,7 +161,7 @@
         }
 
         .results-content {
-          padding: 0 8px;
+          padding: 8px;
         }
 
         .results-item {
@@ -234,47 +182,11 @@
         <h1 class="results-title">Рейтинг</h1>
       </div>
 
-      {{if .results}}
-      <div class="results-content">
-        {{range $index, $result := .results}}
-        <div class="results-item {{if eq $index 0}}results-item-current{{end}}">
-          <span class="results-position">{{add $index 1}}</span>
-          <div class="results-icon">
-            {{if eq $index 0}}
-            <div class="trophy-gold"></div>
-            {{else if eq $index 1}}
-            <div class="trophy-silver"></div>
-            {{else if eq $index 2}}
-            <div class="trophy-bronze"></div>
-            {{else}}
-            <div class="medal"></div>
-            {{end}}
-          </div>
-          <span class="results-name">{{$result.Name}}</span>
+      <div class="results-content" id="resultsContent">
+        <div class="no-results" id="noResults">
+          <h3>📋 Загрузка результатов...</h3>
         </div>
-        {{end}} {{if gt (len .results) 10}}
-        <div class="results-divider">
-          <span>...</span>
-        </div>
-
-        <div class="results-item results-item-last">
-          <span class="results-position">{{len .results}}</span>
-          <div class="results-icon">
-            <div class="medal"></div>
-          </div>
-          <span class="results-name"
-            >{{index .results (sub (len .results) 1) | .Name}}</span
-          >
-        </div>
-        {{end}}
       </div>
-
-      {{else}}
-      <div class="no-results">
-        <h3>📋 Пока нет результатов</h3>
-        <p>Добавьте первый результат через API</p>
-      </div>
-      {{end}}
     </div>
 
     <script>
@@ -289,32 +201,21 @@
           updateResultsDisplay(results);
         } catch (error) {
           console.error("Ошибка при загрузке результатов:", error);
+          showError();
         }
       }
 
       // Функция для обновления отображения результатов
       function updateResultsDisplay(results) {
-        const resultsContent = document.querySelector(".results-content");
-        const noResults = document.querySelector(".no-results");
+        const resultsContent = document.getElementById("resultsContent");
 
         if (!results || results.length === 0) {
-          if (noResults) {
-            noResults.style.display = "block";
-          }
-          if (resultsContent) {
-            resultsContent.style.display = "none";
-          }
+          resultsContent.innerHTML =
+            '<div class="no-results"><h3>📋 Пока нет результатов</h3><p>Добавьте первый результат через API</p></div>';
           return;
         }
 
-        if (noResults) {
-          noResults.style.display = "none";
-        }
-        if (resultsContent) {
-          resultsContent.style.display = "flex";
-        }
-
-        // Очищаем текущий контент
+        // Очищаем и создаем новый контент
         resultsContent.innerHTML = "";
 
         // Создаем элементы для каждого результата
@@ -345,7 +246,7 @@
 
           const name = document.createElement("span");
           name.className = "results-name";
-          name.textContent = result.Name;
+          name.textContent = result.Name || result.name || "Без имени";
 
           resultItem.appendChild(position);
           resultItem.appendChild(icon);
@@ -353,39 +254,13 @@
 
           resultsContent.appendChild(resultItem);
         });
+      }
 
-        // Добавляем разделитель и последний элемент если результатов больше 10
-        if (results.length > 10) {
-          const divider = document.createElement("div");
-          divider.className = "results-divider";
-          const span = document.createElement("span");
-          span.textContent = "...";
-          divider.appendChild(span);
-          resultsContent.appendChild(divider);
-
-          const lastItem = document.createElement("div");
-          lastItem.className = "results-item results-item-last";
-
-          const lastPosition = document.createElement("span");
-          lastPosition.className = "results-position";
-          lastPosition.textContent = results.length;
-
-          const lastIcon = document.createElement("div");
-          lastIcon.className = "results-icon";
-          const lastIconElement = document.createElement("div");
-          lastIconElement.className = "medal";
-          lastIcon.appendChild(lastIconElement);
-
-          const lastName = document.createElement("span");
-          lastName.className = "results-name";
-          lastName.textContent = results[results.length - 1].Name;
-
-          lastItem.appendChild(lastPosition);
-          lastItem.appendChild(lastIcon);
-          lastItem.appendChild(lastName);
-
-          resultsContent.appendChild(lastItem);
-        }
+      // Функция для показа ошибки
+      function showError() {
+        const resultsContent = document.getElementById("resultsContent");
+        resultsContent.innerHTML =
+          '<div class="no-results"><h3>❌ Ошибка загрузки</h3><p>Не удалось загрузить результаты</p></div>';
       }
 
       // Запускаем обновление результатов каждые 5 секунд

@@ -61,10 +61,10 @@ func calculateRating(value, min, max int) int {
 	
 	// Ограничиваем диапазон 1-10
 	if rating < 1 {
-		rating = 1
+		rating = 10
 	}
 	if rating > 10 {
-		rating = 10
+		rating = 1
 	}
 	
 	return rating
@@ -222,16 +222,16 @@ func getResults(c *gin.Context) {
 		return
 	}
 
-	// Сортировка: сначала по достроенности (достроенные первыми), затем по итоговой оценке (по возрастанию), затем по времени создания
+	// Сортировка: сначала по достроенности (достроенные первыми), затем по итоговой оценке (по убыванию), затем по времени создания
 	sort.Slice(results, func(i, j int) bool {
 		// Сначала сортируем по достроенности (достроенные дома первыми)
 		if results[i].IsCompleted != results[j].IsCompleted {
 			return results[i].IsCompleted && !results[j].IsCompleted
 		}
 		
-		// Затем по итоговой оценке (по возрастанию - от меньшего к большему)
+		// Затем по итоговой оценке (по убыванию - от большего к меньшему)
 		if results[i].FinalRating != results[j].FinalRating {
-			return results[i].FinalRating < results[j].FinalRating
+			return results[i].FinalRating > results[j].FinalRating
 		}
 		
 		// Наконец по времени создания (раньше созданные первыми)
@@ -251,16 +251,16 @@ func getResultsPage(c *gin.Context) {
 		return
 	}
 
-	// Сортировка: сначала по достроенности (достроенные первыми), затем по итоговой оценке (по возрастанию), затем по времени создания
+	// Сортировка: сначала по достроенности (достроенные первыми), затем по итоговой оценке (по убыванию), затем по времени создания
 	sort.Slice(results, func(i, j int) bool {
 		// Сначала сортируем по достроенности (достроенные дома первыми)
 		if results[i].IsCompleted != results[j].IsCompleted {
 			return results[i].IsCompleted && !results[j].IsCompleted
 		}
 		
-		// Затем по итоговой оценке (по возрастанию - от меньшего к большему)
+		// Затем по итоговой оценке (по убыванию - от большего к меньшему)
 		if results[i].FinalRating != results[j].FinalRating {
-			return results[i].FinalRating < results[j].FinalRating
+			return results[i].FinalRating > results[j].FinalRating
 		}
 		
 		// Наконец по времени создания (раньше созданные первыми)
