@@ -10,6 +10,14 @@ import "./comparison.css";
 import type { ConstructionOption } from "../constants";
 import type { PaymentScheduleItem } from "../store/factStore";
 
+// Базовый URL API
+const API_URL =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "192.168.31.213" // меняем здесь http://192.168.3.14:5173/
+    ? `http://${window.location.hostname}:8080/api`
+    : "https://scheduler-assistant.ru/api";
+
 interface LayerConfig {
   id: string;
   assetPath: string;
@@ -502,6 +510,18 @@ const createActualHouseConfig = (
   };
 };
 
+// Интерфейс для отправки данных на бэкенд
+interface CreateResultRequest {
+  name: string;
+  planned_duration: number;
+  planned_cost: number;
+  actual_duration: number;
+  actual_cost: number;
+  projected_duration: number;
+  projected_cost: number;
+  is_completed: boolean;
+}
+
 const ComparisonPage: React.FC = () => {
   const navigate = useNavigate();
   const factStore = useFactStore();
@@ -540,10 +560,9 @@ const ComparisonPage: React.FC = () => {
   // Прогнозная длительность - сумма длительностей конструкций + риски с alternative + простои (до 5-го периода включительно)
   const projectedDuration = (() => {
     // Суммируем длительности всех выбранных конструкций
-    const constructionsDuration = Object.values(factStore.selectedOptions).reduce(
-      (total, option) => total + (option?.duration || 0),
-      0
-    );
+    const constructionsDuration = Object.values(
+      factStore.selectedOptions
+    ).reduce((total, option) => total + (option?.duration || 0), 0);
 
     // Добавляем длительность рисков с решением "alternative" (до 5-го периода включительно)
     const risksDuration = factStore.periods
@@ -560,15 +579,18 @@ const ComparisonPage: React.FC = () => {
       }, 0);
 
     // Добавляем простои (дни где issued: 0) - только до 4-го периода включительно
-    const idleDays = factStore.paymentSchedule
-      .filter((payment) => {
-        // Проверяем, что день относится к периодам 1-4
-        const isInPeriods1to4 = factStore.periods
-          .filter((period) => period.id <= 4)
-          .some((period) => payment.dayIndex >= period.startDay && payment.dayIndex <= period.endDay);
-        
-        return isInPeriods1to4 && payment.issued === 0;
-      }).length;
+    const idleDays = factStore.paymentSchedule.filter((payment) => {
+      // Проверяем, что день относится к периодам 1-4
+      const isInPeriods1to4 = factStore.periods
+        .filter((period) => period.id <= 4)
+        .some(
+          (period) =>
+            payment.dayIndex >= period.startDay &&
+            payment.dayIndex <= period.endDay
+        );
+
+      return isInPeriods1to4 && payment.issued === 0;
+    }).length;
 
     return constructionsDuration + risksDuration + idleDays;
   })();
@@ -591,6 +613,60 @@ const ComparisonPage: React.FC = () => {
     );
   };
 
+  // Функция отправки результатов на бэкенд
+  const sendResultsToBackend = async () => {
+    try {
+      // Рассчитываем фактические данные из paymentSchedule
+      const actualCost = factStore.paymentSchedule.reduce((total, payment) => {
+        return total + (payment.issued || 0);
+      }, 0);
+
+      // Фактическая длительность - количество дней, когда были выданы деньги
+      const actualDuration = factStore.paymentSchedule.filter(
+        (payment) => payment.issued !== null && payment.issued > 0
+      ).length;
+
+      // Проверяем достроенность дома
+      const houseCompleted = isAllConstructionsCompleted(
+        factStore.paymentSchedule
+      );
+
+      const resultData: CreateResultRequest = {
+        name: projectName || "Игрок",
+        planned_duration: plannedDuration,
+        planned_cost: plannedCost,
+        actual_duration: actualDuration,
+        actual_cost: actualCost,
+        projected_duration: projectedDuration,
+        projected_cost: projectedCost,
+        is_completed: houseCompleted,
+      };
+
+      console.log("📊 Данные для отправки:", resultData);
+
+      const response = await fetch(`${API_URL}/results`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(resultData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Ошибка при отправке результатов");
+      }
+
+      console.log("Результаты успешно отправлены на бэкенд");
+    } catch (error) {
+      console.error("Ошибка при отправке результатов:", error);
+    }
+  };
+
+  // Отправляем результаты на бэкенд при первом рендере
+  useEffect(() => {
+    sendResultsToBackend();
+  }, []);
+
   const handleContinue = () => {
     navigate("/results");
   };
@@ -599,7 +675,7 @@ const ComparisonPage: React.FC = () => {
     <div className="comparison-page">
       <div className="comparison-container">
         <div className="comparison-header">
-          <h1 className="comparison-title">Дом достроен!</h1>
+          <h1 className="comparison-title">Стройка закончилась!</h1>
         </div>
 
         <div className="comparison-content">

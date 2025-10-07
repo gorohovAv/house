@@ -19,7 +19,6 @@ import { useTour } from "../components/TourProvider";
 import { useTourStorage } from "../hooks/useTourStorage";
 import { CONSTRUCTION_TOUR } from "../config/tours";
 import type { ConstructionOption } from "../constants";
-import type { CreateResultRequest } from "../types/api";
 import type { PaymentScheduleItem } from "../store/factStore";
 
 // Базовый URL API
@@ -1083,68 +1082,16 @@ export default function ConstructionPage() {
     });
   }, [paymentSchedule]);
 
-  // Функция отправки результатов на бэкенд
-  const sendResultsToBackend = useCallback(async () => {
-    try {
-      // Получаем данные из стора плана
-      const plannedDuration = planStore.getTotalDuration();
-      const plannedCost = planStore.getTotalCost();
-
-      // Рассчитываем фактические данные из paymentSchedule
-      const actualCost = paymentSchedule.reduce((total, payment) => {
-        return total + (payment.issued || 0);
-      }, 0);
-
-      // Фактическая длительность - количество дней, когда были выданы деньги
-      const actualDuration = paymentSchedule.filter(
-        (payment) => payment.issued !== null && payment.issued > 0
-      ).length;
-
-      // Проверяем достроенность дома
-      const houseCompleted = isHouseCompleted();
-
-      const resultData: CreateResultRequest = {
-        name: projectName || "Игрок",
-        planned_duration: plannedDuration,
-        planned_cost: plannedCost,
-        actual_duration: actualDuration,
-        actual_cost: actualCost,
-        is_completed: houseCompleted,
-      };
-
-      console.log("📊 Данные для отправки:", resultData);
-
-      const response = await fetch(`${API_URL}/results`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(resultData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Ошибка при отправке результатов");
-      }
-
-      console.log("Результаты успешно отправлены на бэкенд");
-    } catch (error) {
-      console.error("Ошибка при отправке результатов:", error);
-    }
-  }, [planStore, paymentSchedule, projectName, isHouseCompleted]);
-
   // Переход на страницу сравнения после завершения всех периодов
   useEffect(() => {
     if (isAllPeriodsCompleted) {
-      // Отправляем результаты на бэкенд
-      sendResultsToBackend();
-
       const timer = setTimeout(() => {
         navigate("/comparison");
       }, 2000); // Небольшая задержка для показа финального состояния
 
       return () => clearTimeout(timer);
     }
-  }, [isAllPeriodsCompleted, navigate, sendResultsToBackend]);
+  }, [isAllPeriodsCompleted, navigate]);
 
   const [tourStarted, setTourStarted] = useState(false);
   // Запускаем тур при первом посещении страницы
