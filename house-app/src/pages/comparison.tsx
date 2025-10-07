@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFactStore } from "../store/factStore";
 import { usePlanStore } from "../store/store";
@@ -528,6 +528,9 @@ const ComparisonPage: React.FC = () => {
   const planStore = usePlanStore();
   const { projectName } = useOnboardingStore();
 
+  // Флаг для предотвращения повторной отправки
+  const hasSentResults = useRef(false);
+
   // Получаем данные из стора плана
   const plannedDuration = planStore.getTotalDuration();
   const plannedCost = planStore.getTotalCost();
@@ -664,8 +667,17 @@ const ComparisonPage: React.FC = () => {
 
   // Отправляем результаты на бэкенд при первом рендере
   useEffect(() => {
-    sendResultsToBackend();
-  }, []);
+    if (!hasSentResults.current) {
+      hasSentResults.current = true;
+      sendResultsToBackend();
+    }
+  }, [
+    projectedCost,
+    projectedDuration,
+    plannedCost,
+    plannedDuration,
+    projectName,
+  ]);
 
   const handleContinue = () => {
     navigate("/results");
