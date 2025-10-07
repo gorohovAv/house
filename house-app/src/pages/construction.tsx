@@ -1500,7 +1500,12 @@ export default function ConstructionPage() {
                 </div>
                 <div className="card-item">
                   <TimeIcon />
-                  <span>{paymentSchedule.length} дней</span>
+                  <span>
+                    {paymentSchedule.length +
+                      paymentSchedule.filter((payment) => payment.issued === 0)
+                        .length}{" "}
+                    дней
+                  </span>
                 </div>
               </div>
             </div>
@@ -1682,7 +1687,7 @@ export default function ConstructionPage() {
         )}
       </div>
 
-      <div className="page-spacer"></div>
+      {/*<div className="page-spacer"></div>*/}
     </div>
   );
 }

@@ -512,23 +512,75 @@ const ComparisonPage: React.FC = () => {
   const plannedDuration = planStore.getTotalDuration();
   const plannedCost = planStore.getTotalCost();
 
-  // Рассчитываем фактические данные из paymentSchedule
-  const actualCost = factStore.paymentSchedule.reduce((total, payment) => {
-    return total + (payment.issued || 0);
-  }, 0);
+  // Прогнозная стоимость - сумма стоимости конструкций + риски с solution (до 5-го периода включительно)
+  const projectedCost = (() => {
+    // Суммируем стоимость всех выбранных конструкций
+    const constructionsCost = Object.values(factStore.selectedOptions).reduce(
+      (total, option) => total + (option?.cost || 0),
+      0
+    );
 
-  // Фактическая длительность - если домик недостроен, показываем 90 дней
-  const isConstructionCompleted = isAllConstructionsCompleted(
-    factStore.paymentSchedule
-  );
-  const actualDuration = isConstructionCompleted
-    ? factStore.paymentSchedule.filter((payment) => payment.issued !== null)
-        .length
-    : 90;
+    // Добавляем стоимость рисков с решением "solution" (до 5-го периода включительно)
+    const risksCost = factStore.periods
+      .filter((period) => period.id <= 5) // Периоды 1-5
+      .reduce((total, period) => {
+        if (
+          period.risk &&
+          !period.isProtected &&
+          period.selectedSolution === "solution"
+        ) {
+          return total + (period.risk.cost || 0);
+        }
+        return total;
+      }, 0);
+
+    return constructionsCost + risksCost;
+  })();
+
+  // Прогнозная длительность - сумма длительностей конструкций + риски с alternative + простои (до 5-го периода включительно)
+  const projectedDuration = (() => {
+    // Суммируем длительности всех выбранных конструкций
+    const constructionsDuration = Object.values(factStore.selectedOptions).reduce(
+      (total, option) => total + (option?.duration || 0),
+      0
+    );
+
+    // Добавляем длительность рисков с решением "alternative" (до 5-го периода включительно)
+    const risksDuration = factStore.periods
+      .filter((period) => period.id <= 5) // Периоды 1-5
+      .reduce((total, period) => {
+        if (
+          period.risk &&
+          !period.isProtected &&
+          period.selectedSolution === "alternative"
+        ) {
+          return total + (period.risk.duration || 0);
+        }
+        return total;
+      }, 0);
+
+    // Добавляем простои (дни где issued: 0) - только до 4-го периода включительно
+    const idleDays = factStore.paymentSchedule
+      .filter((payment) => {
+        // Проверяем, что день относится к периодам 1-4
+        const isInPeriods1to4 = factStore.periods
+          .filter((period) => period.id <= 4)
+          .some((period) => payment.dayIndex >= period.startDay && payment.dayIndex <= period.endDay);
+        
+        return isInPeriods1to4 && payment.issued === 0;
+      }).length;
+
+    return constructionsDuration + risksDuration + idleDays;
+  })();
 
   // Конфигурация для планируемого дома (по выборам из planStore)
   const getPlannedHouseConfig = (): LayeredImageConfig => {
-    return createPlannedHouseConfig(planStore.selectedOptions);
+    const filteredOptions = Object.fromEntries(
+      Object.entries(planStore.selectedOptions).filter(
+        ([_, option]) => option !== null
+      )
+    ) as Record<string, ConstructionOption>;
+    return createPlannedHouseConfig(filteredOptions);
   };
 
   // Конфигурация для фактического дома (по выборам из factStore и завершенности)
@@ -577,7 +629,7 @@ const ComparisonPage: React.FC = () => {
           </div>
           <div className="comparison-section">
             <div className="section-header">
-              <h2 className="section-title">Итоговая постройка</h2>
+              <h2 className="section-title">Прогноз постройки</h2>
             </div>
             <div className="house-display-comparison">
               <LayeredCanvas config={getActualHouseConfig()} />
@@ -587,14 +639,14 @@ const ComparisonPage: React.FC = () => {
                 <div className="indicator-title">Бюджет</div>
                 <div className="indicator-value-comparison">
                   <MoneyIcon />
-                  <span>{actualCost.toLocaleString()}</span>
+                  <span>{projectedCost.toLocaleString()}</span>
                 </div>
               </div>
               <div className="indicator-item">
                 <div className="indicator-title">Срок</div>
                 <div className="indicator-value-comparison">
                   <TimeIcon />
-                  <span>{actualDuration} дней</span>
+                  <span>{projectedDuration} дней</span>
                 </div>
               </div>
             </div>
@@ -605,8 +657,6 @@ const ComparisonPage: React.FC = () => {
           Далее
         </button>
       </div>
-
-      <div className="page-spacer"></div>
     </div>
   );
 };

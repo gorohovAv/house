@@ -360,7 +360,7 @@ export default function HousePage() {
         </div>
       )}
 
-      <div className="page-spacer"></div>
+      {/*<div className="page-spacer"></div>*/}
     </div>
   );
 }
